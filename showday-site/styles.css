@@ -147,3 +147,6 @@ fieldset.dates-field legend{font-size:14px;font-weight:500;padding:0;margin-bott
 fieldset.dates-field .row{flex-wrap:nowrap}
 textarea{width:100%;border:1px solid #98A2B3;border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit;color:var(--ink);resize:vertical;min-height:96px}
 textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Keep Netlify's badge above the bottom tab bar instead of covering it */
+#nl-badge-frame{bottom:calc(72px + env(safe-area-inset-bottom)) !important}
