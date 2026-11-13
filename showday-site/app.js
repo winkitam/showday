@@ -796,9 +796,10 @@ function meView() {
 
 function footer() {
   const mail = CONTACT_EMAIL.startsWith('YOUR_') ? '' : `<a href="mailto:${esc(CONTACT_EMAIL)}">${t('contactUs')}</a>`;
+  const canInstall = !isStandalone() && (S.installPrompt || isIOS || isAndroid);
   return `<footer>
     <p>${t('footRule')}</p>
-    <p class="row tight"><button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="privacy.html">${t('privacy')}</a>${mail}</p>
+    <p class="row tight">${canInstall ? `<button type="button" class="text small" data-act="showInstall">${t('install')}</button>` : ''}<button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="privacy.html">${t('privacy')}</a>${mail}</p>
   </footer>`;
 }
 
@@ -947,6 +948,12 @@ const actions = {
   async logout() { await sb.auth.signOut(); },
   async install() { if (!S.installPrompt) return; S.installPrompt.prompt(); await S.installPrompt.userChoice; S.installPrompt = null; render(); },
   installLater() { store.set('installLaterAt', Date.now()); renderMain(); },
+  async showInstall() {
+    if (S.installPrompt) { await actions.install(); return; }
+    store.set('installLaterAt', 0);
+    if (S.view !== 'me') await setView('me'); else renderMain();
+    const c = document.querySelector('.install-card'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center' });
+  },
   pick(id) { S.flash = null; openEvent(id); },
   day(id) {
     if (id === S.selEv) return;
