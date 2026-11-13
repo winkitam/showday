@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+const TBL = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } });
 
@@ -38,15 +39,15 @@ async function load() {
   if (!ir.error) {
     const ic = {};
     (ir.data || []).forEach((r) => { const k = r.item_type + ':' + r.item_id; ic[k] = (ic[k] || 0) + 1; });
-    const TBL = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
     for (const type of Object.keys(TBL)) {
-      const cols = type === 'merch' ? 'id, title, details, price, contact, hidden, created_at' : type === 'swap'
+      const cols = type === 'free' ? 'id, what, details, place, hidden, created_at, events(artist, city, venue, event_date)' : type === 'merch' ? 'id, title, details, price, contact, hidden, created_at' : type === 'swap'
         ? 'id, have, want, contact, hidden, created_at, events(artist, city, venue, event_date)' : 'id, note, contact, hidden, created_at, events(artist, city, venue, event_date)';
       const reportedIds = Object.keys(ic).filter((k) => k.startsWith(type + ':')).map((k) => k.slice(type.length + 1));
       const [a, b] = await Promise.all([
         reportedIds.length ? sb.from(TBL[type]).select(cols).in('id', reportedIds) : Promise.resolve({ data: [] }),
         sb.from(TBL[type]).select(cols).eq('hidden', true)
       ]);
+      if (a.error && b.error) continue; // table not created yet
       const seen = new Set();
       [...(a.data || []), ...(b.data || [])].forEach((x) => {
         if (seen.has(x.id)) return; seen.add(x.id);
@@ -142,8 +143,8 @@ function reports() {
 }
 
 function itemCard(x) {
-  const label = { swap: 'Seat swap', buddy: 'Buddy', merch: 'Merch' }[x.type];
-  const text = x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : `${x.title}${x.price != null ? ' · ' + money(x.price) : ''}`;
+  const label = { swap: 'Seat swap', buddy: 'Buddy', merch: 'Merch', free: 'Freebie' }[x.type];
+  const text = x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : x.type === 'free' ? `${x.what}${x.place ? ' · ' + x.place : ''}` : `${x.title}${x.price != null ? ' · ' + money(x.price) : ''}`;
   const ev = x.events ? `${x.events.artist} · ${place(x.events)}` : (x.details || '');
   const key = x.type + ':' + x.id;
   return `<article class="listing">
@@ -190,7 +191,7 @@ const actions = {
     if (S.armed !== key) { S.armed = key; render(); return; }
     S.armed = null;
     const [type, id] = key.split(':');
-    const { error } = await sb.from({ swap: 'swaps', buddy: 'buddies', merch: 'merch' }[type]).delete().eq('id', id);
+    const { error } = await sb.from(TBL[type]).delete().eq('id', id);
     if (error) setNote('Could not delete: ' + error.message, 'err');
     else { S.items = S.items.filter((x) => !(x.type === type && x.id === id)); setNote('Post deleted.'); }
     render();

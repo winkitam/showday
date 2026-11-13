@@ -139,7 +139,39 @@ const T = {
   sendFeedback: ['Send', '發送', '보내기'],
   feedbackSent: ['Thank you. Your feedback was sent.', '謝謝，你的意見已送出。', '감사해요. 의견이 전송되었어요.'],
   feedbackShort: ['Please write a little more.', '請多寫一點。', '조금 더 적어 주세요.'],
-  privacy: ['Privacy', '私隱政策', '개인정보'], contactUs: ['Contact us', '聯絡我們', '문의']
+  justNow: ['just now', '剛剛', '방금'],
+  maybeSold: ['May be gone', '可能已售出', '이미 거래됐을 수도'],
+  maybeSwapped: ['May be swapped', '可能已換出', '이미 교환됐을 수도'],
+  priceMatch: ['Fits your price', '價格合適', '가격 맞음'],
+  belowFace: ['{p}% below face value', '低於原價 {p}%', '원가보다 {p}% 저렴'],
+  sortBy: ['Sort', '排序', '정렬'], sortNew: ['Newest', '最新', '최신순'], sortLow: ['Price: low to high', '價格：低至高', '가격 낮은순'],
+  sortHigh: ['Price: high to low', '價格：高至低', '가격 높은순'], sortSection: ['Section', '區域', '구역순'],
+  perfectMatch: ['Perfect match ✦', '完美配對 ✦', '완벽 매칭 ✦'], maybeMatch: ['Might suit you', '可能適合', '맞을 수도 있어요'],
+  matchHint: ['Post your own swap to see who matches you.', '發佈你的換位，即可看到誰跟你配對。', '내 교환글을 올리면 매칭되는 사람을 보여드려요.'],
+  fStanding: ['Standing', '企位', '스탠딩'], fSeated: ['Seated', '座位', '좌석'],
+  tagFirst: ['First time', '第一次去', '첫 공연'], tagSolo: ['Going solo', '一個人', '혼자 가요'],
+  tagCantonese: ['廣東話', '廣東話', '광둥어'], tagEnglish: ['English', 'English', '영어'], tagKorean: ['한국어', '한국어', '한국어'], tagMandarin: ['普通話', '普通話', '중국어'],
+  tagQueue: ['Queue together', '一起排隊', '같이 줄 서기'], tagEat: ['Eat together', '一起食飯', '같이 밥 먹기'], tagPhoto: ['Take photos', '一起拍照', '같이 사진 찍기'],
+  fTags: ['Tags', '標籤', '태그'], fMeetTime: ['Meet time (optional)', '集合時間（選填）', '만날 시간 (선택)'], phMeetTime: ['5:30pm', '5:30pm', '오후 5:30'],
+  fMeetPlace: ['Meet place (optional)', '集合地點（選填）', '만날 장소 (선택)'], phMeetPlace: ['Gate B, by the merch booth', 'B 閘，周邊攤位旁', 'B 게이트 굿즈 부스 옆'],
+  wts: ['WTS · Selling', 'WTS 出售', 'WTS 판매'], wtb: ['WTB · Looking for', 'WTB 收', 'WTB 구해요'], wtt: ['WTT · Swap', 'WTT 交換', 'WTT 교환'],
+  fCategory: ['Category', '類別', '카테고리'], fMember: ['Member (optional)', '成員（選填）', '멤버 (선택)'], phMember: ['e.g. Jennie', '例如：Jennie', '예: 제니'],
+  catPhotocard: ['Photocard', '小卡', '포토카드'], catLightstick: ['Lightstick', '燈牌', '응원봉'], catSlogan: ['Slogan', '手幅', '슬로건'],
+  catAlbum: ['Album', '專輯', '앨범'], catClothing: ['Clothing', '衣物', '의류'], catOther: ['Other', '其他', '기타'],
+  fBudget: ['Budget ({c}, optional)', '預算（{c}，選填）', '예산 ({c}, 선택)'],
+  fPhoto: ['Photo (optional)', '相片（選填）', '사진 (선택)'], photoErr: ['Photo upload failed. Try a smaller image.', '相片上載失敗，請試試較小的相片。', '사진 업로드 실패. 더 작은 사진으로 해 보세요.'],
+  uploading: ['Uploading photo…', '正在上載相片…', '사진 업로드 중…'],
+  all2: ['All', '全部', '전체'], anyMember: ['All members', '所有成員', '모든 멤버'],
+  navFree: ['Freebies', '派發', '나눔'],
+  freeSub: ['Free fan goodies handed out at the show.', '粉絲在現場免費派發的應援物。', '공연장에서 무료로 나눠 주는 굿즈.'],
+  freeCta: ['Post a giveaway', '發佈派發', '나눔 올리기'],
+  fWhat: ['What are you giving out', '派發什麼', '무엇을 나눠요'], phWhat: ['Handmade stickers, 200 sets', '手作貼紙 200 份', '수제 스티커 200세트'],
+  fGiveTime: ['When', '派發時間', '나눔 시간'], phGiveTime: ['From 5pm until gone', '5pm 開始，派完即止', '오후 5시부터 소진 시까지'],
+  fPlace: ['Where', '派發地點', '나눔 장소'], phPlace: ['Exit A, look for the pink balloon', 'A 出口，找粉紅氣球', 'A 출구, 핑크 풍선'],
+  freeDetails: ['How to get one (optional)', '領取方法（選填）', '받는 방법 (선택)'], phFreeDetails: ['Show your lightstick or say the fan chant', '出示燈牌或講應援口號', '응원봉 보여주거나 응원법 말하기'],
+  allGone: ['All gone', '已派完', '나눔 완료'], markAllGone: ['Mark as all gone', '標記為已派完', '나눔 완료로 표시'],
+  typeFree: ['Freebie', '派發', '나눔'],
+  privacy: ['Privacy', '私隱政策', '개인정보'], contactUs:['Contact us', '聯絡我們', '문의']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
 const HTML_LANG = ['en', 'zh-Hant', 'ko'];
@@ -180,8 +212,42 @@ const fmtDate = (iso) => iso === todayISO() ? t('tonight')
 const ago = (ts) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 60000));
   const f = new Intl.RelativeTimeFormat(LOCALES[S.lang], { numeric: 'auto' });
-  return m < 60 ? f.format(-m, 'minute') : f.format(-Math.floor(m / 60), 'hour');
+  if (m < 1) return t('justNow');
+  return m < 60 ? f.format(-m, 'minute') : m < 1440 ? f.format(-Math.floor(m / 60), 'hour') : f.format(-Math.floor(m / 1440), 'day');
 };
+// Exact post time next to the relative one: "2 hours ago · 14:05" (date added if not today)
+const postedAt = (ts) => {
+  const d = new Date(ts);
+  const sameDay = d.toDateString() === new Date().toDateString();
+  const exact = d.toLocaleString(LOCALES[S.lang], sameDay ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return `${ago(ts)} · ${exact}`;
+};
+// Open ticket or swap posted 3+ hours ago on show day: probably gone
+const isStale = (ts, eventDate) => eventDate === todayISO() && Date.now() - new Date(ts).getTime() > 3 * 3600e3;
+// Standing or seated, guessed from free text
+const seatClass = (s) => {
+  const x = (s || '').toLowerCase();
+  if (/stand|standing|floor|\bga\b|企|站|스탠딩|플로어/.test(x)) return 'stand';
+  if (/seat|座|좌석|block|區|row|排|열|구역|tier|level|樓|층|\d/.test(x)) return 'seat';
+  return null;
+};
+const ANY_RX = /any|whatever|任何|都可|皆可|아무|상관없/i;
+const WEAK = new Set(['seat', 'seats', 'block', 'row', 'standing', 'stand', 'ticket', 'the', 'near', 'any', '區', '排', '座', '座位', '企位', '좌석', '구역', '열', '스탠딩']);
+const tokens = (s) => (s || '').toLowerCase().replace(/(\d)(\D)/g, '$1 $2').replace(/(\D)(\d)/g, '$1 $2')
+  .split(/[^\p{L}\p{N}]+/u).filter((w) => w && !WEAK.has(w));
+// Does a ticket described as `have` satisfy a wish described as `want`?
+function fits(want, have) {
+  const cw = seatClass(want), ch = seatClass(have);
+  if (cw && ch && cw !== ch) return false;
+  if (ANY_RX.test(want)) return true;
+  if (cw === 'stand' && ch === 'stand') return true;
+  const th = tokens(have);
+  // "100s", "100번대", "100多" = any number from 100 to 199
+  const range = (want || '').match(/(\d)(0{1,3})\s*(?:s\b|번대|多|幾)/i);
+  if (range && th.some((h) => /^\d+$/.test(h) && h.length === range[2].length + 1 && h[0] === range[1])) return true;
+  const tw = tokens(want);
+  return tw.some((w) => th.includes(w));
+}
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
 const isAndroid = /android/i.test(navigator.userAgent);
 const isStandalone = () => !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
@@ -197,6 +263,7 @@ const icon = {
   me: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   palette: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1-.1-2.2 1.1-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.2" r="1.2"/><circle cx="14.5" cy="7.2" r="1.2"/></svg>',
   share: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share" role="img" style="vertical-align:-3px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11v9h12v-9"/></svg>',
+  gift: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8c-2-4-6-4-6-1.5S9 8 12 8c3 0 6-.5 6-1.5S14 4 12 8z"/></svg>',
   chev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
 };
 
@@ -224,7 +291,7 @@ const S = {
   view: 'board',
   isAdmin: false,
   counts: {},
-  items: { swap: null, buddy: null, merch: null },
+  items: { swap: null, buddy: null, merch: null, free: null },
   mine: null,
   composing: false,
   merchKind: 'swap',
@@ -232,6 +299,12 @@ const S = {
   newDates: 1,
   feedbackOpen: false,
   v5: false,
+  v7: false,
+  sort: 'new',
+  swapFilter: 'all',
+  buddyTag: null,
+  mf: { kind: 'all', cat: null, member: null },
+  merchCat: 'photocard',
   theme: ['cute', 'simple', 'night'].includes(store.get('theme', 'cute')) ? store.get('theme', 'cute') : 'cute',
   evQ: '',
   armDel: null,
@@ -280,16 +353,18 @@ async function loadListings() {
   if (!error) S.listings = data.filter((l) => !l.hidden || (S.user && l.user_id === S.user.id));
   S.listingsLoaded = true;
 }
-const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
+const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' };
 const EV_EMBED = 'events(artist, city, venue, event_date, currency)';
 const ITEM_COLS = {
   get swap() { return `id, event_id, user_id, have, want, status, hidden, created_at, ${S.v5 ? 'note, ' : ''}${EV_EMBED}`; },
-  get buddy() { return `id, event_id, user_id, note, hidden, created_at, ${EV_EMBED}`; },
-  get merch() { return `id, user_id, kind, title, details, price, status, hidden, created_at${S.v5 ? ', event_id, ' + EV_EMBED : ''}`; }
+  get buddy() { return `id, event_id, user_id, note, hidden, created_at, ${S.v7 ? 'tags, meet_time, meet_place, ' : ''}${EV_EMBED}`; },
+  get merch() { return `id, user_id, kind, title, details, price, status, hidden, created_at${S.v7 ? ', category, member, photo_url' : ''}${S.v5 ? ', event_id, ' + EV_EMBED : ''}`; },
+  get free() { return `id, event_id, user_id, what, details, give_time, place, photo_url, status, hidden, created_at, ${EV_EMBED}`; }
 };
 async function detectV5() {
-  const { error } = await sb.from('listings').select('note').limit(1);
-  S.v5 = !error;
+  const [a, b] = await Promise.all([sb.from('listings').select('note').limit(1), sb.from('buddies').select('tags').limit(1)]);
+  S.v5 = !a.error;
+  S.v7 = !b.error;
 }
 async function loadCounts() {
   const ids = S.events.filter((e) => e.event_date === todayISO()).map((e) => e.id);
@@ -309,17 +384,19 @@ async function loadItems(type) {
 async function loadMine() {
   if (!S.user) { S.mine = null; return; }
   const uid = S.user.id;
-  const [l, sw, bu, me] = await Promise.all([
+  const [l, sw, bu, me, fr] = await Promise.all([
     sb.from('listings').select('id, kind, section, price, status, created_at, events(artist, city, venue, event_date, currency)').eq('user_id', uid).order('created_at', { ascending: false }),
     sb.from('swaps').select(ITEM_COLS.swap).eq('user_id', uid).order('created_at', { ascending: false }),
     sb.from('buddies').select(ITEM_COLS.buddy).eq('user_id', uid).order('created_at', { ascending: false }),
-    sb.from('merch').select(ITEM_COLS.merch).eq('user_id', uid).order('created_at', { ascending: false })
+    sb.from('merch').select(ITEM_COLS.merch).eq('user_id', uid).order('created_at', { ascending: false }),
+    S.v7 ? sb.from('freebies').select(ITEM_COLS.free).eq('user_id', uid).order('created_at', { ascending: false }) : Promise.resolve({ data: [] })
   ]);
   S.mine = [
     ...(l.data || []).map((x) => ({ type: 'listing', ...x })),
     ...(sw.data || []).map((x) => ({ type: 'swap', ...x })),
     ...(bu.data || []).map((x) => ({ type: 'buddy', ...x })),
-    ...(me.data || []).map((x) => ({ type: 'merch', ...x }))
+    ...(me.data || []).map((x) => ({ type: 'merch', ...x })),
+    ...(fr.data || []).map((x) => ({ type: 'free', ...x }))
   ].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 async function checkAdmin() {
@@ -350,6 +427,7 @@ async function openEvent(id, push = true, view) {
   if (S.view === 'me') S.view = 'board';
   S.selEv = id; S.contacts = {}; S.evQ = ''; S.armDel = null;
   S.tab = 'all'; S.posting = false; S.creating = false; S.composing = false;
+  S.sort = 'new'; S.swapFilter = 'all'; S.buddyTag = null; S.mf = { kind: 'all', cat: null, member: null };
   if (push) history.pushState({ ev: id, v: S.view }, '', urlFor(S.view, id));
   if (S.view === 'board') {
     S.listings = []; S.listingsLoaded = false;
@@ -431,7 +509,7 @@ function homeView() {
       <div class="row"><button type="submit" class="primary">${t('createBtn')}</button><button type="button" class="text" data-act="cancelCreate">${t('cancel')}</button></div>
     </form>`
     : `<button type="button" class="text" data-act="openCreate">+ ${t('addMissing')}</button>`;
-  const heads = { swap: ['navSwap', 'swapSub'], buddy: ['navBuddies', 'buddySub'], merch: ['navMerch', 'merchSub'] }[S.view];
+  const heads = { swap: ['navSwap', 'swapSub'], buddy: ['navBuddies', 'buddySub'], merch: ['navMerch', 'merchSub'], free: ['navFree', 'freeSub'] }[S.view];
   return `<section class="hero">
       <h1>${heads ? t(heads[0]) : t('hero')}</h1><p class="sub muted">${heads ? t(heads[1]) : t('heroSub')}</p>
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
@@ -547,12 +625,79 @@ function evSearch(ph) {
   return `<div class="searchbox small-search">${icon.search}<input id="evq" type="search" aria-label="${ph}" placeholder="${ph}" value="${esc(S.evQ)}" autocomplete="off"></div>`;
 }
 
+const SORTERS = {
+  new: (a, b) => b.created_at.localeCompare(a.created_at),
+  low: (a, b) => a.price - b.price,
+  high: (a, b) => b.price - a.price,
+  section: (a, b) => String(a.section || a.have || '').localeCompare(String(b.section || b.have || ''), undefined, { numeric: true })
+};
+function sortSelect(withPrice) {
+  const opts = [['new', 'sortNew'], ...(withPrice ? [['low', 'sortLow'], ['high', 'sortHigh']] : []), ['section', 'sortSection']];
+  return `<label class="sort"><span class="sr-only">${t('sortBy')}</span><select id="sort" aria-label="${t('sortBy')}">${opts.map(([k, l]) =>
+    `<option value="${k}" ${S.sort === k ? 'selected' : ''}>${t(l)}</option>`).join('')}</select></label>`;
+}
+// Your own open listings decide which other listings fit your price
+function priceFits(l) {
+  if (!S.user || l.user_id === S.user.id || l.status !== 'open') return false;
+  return S.listings.some((m) => m.user_id === S.user.id && m.status === 'open' && m.kind !== l.kind
+    && (l.kind === 'sell' ? Number(l.price) <= Number(m.price) : Number(l.price) >= Number(m.price)));
+}
 function boardList() {
   const q = S.evQ.trim().toLowerCase();
   const shown = visibleListings().filter((l) => (S.tab === 'all' || l.kind === S.tab)
-    && (!q || [l.section, l.note, l.meet_point].join(' ').toLowerCase().includes(q)));
+    && (!q || [l.section, l.note, l.meet_point].join(' ').toLowerCase().includes(q)))
+    .sort(SORTERS[S.sort] || SORTERS.new)
+    .sort((a, b) => (a.status === 'done') - (b.status === 'done'));
   return !S.listingsLoaded ? `<p class="muted">${t('loading')}</p>`
     : shown.length ? shown.map(listingCard).join('') : `<p class="muted empty">${q ? esc(t('noResults', { q: S.evQ.trim() })) : t('empty')}</p>`;
+}
+
+const BUDDY_TAGS = ['first', 'solo', 'cantonese', 'english', 'korean', 'mandarin', 'queue', 'eat', 'photo'];
+const tagLabel = (k) => t('tag' + k[0].toUpperCase() + k.slice(1));
+const CATS = ['photocard', 'lightstick', 'slogan', 'album', 'clothing', 'other'];
+const catLabel = (k) => t('cat' + k[0].toUpperCase() + k.slice(1));
+const MERCH_KINDS = { sale: 'wts', buy: 'wtb', swap: 'wtt' };
+const CTA = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta', free: 'freeCta' };
+
+// Your own open swaps at this concert, used to find matches
+function mySwaps() {
+  return S.user ? itemsFor('swap', S.selEv).filter((x) => x.user_id === S.user.id && x.status !== 'done') : [];
+}
+function swapMatch(it) {
+  if (!S.user || it.user_id === S.user.id || it.status === 'done') return 0;
+  let best = 0;
+  mySwaps().forEach((m) => {
+    if (fits(m.want, it.have)) best = Math.max(best, fits(it.want, m.have) ? 2 : 1);
+  });
+  return best;
+}
+
+function chipBtn(act, id, on, label) {
+  return `<button type="button" class="fchip ${on ? 'on' : ''}" aria-pressed="${on}" data-act="${act}" data-id="${id}">${esc(label)}</button>`;
+}
+function filterBar(type) {
+  const all = itemsFor(type, S.selEv);
+  if (type === 'swap') {
+    const seg = (k, label) => `<button type="button" class="${S.swapFilter === k ? 'on' : ''}" aria-pressed="${S.swapFilter === k}" data-act="swapFilter" data-id="${k}">${label}</button>`;
+    return `<div class="row between filters"><div class="seg" role="group">${seg('all', t('all2'))}${seg('stand', t('fStanding'))}${seg('seat', t('fSeated'))}</div>${sortSelect(false)}</div>
+      ${S.user && !mySwaps().length && all.length ? `<p class="small muted">${t('matchHint')}</p>` : ''}`;
+  }
+  if (type === 'buddy' && S.v7) {
+    const used = BUDDY_TAGS.filter((k) => all.some((x) => (x.tags || []).includes(k)));
+    return used.length ? `<div class="chips-row" role="group" aria-label="${t('fTags')}">${used.map((k) => chipBtn('buddyTag', k, S.buddyTag === k, tagLabel(k))).join('')}</div>` : '';
+  }
+  if (type === 'merch') {
+    const seg = (k, label) => `<button type="button" class="${S.mf.kind === k ? 'on' : ''}" aria-pressed="${S.mf.kind === k}" data-act="mfKind" data-id="${k}">${label}</button>`;
+    let html = `<div class="seg wrap" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}</div>`;
+    if (S.v7) {
+      const cats = CATS.filter((k) => all.some((x) => x.category === k));
+      const members = [...new Map(all.filter((x) => x.member).map((x) => [x.member.trim().toLowerCase(), x.member.trim()])).values()].slice(0, 20);
+      if (cats.length) html += `<div class="chips-row" role="group" aria-label="${t('fCategory')}">${cats.map((k) => chipBtn('mfCat', k, S.mf.cat === k, catLabel(k))).join('')}</div>`;
+      if (members.length) html += `<div class="chips-row" role="group" aria-label="${t('fMember')}">${members.map((m) => chipBtn('mfMember', m, (S.mf.member || '').toLowerCase() === m.toLowerCase(), '♡ ' + m)).join('')}</div>`;
+    }
+    return html;
+  }
+  return '';
 }
 
 function itemList(type) {
@@ -560,14 +705,26 @@ function itemList(type) {
   if (d === null) return `<p class="muted">${t('loading')}</p>`;
   if (d && d.error) return `<p class="muted empty">${t('errSetup')}</p>`;
   const q = S.evQ.trim().toLowerCase();
-  const shown = itemsFor(type, S.selEv).filter((x) => !q
-    || [x.have, x.want, x.note, x.title, x.details].filter(Boolean).join(' ').toLowerCase().includes(q));
+  let shown = itemsFor(type, S.selEv).filter((x) => !q
+    || [x.have, x.want, x.note, x.title, x.details, x.member, x.what, x.place, x.meet_place].filter(Boolean).join(' ').toLowerCase().includes(q));
+  if (type === 'swap') {
+    if (S.swapFilter !== 'all') shown = shown.filter((x) => seatClass(x.have) === S.swapFilter);
+    shown = shown.sort(SORTERS[S.sort === 'section' ? 'section' : 'new'])
+      .sort((a, b) => swapMatch(b) - swapMatch(a))
+      .sort((a, b) => (a.status === 'done') - (b.status === 'done'));
+  }
+  if (type === 'buddy' && S.buddyTag) shown = shown.filter((x) => (x.tags || []).includes(S.buddyTag));
+  if (type === 'merch') {
+    if (S.mf.kind !== 'all') shown = shown.filter((x) => x.kind === S.mf.kind);
+    if (S.mf.cat) shown = shown.filter((x) => x.category === S.mf.cat);
+    if (S.mf.member) shown = shown.filter((x) => (x.member || '').trim().toLowerCase() === S.mf.member.toLowerCase());
+  }
+  if (type === 'free') shown = shown.sort((a, b) => (a.status === 'done') - (b.status === 'done'));
   return shown.length ? shown.map((x) => itemCard(type, x, true)).join('')
     : `<p class="muted empty">${q ? esc(t('noResults', { q: S.evQ.trim() })) : t('noPosts')}</p>`;
 }
 
 function itemsEventView(type, e) {
-  const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
   const n = itemsFor(type, S.selEv).filter((x) => x.status !== 'done').length;
   const head = e === 'general'
     ? `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
@@ -575,9 +732,10 @@ function itemsEventView(type, e) {
     : eventHead(e, t('postsN', { n }));
   return `${head}
     ${evSearch(e === 'general' ? t('generalSearchPh') : t('evSearchPh'))}
+    ${filterBar(type)}
     ${flashFor('list')}
     <div class="list" id="evlist">${itemList(type)}</div>
-    ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(cta)}</button></div>`}`;
+    ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(CTA[type])}</button></div>`}`;
 }
 
 function eventView(e) {
@@ -586,7 +744,7 @@ function eventView(e) {
   const seg = (k, label) => `<button type="button" class="${S.tab === k ? 'on' : ''}" aria-pressed="${S.tab === k}" data-act="tab" data-id="${k}">${label}</button>`;
   return `${eventHead(e, t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}
     ${evSearch(t('evSearchPh'))}
-    <div class="seg" role="group">${seg('all', t('all'))}${seg('sell', t('has'))}${seg('buy', t('needs'))}</div>
+    <div class="row between filters"><div class="seg" role="group">${seg('all', t('all'))}${seg('sell', t('has'))}${seg('buy', t('needs'))}</div>${sortSelect(true)}</div>
     ${flashFor('list')}
     <div class="list" id="evlist">${boardList()}</div>
     ${postArea(e)}`;
@@ -597,6 +755,12 @@ function listingCard(l) {
   const mine = S.user && l.user_id === S.user.id;
   const contact = S.contacts[l.id];
   const n = String(l.qty);
+  const ev = S.events.find((x) => x.id === l.event_id) || {};
+  const stale = l.status === 'open' && isStale(l.created_at, ev.event_date);
+  const off = sell && l.original_price > 0 ? Math.round((1 - l.price / l.original_price) * 100) : 0;
+  const extra = (priceFits(l) ? `<span class="chip match">${t('priceMatch')}</span>` : '')
+    + (off >= 5 ? `<span class="chip deal">${esc(t('belowFace', { p: off }))}</span>` : '')
+    + (stale ? `<span class="chip stale">${t('maybeSold')}</span>` : '');
   const status = l.status === 'meeting' ? `<span class="chip meeting">${t('stMeeting')}</span>` : l.status === 'done' ? `<span class="chip done">${t('stDone')}</span>` : '';
   let main = '', menu = '';
   if (mine) {
@@ -609,14 +773,15 @@ function listingCard(l) {
     menu = `<button type="button" class="menu-item" data-act="report" data-id="${l.id}" ${S.reported[l.id] ? 'disabled' : ''}>${S.reported[l.id] ? t('reported') : t('report')}</button>`
       + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${l.user_id}">${t('block')}</button>` : '');
   }
-  return `<article class="listing ${l.status === 'done' ? 'is-done' : ''}">
+  return `<article class="listing ${l.status === 'done' ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
     <div class="listing-top">
       <div class="listing-info">
-        <div class="row tight"><span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>${status}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}</div>
+        <div class="row tight"><span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>${status}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${extra}</div>
         <h3>${esc(l.section)}</h3>${l.note ? `<p class="desc">${esc(l.note)}</p>` : ''}
-        <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)} · ${esc(ago(l.created_at))}</p>
+        <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)}</p>
+        <p class="muted small time">${esc(postedAt(l.created_at))}</p>
       </div>
-      <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, (S.events.find((x) => x.id === l.event_id) || {}).currency)}</div>
+      <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, ev.currency)}</div>
     </div>
     <div class="row">
       ${main}
@@ -658,49 +823,70 @@ function postArea(e) {
 }
 
 function tabBar() {
-  const tabs = [['board', 'navBoard'], ['swap', 'navSwap'], ['buddy', 'navBuddies'], ['merch', 'navMerch'], ['me', 'navMe']];
-  const ic = { board: icon.board, swap: icon.swap, buddy: icon.buddies, merch: icon.merch, me: icon.me };
-  return `<nav class="tabbar" aria-label="Sections">${tabs.map(([v, k]) =>
+  const tabs = [['board', 'navBoard'], ['swap', 'navSwap'], ['buddy', 'navBuddies'], ['merch', 'navMerch'], ...(S.v7 ? [['free', 'navFree']] : []), ['me', 'navMe']];
+  const ic = { board: icon.board, swap: icon.swap, buddy: icon.buddies, merch: icon.merch, free: icon.gift, me: icon.me };
+  return `<nav class="tabbar ${S.v7 ? 'six' : ''}" aria-label="Sections">${tabs.map(([v, k]) =>
     `<button type="button" data-act="nav" data-id="${v}" ${S.view === v ? 'aria-current="page" class="on"' : ''}>${ic[v]}<span>${t(k)}</span></button>`).join('')}</nav>`;
 }
 
 function evName(ev) { return ev ? `${ev.artist} · ${place(ev)} · ${fmtDate(ev.event_date)}` : ''; }
+
+function photo(url) {
+  return url && /^https:\/\//.test(url) ? `<a class="photo" href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="" loading="lazy"></a>` : '';
+}
+const whenWhere = (time, where) => (time || where)
+  ? `<p class="small meet">${time ? `<span>🕔 ${esc(time)}</span>` : ''}${where ? `<span>📍 ${esc(where)}</span>` : ''}</p>` : '';
 
 function itemCard(type, it, inEvent) {
   const mine = S.user && it.user_id === S.user.id;
   const key = type + ':' + it.id;
   const contact = S.contacts[key];
   const done = it.status === 'done';
-  let body = '';
+  const evLine = inEvent || !it.events ? '' : `<p class="muted small">${esc(evName(it.events))}</p>`;
+  let body = '', chips = '', stale = false;
   if (type === 'swap') {
-    body = `${inEvent ? '' : `<p class="muted small">${esc(evName(it.events))}</p>`}
+    const m = inEvent ? swapMatch(it) : 0;
+    stale = !done && it.events && isStale(it.created_at, it.events.event_date);
+    chips = (m === 2 ? `<span class="chip match">${t('perfectMatch')}</span>` : m === 1 ? `<span class="chip deal">${t('maybeMatch')}</span>` : '')
+      + (stale ? `<span class="chip stale">${t('maybeSwapped')}</span>` : '');
+    body = `${evLine}
       <div class="swap-row"><div><span class="small muted">${t('hasLabel')}</span><b>${esc(it.have)}</b></div>${icon.swap}<div><span class="small muted">${t('wantsLabel')}</span><b>${esc(it.want)}</b></div></div>
       ${it.note ? `<p class="desc">${esc(it.note)}</p>` : ''}`;
   } else if (type === 'buddy') {
-    body = `${inEvent ? '' : `<p class="muted small">${esc(evName(it.events))}</p>`}<p>${esc(it.note)}</p>`;
+    const tags = (it.tags || []).filter((k) => BUDDY_TAGS.includes(k));
+    body = `${evLine}<p>${esc(it.note)}</p>
+      ${tags.length ? `<div class="row tight">${tags.map((k) => `<span class="chip tag">${esc(tagLabel(k))}</span>`).join('')}</div>` : ''}
+      ${whenWhere(it.meet_time, it.meet_place)}`;
+  } else if (type === 'free') {
+    body = `${evLine}<div class="listing-top"><div class="listing-info"><h3>🎁 ${esc(it.what)}</h3>
+        ${it.details ? `<p class="desc">${esc(it.details)}</p>` : ''}${whenWhere(it.give_time, it.place)}</div>${photo(it.photo_url)}</div>`;
   } else {
+    const k = MERCH_KINDS[it.kind] || 'wtt';
+    const cls = it.kind === 'sale' ? 'sell' : it.kind === 'buy' ? 'buy' : 'tag';
+    const meta = [it.category && CATS.includes(it.category) ? catLabel(it.category) : '', it.member ? '♡ ' + it.member : ''].filter(Boolean);
     body = `<div class="listing-top"><div class="listing-info">
-        <div class="row tight"><span class="chip ${it.kind === 'swap' ? 'buy' : 'sell'}">${it.kind === 'swap' ? t('forSwap') : t('forSale')}</span></div>
+        <div class="row tight"><span class="chip ${cls}">${t(k)}</span>${meta.map((x) => `<span class="chip tag">${esc(x)}</span>`).join('')}</div>
         <h3>${esc(it.title)}</h3>${it.details ? `<p class="desc">${esc(it.details)}</p>` : ''}${it.events && !inEvent ? `<p class="muted small">${esc(evName(it.events))}</p>` : ''}</div>
-        ${it.kind === 'sale' && it.price != null ? `<div class="price">${fmtMoney(it.price)}</div>` : ''}</div>`;
+        <div class="stack-r">${it.price != null && it.kind !== 'swap' ? `<div class="price">${it.kind === 'buy' ? `<span class="small muted">${t('upTo')} </span>` : ''}${fmtMoney(it.price, it.events && it.events.currency)}</div>` : ''}${photo(it.photo_url)}</div></div>`;
   }
   let main = '', menu = '';
   if (mine) {
-    if (type !== 'buddy' && !done) main = `<button type="button" class="outline" data-act="itemDone" data-id="${key}">${t('markDone')}</button>`;
+    if (type !== 'buddy' && !done) main = `<button type="button" class="outline" data-act="itemDone" data-id="${key}">${type === 'free' ? t('markAllGone') : t('markDone')}</button>`;
     menu = `<button type="button" class="menu-item danger" data-act="itemDel" data-id="${key}">${t('del')}</button>`;
   } else {
-    main = S.user
+    if (type !== 'free') main = S.user
       ? `<button type="button" class="outline" data-act="itemContact" data-id="${key}" aria-expanded="${!!contact}">${contact ? t('hide') : t('contact')}</button>`
       : `<button type="button" class="outline" data-act="toggleLogin">${t('contact')}</button>`;
     menu = `<button type="button" class="menu-item" data-act="itemReport" data-id="${key}" ${S.reported[key] ? 'disabled' : ''}>${S.reported[key] ? t('reported') : t('report')}</button>`
       + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${it.user_id}">${t('block')}</button>` : '');
   }
-  return `<article class="listing ${done ? 'is-done' : ''}">
-    ${mine || done ? `<div class="row tight">${done ? `<span class="chip done">${t('doneLabel')}</span>` : ''}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}</div>` : ''}
+  const doneLabel = type === 'free' ? t('allGone') : t('doneLabel');
+  return `<article class="listing ${done ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
+    ${mine || done || chips ? `<div class="row tight">${done ? `<span class="chip done">${doneLabel}</span>` : ''}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${chips}</div>` : ''}
     ${body}
     <div class="row">${main}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b>${type === 'merch' ? `<br>${t('footRule')}` : ''}</p>` : ''}
-    <p class="small muted">${esc(ago(it.created_at))}</p>
+    <p class="small muted time">${esc(postedAt(it.created_at))}</p>
   </article>`;
 }
 
@@ -709,6 +895,8 @@ function eventOptions(noPreselect) {
   const list = S.events.filter((e) => e.event_date >= today);
   return list.map((e) => `<option value="${e.id}" ${!noPreselect && e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
 }
+
+const photoField = () => S.v7 ? `<div class="field"><label for="c-photo">${t('fPhoto')}</label><input id="c-photo" name="photo" type="file" accept="image/*"></div>` : '';
 
 function composer(type) {
   const ev = S.events.find((x) => x.id === S.selEv);
@@ -722,24 +910,40 @@ function composer(type) {
       ${S.v5 ? `<div class="field"><label for="c-desc">${t('fDesc')}</label><textarea id="c-desc" name="desc" rows="2" maxlength="200" placeholder="${t('phDescSwap')}"></textarea></div>` : ''}`;
     confirm = t('confirmSwap');
   } else if (type === 'buddy') {
-    fields = `<div class="field"><label for="c-note">${t('fNote')}</label><input id="c-note" name="note" maxlength="140" placeholder="${t('phNote')}" required></div>`;
+    fields = `<div class="field"><label for="c-note">${t('fNote')}</label><input id="c-note" name="note" maxlength="140" placeholder="${t('phNote')}" required></div>
+      ${S.v7 ? `<fieldset class="tag-pick"><legend>${t('fTags')}</legend><div class="chips-row">${BUDDY_TAGS.map((k) =>
+        `<label class="fchip-check"><input type="checkbox" name="tags" value="${k}"><span>${esc(tagLabel(k))}</span></label>`).join('')}</div></fieldset>
+      <div class="grid2">
+        <div class="field"><label for="c-mtime">${t('fMeetTime')}</label><input id="c-mtime" name="meet_time" maxlength="40" placeholder="${t('phMeetTime')}"></div>
+        <div class="field"><label for="c-mplace">${t('fMeetPlace')}</label><input id="c-mplace" name="meet_place" maxlength="80" placeholder="${t('phMeetPlace')}"></div></div>` : ''}`;
+  } else if (type === 'free') {
+    fields = `<div class="field"><label for="c-what">${t('fWhat')}</label><input id="c-what" name="what" maxlength="80" placeholder="${t('phWhat')}" required></div>
+      <div class="grid2">
+        <div class="field"><label for="c-gtime">${t('fGiveTime')}</label><input id="c-gtime" name="give_time" maxlength="40" placeholder="${t('phGiveTime')}"></div>
+        <div class="field"><label for="c-place">${t('fPlace')}</label><input id="c-place" name="place" maxlength="80" placeholder="${t('phPlace')}"></div></div>
+      <div class="field"><label for="c-details">${t('freeDetails')}</label><textarea id="c-details" name="details" rows="2" maxlength="200" placeholder="${t('phFreeDetails')}"></textarea></div>
+      ${photoField()}`;
   } else {
-    const sale = S.merchKind === 'sale';
-    fields = `<div class="seg" role="group">
-        <button type="button" class="${!sale ? 'on' : ''}" aria-pressed="${!sale}" data-act="merchKind" data-id="swap">${t('forSwap')}</button>
-        <button type="button" class="${sale ? 'on' : ''}" aria-pressed="${sale}" data-act="merchKind" data-id="sale">${t('forSale')}</button></div>
+    const k = S.merchKind;
+    const kinds = S.v7 ? ['sale', 'buy', 'swap'] : ['swap', 'sale'];
+    const cur = ev ? ev.currency : 'GBP';
+    fields = `<div class="seg wrap" role="group">${kinds.map((x) =>
+        `<button type="button" class="${k === x ? 'on' : ''}" aria-pressed="${k === x}" data-act="merchKind" data-id="${x}">${S.v7 ? t(MERCH_KINDS[x]) : x === 'sale' ? t('forSale') : t('forSwap')}</button>`).join('')}</div>
       <div class="grid2">
         <div class="field"><label for="c-title">${t('fTitle')}</label><input id="c-title" name="title" maxlength="80" placeholder="${t('phTitle')}" required></div>
-        ${sale ? `<div class="field"><label for="c-price">${t('fPrice', { c: curSym('GBP') })}</label><input id="c-price" name="price" inputmode="decimal" required></div>` : ''}</div>
+        ${k === 'sale' ? `<div class="field"><label for="c-price">${t('fPrice', { c: curSym(cur) })}</label><input id="c-price" name="price" inputmode="decimal" required></div>`
+          : k === 'buy' ? `<div class="field"><label for="c-price">${t('fBudget', { c: curSym(cur) })}</label><input id="c-price" name="price" inputmode="decimal"></div>` : ''}</div>
+      ${S.v7 ? `<div class="grid2">
+        <div class="field"><label for="c-cat">${t('fCategory')}</label><select id="c-cat" name="category">${CATS.map((c) => `<option value="${c}" ${S.merchCat === c ? 'selected' : ''}>${esc(catLabel(c))}</option>`).join('')}</select></div>
+        <div class="field"><label for="c-member">${t('fMember')}</label><input id="c-member" name="member" maxlength="40" placeholder="${t('phMember')}"></div></div>` : ''}
       <div class="field"><label for="c-details">${t('fDetails')}</label><textarea id="c-details" name="details" rows="2" maxlength="200" placeholder="${t('phDetails')}"></textarea></div>
-`;
+      ${photoField()}`;
     confirm = t('confirmMerch');
   }
-  const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
-  return `<form data-form="item" data-type="${type}" class="panel" aria-label="${t(cta)}">
-    <div class="row between"><h2>${t(cta)}</h2><button type="button" class="text" data-act="closeCompose">${t('cancel')}</button></div>
+  return `<form data-form="item" data-type="${type}" class="panel" aria-label="${t(CTA[type])}">
+    <div class="row between"><h2>${t(CTA[type])}</h2><button type="button" class="text" data-act="closeCompose">${t('cancel')}</button></div>
     ${pickEv}${fields}
-    <div class="field"><label for="c-contact">${t('fHandle')}</label><input id="c-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>
+    ${type === 'free' ? '' : `<div class="field"><label for="c-contact">${t('fHandle')}</label><input id="c-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>`}
     ${confirm ? `<div class="check"><input id="c-confirm" name="confirm" type="checkbox" required><label for="c-confirm">${confirm}</label></div>` : ''}
     ${flashFor('compose')}
     <button type="submit" class="primary big">${t('submit')}</button>
@@ -767,9 +971,9 @@ function meView() {
       ${themePicker()}
       ${feedbackBox()}`;
   }
-  const typeLabel = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch' };
+  const typeLabel = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch', free: 'typeFree' };
   const describe = (x) => x.type === 'listing' ? `${x.section} · ${fmtMoney(x.price, x.events && x.events.currency)}`
-    : x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : x.title;
+    : x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : x.type === 'free' ? x.what : x.title;
   const posts = S.mine === null ? `<p class="muted">${t('loading')}</p>`
     : S.mine.length ? S.mine.map((x) => `<div class="mine-row">
         <div class="item-main"><span class="small muted">${t(typeLabel[x.type])}${x.events ? ' · ' + esc(evName(x.events)) : ''}</span><b>${esc(describe(x))}</b>
@@ -826,10 +1030,14 @@ function renderMain() {
   if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   if (S.view !== 'board') {
     const cf = main.querySelector('form[data-form="item"]');
-    const keep = cf ? Object.fromEntries(new FormData(cf)) : null;
+    const keep = cf ? [...new FormData(cf).entries()].filter(([, v]) => typeof v === 'string') : null;
     main.innerHTML = itemsEventView(S.view, e);
     const nf = main.querySelector('form[data-form="item"]');
-    if (keep && nf) for (const [k, v] of Object.entries(keep)) { const el = nf.elements[k]; if (el && el.type !== 'hidden') { if (el.type === 'checkbox') el.checked = v === 'on'; else el.value = v; } }
+    if (keep && nf) [...nf.elements].forEach((el) => {
+      if (!el.name || el.type === 'hidden' || el.type === 'file') return;
+      if (el.type === 'checkbox') el.checked = keep.some(([k, v]) => k === el.name && v === el.value);
+      else { const hit = keep.filter(([k]) => k === el.name).pop(); if (hit) el.value = hit[1]; }
+    });
     return;
   }
   // Keep what the user is typing in the post form across live refreshes.
@@ -894,7 +1102,12 @@ const actions = {
     renderMain(); document.querySelector('form[data-form="item"] input:not([type=checkbox])')?.focus();
   },
   closeCompose() { S.composing = false; S.flash = null; renderMain(); },
-  merchKind(id) { S.merchKind = id; renderMain(); },
+  merchKind(id) { const c = document.getElementById('c-cat'); if (c) S.merchCat = c.value; S.merchKind = id; renderMain(); },
+  swapFilter(id) { S.swapFilter = id; renderMain(); },
+  buddyTag(id) { S.buddyTag = S.buddyTag === id ? null : id; renderMain(); },
+  mfKind(id) { S.mf.kind = id; renderMain(); },
+  mfCat(id) { S.mf.cat = S.mf.cat === id ? null : id; renderMain(); },
+  mfMember(id) { S.mf.member = (S.mf.member || '').toLowerCase() === id.toLowerCase() ? null : id; renderMain(); },
   async itemContact(key) {
     if (S.contacts[key]) { delete S.contacts[key]; renderMain(); return; }
     const [type, id] = parseKey(key);
@@ -1019,6 +1232,27 @@ const actions = {
   }
 };
 
+// Shrink to 1280px JPEG in the browser, then upload to the public "photos" bucket
+async function shrink(file) {
+  if (!/^image\//.test(file.type)) return null;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.82));
+  } catch (e) { return file.size <= 2e6 ? file : null; }
+}
+async function uploadPhoto(file) {
+  const blob = await shrink(file);
+  if (!blob || blob.size > 2e6) return null;
+  const path = `${S.user.id}/${Date.now()}.jpg`;
+  const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false });
+  if (error) return null;
+  return sb.storage.from('photos').getPublicUrl(path).data.publicUrl;
+}
+
 const forms = {
   async feedback(f) {
     const d = new FormData(f);
@@ -1036,20 +1270,34 @@ const forms = {
     const type = f.dataset.type;
     const d = new FormData(f);
     const val = (k) => String(d.get(k) || '').trim();
+    const opt = (k) => val(k) || null;
     let row;
     if (type === 'swap') { row = { event_id: val('event'), have: val('have'), want: val('want'), contact: val('contact') }; if (S.v5 && val('desc')) row.note = val('desc'); }
-    else if (type === 'buddy') row = { event_id: val('event'), note: val('note'), contact: val('contact') };
-    else {
-      const price = S.merchKind === 'sale' ? parseFloat(val('price')) : null;
-      row = { kind: S.merchKind, title: val('title'), details: val('details') || null, price, contact: val('contact') };
+    else if (type === 'buddy') {
+      row = { event_id: val('event'), note: val('note'), contact: val('contact') };
+      if (S.v7) Object.assign(row, { tags: d.getAll('tags').map(String).filter((k) => BUDDY_TAGS.includes(k)), meet_time: opt('meet_time'), meet_place: opt('meet_place') });
+    } else if (type === 'free') {
+      row = { event_id: val('event'), what: val('what'), details: opt('details'), give_time: opt('give_time'), place: opt('place') };
+    } else {
+      const k = S.merchKind;
+      const price = k !== 'swap' && val('price') ? parseFloat(val('price')) : null;
+      row = { kind: k, title: val('title'), details: val('details') || null, price, contact: val('contact') };
+      if (S.v7) Object.assign(row, { category: CATS.includes(val('category')) ? val('category') : null, member: opt('member') });
       if (S.v5 && val('mevent')) row.event_id = val('mevent');
       else if (!S.v5 && S.selEv !== 'general') { flash('compose', 'errSetup'); renderMain(); return; }
-      if (S.merchKind === 'sale' && !(price >= 0)) { flash('compose', 'fillAll'); renderMain(); return; }
+      if ((k === 'sale' && !(price >= 0)) || (price !== null && !(price >= 0))) { flash('compose', 'fillAll'); renderMain(); return; }
     }
-    const needConfirm = type !== 'buddy';
-    const required = { swap: ['event_id', 'have', 'want', 'contact'], buddy: ['event_id', 'note', 'contact'], merch: ['title', 'contact'] }[type];
+    const needConfirm = type === 'swap' || type === 'merch';
+    const required = { swap: ['event_id', 'have', 'want', 'contact'], buddy: ['event_id', 'note', 'contact'], merch: ['title', 'contact'], free: ['event_id', 'what'] }[type];
     if (required.some((k) => !row[k]) || (needConfirm && d.get('confirm') !== 'on')) {
       flash('compose', 'fillAll'); renderMain(); return;
+    }
+    const file = f.elements.photo && f.elements.photo.files ? f.elements.photo.files[0] : null;
+    if (S.v7 && (type === 'merch' || type === 'free') && file && file.size) {
+      S.flash = { area: 'compose', text: t('uploading'), kind: 'info' }; renderMain();
+      const url = await uploadPhoto(file);
+      if (!url) { flash('compose', 'photoErr'); renderMain(); return; }
+      row.photo_url = url;
     }
     if (row.event_id) S.selEvForm = row.event_id;
     const { error } = await sb.from(TABLE[type]).insert(row);
@@ -1175,8 +1423,13 @@ document.addEventListener('input', (e) => {
 });
 document.addEventListener('change', (e) => {
   if (e.target.id === 'lang') { S.lang = Number(e.target.value); store.set('lang', S.lang); render(); }
+  if (e.target.id === 'sort') {
+    S.sort = e.target.value;
+    const box = document.getElementById('evlist');
+    if (box) box.innerHTML = S.view === 'board' ? boardList() : itemList(S.view);
+  }
 });
-const VIEWS = ['swap', 'buddy', 'merch', 'me'];
+const VIEWS = ['swap', 'buddy', 'merch', 'free', 'me'];
 const routeTo = async (push) => {
   const p = new URLSearchParams(location.search);
   const id = p.get('e'); const v = p.get('v');
