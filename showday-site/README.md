@@ -103,6 +103,18 @@ Option B (faster for many): Supabase **Table Editor > events > Insert row**:
 
 ## Step 7. Your daily admin (5 minutes)
 
+**Easiest: the admin page**
+1. One-time setup: log in on the website once, then run `supabase/001_admin.sql` (in the repository root) in Supabase SQL Editor. Change the email at the bottom if needed.
+2. Open `yoursite/admin.html` and log in with the same email.
+3. **New concerts**: fix the name or date if needed, tap **Approve**, or **Delete** (tap twice).
+4. **Reported posts**: **Hide**, **Restore** (also clears its reports) or **Delete**.
+
+Only emails in the `admins` table can use it. Everyone else sees "Not allowed".
+
+> 中文說明：管理頁面只有你可以使用，在網址後面加 `/admin.html` 就能進入，用手機也可以審核演出和處理舉報。
+
+**Or directly in Supabase:**
+
 **Approve new concerts**
 Table Editor > **events** > filter `status` = `pending` > change to `approved`.
 Delete fake or duplicate ones.
