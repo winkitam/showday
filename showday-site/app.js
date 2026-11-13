@@ -115,6 +115,14 @@ const T = {
   fMerchEvent: ['Meet at a concert (optional)', '在演出現場交收（選填）', '공연장에서 거래 (선택)'],
   noConcert: ['Not for a specific concert', '不限演出', '특정 공연 아님'],
   otherItems: ['Other items', '其他物品', '다른 물품'],
+  postsN: ['{n} posts', '{n} 則', '{n}개'],
+  generalMerch: ['Merch not tied to a concert', '不限演出的周邊', '공연 무관 굿즈'],
+  evSearchPh: ['Search in this concert', '在此演出中搜尋', '이 공연에서 검색'],
+  generalSearchPh: ['Search items', '搜尋物品', '물품 검색'],
+  deleteEvent: ['Delete concert', '刪除演出', '공연 삭제'],
+  confirmDelete: ['Tap again to delete', '再按一次確認刪除', '한 번 더 눌러 삭제'],
+  eventDeleted: ['Concert deleted.', '已刪除演出。', '공연이 삭제되었어요.'],
+  postTo: ['Posting to', '發佈到', '게시 대상'],
   feedback: ['Feedback', '意見回饋', '의견 보내기'],
   feedbackTitle: ['Send feedback', '發送意見', '의견 보내기'],
   feedbackSub: ['Ideas, bugs or problems. Only the Show Day team can read this.', '建議、問題或錯誤，只有 Show Day 團隊看得到。', '아이디어, 버그, 문제 등. Show Day 팀만 볼 수 있어요.'],
@@ -212,6 +220,8 @@ const S = {
   newDates: 1,
   feedbackOpen: false,
   v5: false,
+  evQ: '',
+  armDel: null,
   draft: null
 };
 function guessLang() {
@@ -306,14 +316,24 @@ function subscribe() {
       async () => { await loadListings(); renderMain(); })
     .subscribe();
 }
-async function openEvent(id, push = true) {
-  S.view = 'board';
-  S.selEv = id; S.listings = []; S.listingsLoaded = false; S.contacts = {};
-  S.tab = 'all'; S.posting = false; S.creating = false;
-  if (push) history.pushState({ ev: id }, '', location.pathname + '?e=' + id);
+const urlFor = (view, id) => location.pathname + (view === 'board' ? (id ? '?e=' + id : '') : '?v=' + view + (id ? '&e=' + id : ''));
+async function openEvent(id, push = true, view) {
+  if (view) S.view = view;
+  if (S.view === 'me') S.view = 'board';
+  S.selEv = id; S.contacts = {}; S.evQ = ''; S.armDel = null;
+  S.tab = 'all'; S.posting = false; S.creating = false; S.composing = false;
+  if (push) history.pushState({ ev: id, v: S.view }, '', urlFor(S.view, id));
+  if (S.view === 'board') {
+    S.listings = []; S.listingsLoaded = false;
+    render(); window.scrollTo(0, 0);
+    await loadListings(); subscribe(); renderMain();
+    return;
+  }
+  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   render(); window.scrollTo(0, 0);
-  await loadListings(); subscribe(); renderMain();
+  if (!Array.isArray(S.items[S.view])) { await loadItems(S.view); renderMain(); }
 }
+function tabHome(push = true) { if (S.view === 'board' || S.view === 'me') return goHome(push); return setView(S.view, push); }
 function goHome(push = true) {
   S.view = 'board';
   S.selEv = null; S.posting = false; S.flash = null;
@@ -382,8 +402,9 @@ function homeView() {
       <div class="row"><button type="submit" class="primary">${t('createBtn')}</button><button type="button" class="text" data-act="cancelCreate">${t('cancel')}</button></div>
     </form>`
     : `<button type="button" class="text" data-act="openCreate">+ ${t('addMissing')}</button>`;
+  const heads = { swap: ['navSwap', 'swapSub'], buddy: ['navBuddies', 'buddySub'], merch: ['navMerch', 'merchSub'] }[S.view];
   return `<section class="hero">
-      <h1>${t('hero')}</h1>
+      <h1>${heads ? t(heads[0]) : t('hero')}</h1>${heads ? `<p class="sub muted">${t(heads[1])}</p>` : ''}
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
     </section>
     <div id="results" class="list"></div>
@@ -396,14 +417,24 @@ function groupShows(list) {
   return [...map.values()].map((g) => g.sort((a, b) => a.event_date.localeCompare(b.event_date)));
 }
 
+function itemsFor(type, evId) {
+  const d = S.items[type];
+  if (!Array.isArray(d)) return [];
+  return d.filter((x) => (evId === 'general' ? !x.event_id : x.event_id === evId)
+    && (!S.blocked.includes(x.user_id) || (S.user && x.user_id === S.user.id)));
+}
+function countFor(e) { return S.view === 'board' ? (S.counts[e.id] || 0) : itemsFor(S.view, e.id).filter((x) => x.status !== 'done').length; }
+function countLabel(n) { return S.view === 'board' ? t('availableN', { n }) : t('postsN', { n }); }
+
 function showRow(g) {
   const e = g[0];
   const pending = g.some((x) => x.status === 'pending');
   const when = g.length === 1 ? fmtDate(e.event_date)
     : `${t('datesN', { n: g.length })} · ${shortDate(e.event_date)} – ${shortDate(g[g.length - 1].event_date)}`;
+  const n = S.view === 'board' ? 0 : g.reduce((a, x) => a + countFor(x), 0);
   return `<button type="button" class="item" data-act="pick" data-id="${e.id}">
       <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(place(e))} · ${esc(when)}${pending ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
-      ${icon.chev}
+      ${n ? `<span class="count-pill">${esc(countLabel(n))}</span>` : ''}${icon.chev}
     </button>`;
 }
 
@@ -413,7 +444,7 @@ function renderResults() {
   if (!S.eventsLoaded) { box.innerHTML = `<p class="muted">${t('loading')}</p>`; return; }
   const q = S.q.trim().toLowerCase();
   const matches = S.events.filter((e) => !q || [e.artist, e.city, e.venue, e.event_date].join(' ').toLowerCase().includes(q));
-  if (!matches.length) {
+  if (!matches.length && !(S.view === 'merch' && !q)) {
     box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>`;
     return;
   }
@@ -425,10 +456,13 @@ function renderResults() {
       <p class="live">● ${t('showDay')}</p>
       ${tonight.map((e) => `<button type="button" class="sd-item" data-act="pick" data-id="${e.id}">
         <span class="item-main"><b>${esc(e.artist)}</b><span>${esc(place(e))}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
-        <span class="sd-count">${esc(t('availableN', { n: S.counts[e.id] || 0 }))}</span>
+        <span class="sd-count">${esc(countLabel(countFor(e)))}</span>
       </button>`).join('')}
     </section>` : '';
-  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + groupShows(later).slice(0, 30).map(showRow).join('') : '');
+  const general = S.view === 'merch' ? `<h2 class="list-title">${t('generalMerch')}</h2>
+    <button type="button" class="item" data-act="pick" data-id="general"><span class="item-main"><b>${t('generalMerch')}</b></span>
+      ${itemsFor('merch', 'general').length ? `<span class="count-pill">${esc(t('postsN', { n: itemsFor('merch', 'general').length }))}</span>` : ''}${icon.chev}</button>` : '';
+  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + groupShows(later).slice(0, 30).map(showRow).join('') : '') + general;
 }
 
 function visibleListings() {
@@ -442,29 +476,73 @@ function dateChips(e) {
     `<button type="button" class="${x.id === e.id ? 'on' : ''}" aria-pressed="${x.id === e.id}" data-act="day" data-id="${x.id}">${esc(fmtDate(x.event_date))}</button>`).join('')}</div>`;
 }
 
-function eventView(e) {
-  const vis = visibleListings();
-  const c = (s) => vis.filter((l) => l.status === s).length;
-  const shown = vis.filter((l) => S.tab === 'all' || l.kind === S.tab);
-  const seg = (k, label) => `<button type="button" class="${S.tab === k ? 'on' : ''}" aria-pressed="${S.tab === k}" data-act="tab" data-id="${k}">${label}</button>`;
-  const list = !S.listingsLoaded ? `<p class="muted">${t('loading')}</p>`
-    : shown.length ? shown.map(listingCard).join('') : `<p class="muted empty">${t('empty')}</p>`;
+function eventHead(e, stats) {
+  const tonight = e.event_date === todayISO();
+  const admin = S.isAdmin && e.status === 'pending' ? `<div class="row">
+      <button type="button" class="primary" data-act="approveEvent">${t('approve')}</button>
+      <button type="button" class="${tonight ? 'ghost-light' : 'outline'} danger" data-act="deleteEvent">${S.armDel === e.id ? t('confirmDelete') : t('deleteEvent')}</button>
+    </div>` : '';
   return `<div class="row between">
       <button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button>
       <button type="button" class="icon-btn" data-act="share" aria-label="${t('copyLink')}" title="${t('copyLink')}">${icon.link}</button>
     </div>
-    <section class="event-head ${e.event_date === todayISO() ? 'showday' : ''}">
-      ${e.event_date === todayISO() ? `<p class="live">● ${t('showDay')}</p>` : ''}
+    <section class="event-head ${tonight ? 'showday' : ''}">
+      ${tonight ? `<p class="live">● ${t('showDay')}</p>` : ''}
       <h1>${esc(e.artist)}</h1>
       <p class="sub">${esc(place(e))} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
       ${dateChips(e)}
-      <p class="small sub">${esc(t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}</p>
-      ${S.isAdmin && e.status === 'pending' ? `<button type="button" class="primary" style="align-self:flex-start" data-act="approveEvent">${t('approve')}</button>` : ''}
+      <p class="small sub">${esc(stats)}</p>
+      ${admin}
       ${flashFor('share')}
-    </section>
+    </section>`;
+}
+
+function evSearch(ph) {
+  return `<div class="searchbox small-search">${icon.search}<input id="evq" type="search" aria-label="${ph}" placeholder="${ph}" value="${esc(S.evQ)}" autocomplete="off"></div>`;
+}
+
+function boardList() {
+  const q = S.evQ.trim().toLowerCase();
+  const shown = visibleListings().filter((l) => (S.tab === 'all' || l.kind === S.tab)
+    && (!q || [l.section, l.note, l.meet_point].join(' ').toLowerCase().includes(q)));
+  return !S.listingsLoaded ? `<p class="muted">${t('loading')}</p>`
+    : shown.length ? shown.map(listingCard).join('') : `<p class="muted empty">${q ? esc(t('noResults', { q: S.evQ.trim() })) : t('empty')}</p>`;
+}
+
+function itemList(type) {
+  const d = S.items[type];
+  if (d === null) return `<p class="muted">${t('loading')}</p>`;
+  if (d && d.error) return `<p class="muted empty">${t('errSetup')}</p>`;
+  const q = S.evQ.trim().toLowerCase();
+  const shown = itemsFor(type, S.selEv).filter((x) => !q
+    || [x.have, x.want, x.note, x.title, x.details].filter(Boolean).join(' ').toLowerCase().includes(q));
+  return shown.length ? shown.map((x) => itemCard(type, x, true)).join('')
+    : `<p class="muted empty">${q ? esc(t('noResults', { q: S.evQ.trim() })) : t('noPosts')}</p>`;
+}
+
+function itemsEventView(type, e) {
+  const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
+  const n = itemsFor(type, S.selEv).filter((x) => x.status !== 'done').length;
+  const head = e === 'general'
+    ? `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
+       <section class="event-head"><h1>${t('generalMerch')}</h1><p class="sub">${t('merchSub')}</p></section>`
+    : eventHead(e, t('postsN', { n }));
+  return `${head}
+    ${evSearch(e === 'general' ? t('generalSearchPh') : t('evSearchPh'))}
+    ${flashFor('list')}
+    <div class="list" id="evlist">${itemList(type)}</div>
+    ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(cta)}</button></div>`}`;
+}
+
+function eventView(e) {
+  const vis = visibleListings();
+  const c = (s) => vis.filter((l) => l.status === s).length;
+  const seg = (k, label) => `<button type="button" class="${S.tab === k ? 'on' : ''}" aria-pressed="${S.tab === k}" data-act="tab" data-id="${k}">${label}</button>`;
+  return `${eventHead(e, t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}
+    ${evSearch(t('evSearchPh'))}
     <div class="seg" role="group">${seg('all', t('all'))}${seg('sell', t('has'))}${seg('buy', t('needs'))}</div>
     ${flashFor('list')}
-    <div class="list">${list}</div>
+    <div class="list" id="evlist">${boardList()}</div>
     ${postArea(e)}`;
 }
 
@@ -542,22 +620,22 @@ function tabBar() {
 
 function evName(ev) { return ev ? `${ev.artist} · ${place(ev)} · ${fmtDate(ev.event_date)}` : ''; }
 
-function itemCard(type, it) {
+function itemCard(type, it, inEvent) {
   const mine = S.user && it.user_id === S.user.id;
   const key = type + ':' + it.id;
   const contact = S.contacts[key];
   const done = it.status === 'done';
   let body = '';
   if (type === 'swap') {
-    body = `<p class="muted small">${esc(evName(it.events))}</p>
+    body = `${inEvent ? '' : `<p class="muted small">${esc(evName(it.events))}</p>`}
       <div class="swap-row"><div><span class="small muted">${t('hasLabel')}</span><b>${esc(it.have)}</b></div>${icon.swap}<div><span class="small muted">${t('wantsLabel')}</span><b>${esc(it.want)}</b></div></div>
       ${it.note ? `<p class="desc">${esc(it.note)}</p>` : ''}`;
   } else if (type === 'buddy') {
-    body = `<p class="muted small">${esc(evName(it.events))}</p><p>${esc(it.note)}</p>`;
+    body = `${inEvent ? '' : `<p class="muted small">${esc(evName(it.events))}</p>`}<p>${esc(it.note)}</p>`;
   } else {
     body = `<div class="listing-top"><div class="listing-info">
         <div class="row tight"><span class="chip ${it.kind === 'swap' ? 'buy' : 'sell'}">${it.kind === 'swap' ? t('forSwap') : t('forSale')}</span></div>
-        <h3>${esc(it.title)}</h3>${it.details ? `<p class="desc">${esc(it.details)}</p>` : ''}${it.events ? `<p class="muted small">${esc(evName(it.events))}</p>` : ''}</div>
+        <h3>${esc(it.title)}</h3>${it.details ? `<p class="desc">${esc(it.details)}</p>` : ''}${it.events && !inEvent ? `<p class="muted small">${esc(evName(it.events))}</p>` : ''}</div>
         ${it.kind === 'sale' && it.price != null ? `<div class="price">${fmtMoney(it.price)}</div>` : ''}</div>`;
   }
   let main = '', menu = '';
@@ -587,9 +665,9 @@ function eventOptions(noPreselect) {
 }
 
 function composer(type) {
-  const pickEv = type !== 'merch' ? (S.events.some((e) => e.event_date >= todayISO())
-    ? `<div class="field"><label for="c-event">${t('fEvent')}</label><select id="c-event" name="event" required>${eventOptions()}</select></div>`
-    : `<p class="note warn">${t('noUpcoming')}</p>`) : '';
+  const ev = S.events.find((x) => x.id === S.selEv);
+  const pickEv = ev ? `<div class="field"><span style="font-size:14px;font-weight:500">${t('postTo')}</span><div class="note info">${esc(evName(ev))}</div>
+      <input type="hidden" name="${type === 'merch' ? 'mevent' : 'event'}" value="${ev.id}"></div>` : '';
   let fields = '', confirm = '';
   if (type === 'swap') {
     fields = `<div class="grid2">
@@ -608,7 +686,7 @@ function composer(type) {
         <div class="field"><label for="c-title">${t('fTitle')}</label><input id="c-title" name="title" maxlength="80" placeholder="${t('phTitle')}" required></div>
         ${sale ? `<div class="field"><label for="c-price">${t('fPrice', { c: curSym('GBP') })}</label><input id="c-price" name="price" inputmode="decimal" required></div>` : ''}</div>
       <div class="field"><label for="c-details">${t('fDetails')}</label><textarea id="c-details" name="details" rows="2" maxlength="200" placeholder="${t('phDetails')}"></textarea></div>
-      ${S.v5 && S.events.some((e) => e.event_date >= todayISO()) ? `<div class="field"><label for="c-mevent">${t('fMerchEvent')}</label><select id="c-mevent" name="mevent"><option value="">${t('noConcert')}</option>${eventOptions(true)}</select></div>` : ''}`;
+`;
     confirm = t('confirmMerch');
   }
   const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
@@ -620,35 +698,6 @@ function composer(type) {
     ${flashFor('compose')}
     <button type="submit" class="primary big">${t('submit')}</button>
   </form>`;
-}
-
-function itemsView(type) {
-  const title = { swap: 'navSwap', buddy: 'navBuddies', merch: 'navMerch' }[type];
-  const sub = { swap: 'swapSub', buddy: 'buddySub', merch: 'merchSub' }[type];
-  const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
-  const data = S.items[type];
-  let list;
-  if (data === null) list = `<p class="muted">${t('loading')}</p>`;
-  else if (data.error) list = `<p class="muted empty">${t('errSetup')}</p>`;
-  else {
-    const q = S.postQ.trim().toLowerCase();
-    const shown = data.filter((x) => (!S.blocked.includes(x.user_id) || (S.user && x.user_id === S.user.id))
-      && (!q || (type === 'merch' ? (x.title + ' ' + (x.details || '')) : evName(x.events)).toLowerCase().includes(q)));
-    const today = todayISO();
-    const tonight = shown.filter((x) => x.events && x.events.event_date === today);
-    const rest = shown.filter((x) => !(x.events && x.events.event_date === today));
-    const sd = tonight.length ? `<section class="showday sd-posts" aria-label="${t('showDay')}">
-        <p class="live">● ${t('showDay')}</p>
-        ${tonight.map((x) => itemCard(type, x)).join('')}
-      </section>` : '';
-    list = !shown.length ? `<p class="muted empty">${t('noPosts')}</p>`
-      : sd + (rest.length ? (sd ? `<h2 class="list-title">${type === 'merch' ? t('otherItems') : t('upcoming')}</h2>` : '') + rest.map((x) => itemCard(type, x)).join('') : '');
-  }
-  return `<section class="event-head"><h1>${t(title)}</h1><p class="sub">${t(sub)}</p></section>
-    <div class="searchbox small-search">${icon.search}<input id="postq" type="search" aria-label="${type === 'merch' ? t('filterMerchPh') : t('filterPh')}" placeholder="${type === 'merch' ? t('filterMerchPh') : t('filterPh')}" value="${esc(S.postQ)}" autocomplete="off"></div>
-    ${flashFor('list')}
-    <div class="list" id="items">${list}</div>
-    ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(cta)}</button></div>`}`;
 }
 
 function feedbackBox() {
@@ -715,6 +764,7 @@ function render() {
   }
   const e = S.events.find((x) => x.id === S.selEv);
   document.title = e ? `${e.artist} · ${t('brand')}` : `${t('brand')} · ${t('hero')}`;
+  document.body.dataset.view = S.view;
   app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer() + tabBar();
   renderMain();
 }
@@ -723,16 +773,16 @@ function renderMain() {
   const main = document.getElementById('main');
   if (!main) return;
   if (S.view === 'me') { main.innerHTML = meView(); return; }
+  const e = S.selEv === 'general' && S.view === 'merch' ? 'general' : S.events.find((x) => x.id === S.selEv);
+  if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   if (S.view !== 'board') {
     const cf = main.querySelector('form[data-form="item"]');
     const keep = cf ? Object.fromEntries(new FormData(cf)) : null;
-    main.innerHTML = itemsView(S.view);
+    main.innerHTML = itemsEventView(S.view, e);
     const nf = main.querySelector('form[data-form="item"]');
-    if (keep && nf) for (const [k, v] of Object.entries(keep)) { const el = nf.elements[k]; if (el) { if (el.type === 'checkbox') el.checked = v === 'on'; else el.value = v; } }
+    if (keep && nf) for (const [k, v] of Object.entries(keep)) { const el = nf.elements[k]; if (el && el.type !== 'hidden') { if (el.type === 'checkbox') el.checked = v === 'on'; else el.value = v; } }
     return;
   }
-  const e = S.events.find((x) => x.id === S.selEv);
-  if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   // Keep what the user is typing in the post form across live refreshes.
   const form = main.querySelector('form[data-form="post"]');
   const saved = form ? Object.fromEntries(new FormData(form)) : null;
@@ -770,7 +820,18 @@ const readDraft = (f) => {
 const parseKey = (k) => { const i = k.indexOf(':'); return [k.slice(0, i), k.slice(i + 1)]; };
 const actions = {
   home() { setView('board'); },
-  nav(v) { if (v === S.view && v !== 'board') return; setView(v); },
+  nav(v) { if (v === S.view && !S.selEv && v !== 'board') return; setView(v); },
+  async deleteEvent() {
+    const id = S.selEv;
+    if (S.armDel !== id) { S.armDel = id; renderMain(); return; }
+    S.armDel = null;
+    const { error } = await sb.from('events').delete().eq('id', id);
+    if (error) { flash('share', 'errGeneric'); renderMain(); return; }
+    S.events = S.events.filter((x) => x.id !== id);
+    await tabHome();
+    flash('top', 'eventDeleted', 'ok');
+    render();
+  },
   async approveEvent() {
     const { error } = await sb.from('events').update({ status: 'approved' }).eq('id', S.selEv);
     if (error) flash('share', 'errGeneric');
@@ -780,7 +841,7 @@ const actions = {
   openCompose() {
     S.flash = null;
     if (!S.user) { actions.toggleLogin(); return; }
-    S.composing = true; S.selEvForm = S.selEvForm || (S.events.find((e) => e.event_date === todayISO()) || {}).id;
+    S.composing = true;
     renderMain(); document.querySelector('form[data-form="item"] input:not([type=checkbox])')?.focus();
   },
   closeCompose() { S.composing = false; S.flash = null; renderMain(); },
@@ -824,7 +885,7 @@ const actions = {
     const el = document.getElementById('feedback'); if (el) { el.open = true; el.scrollIntoView({ block: 'center' }); document.getElementById('fb-msg')?.focus(); }
   },
   unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
-  back() { if (history.state && history.state.ev) history.back(); else goHome(); },
+  back() { if (history.state && history.state.ev) history.back(); else tabHome(); },
   authMode(id) {
     const email = document.getElementById('login-email')?.value || '';
     S.authMode = id; S.flash = null; render(); keepEmail(email);
@@ -839,7 +900,7 @@ const actions = {
   day(id) {
     if (id === S.selEv) return;
     S.flash = null;
-    history.replaceState({ ev: id }, '', location.pathname + '?e=' + id);
+    history.replaceState({ ev: id, v: S.view }, '', urlFor(S.view, id));
     openEvent(id, false);
   },
   openCreate() {
@@ -867,7 +928,7 @@ const actions = {
   },
   closePost() { S.posting = false; S.flash = null; renderMain(); },
   async share() {
-    const link = location.origin + location.pathname + '?e=' + S.selEv;
+    const link = location.origin + urlFor(S.view, S.selEv);
     try { await navigator.clipboard.writeText(link); flash('share', 'copied', 'ok'); }
     catch (e) { S.flash = { area: 'share', text: link, kind: 'info' }; }
     renderMain();
@@ -924,6 +985,7 @@ const forms = {
       const price = S.merchKind === 'sale' ? parseFloat(val('price')) : null;
       row = { kind: S.merchKind, title: val('title'), details: val('details') || null, price, contact: val('contact') };
       if (S.v5 && val('mevent')) row.event_id = val('mevent');
+      else if (!S.v5 && S.selEv !== 'general') { flash('compose', 'errSetup'); renderMain(); return; }
       if (S.merchKind === 'sale' && !(price >= 0)) { flash('compose', 'fillAll'); renderMain(); return; }
     }
     const needConfirm = type !== 'buddy';
@@ -1045,10 +1107,10 @@ document.addEventListener('submit', (e) => {
 });
 document.addEventListener('input', (e) => {
   if (e.target.id === 'q') { S.q = e.target.value; renderResults(); }
-  if (e.target.id === 'postq') {
-    S.postQ = e.target.value;
-    const box = document.getElementById('items');
-    if (box) { const tmp = document.createElement('div'); tmp.innerHTML = itemsView(S.view); const nb = tmp.querySelector('#items'); if (nb) box.innerHTML = nb.innerHTML; }
+  if (e.target.id === 'evq') {
+    S.evQ = e.target.value;
+    const box = document.getElementById('evlist');
+    if (box) box.innerHTML = S.view === 'board' ? boardList() : itemList(S.view);
   }
   if (e.target.id === 'c-event') S.selEvForm = e.target.value;
   if (e.target.id === 'p-price' || e.target.id === 'p-original') checkOver();
@@ -1057,13 +1119,16 @@ document.addEventListener('change', (e) => {
   if (e.target.id === 'lang') { S.lang = Number(e.target.value); store.set('lang', S.lang); render(); }
 });
 const VIEWS = ['swap', 'buddy', 'merch', 'me'];
-window.addEventListener('popstate', () => {
+const routeTo = async (push) => {
   const p = new URLSearchParams(location.search);
   const id = p.get('e'); const v = p.get('v');
-  if (id && S.events.some((x) => x.id === id)) openEvent(id, false);
-  else if (VIEWS.includes(v)) setView(v, false);
-  else goHome(false);
-});
+  const view = VIEWS.includes(v) ? v : 'board';
+  const okId = id && ((id === 'general' && view === 'merch') || (UUID.test(id) && S.events.some((x) => x.id === id)));
+  if (okId && view !== 'me') await openEvent(id, push, view);
+  else if (view !== 'board') await setView(view, push);
+  else goHome(push);
+};
+window.addEventListener('popstate', () => { routeTo(false); });
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); S.installPrompt = e; render(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
@@ -1088,13 +1153,9 @@ async function start() {
   await loadEvents();
   await loadCounts();
   const params = new URLSearchParams(location.search);
-  const wanted = params.get('e');
-  const v = params.get('v');
-  if (wanted && UUID.test(wanted) && S.events.some((x) => x.id === wanted)) {
-    history.replaceState({ ev: wanted }, '', location.pathname + '?e=' + wanted);
-    await openEvent(wanted, false);
-  } else if (VIEWS.includes(v)) {
-    await setView(v, false);
+  if (params.get('e') || params.get('v')) {
+    if (params.get('e')) history.replaceState({ ev: params.get('e'), v: params.get('v') || 'board' }, '', location.pathname + location.search);
+    await routeTo(false);
   } else {
     render();
   }
