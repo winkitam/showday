@@ -9,7 +9,7 @@ const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { 
 // ---------- Text: [English, 繁體中文, 한국어] ----------
 const T = {
   brand: ['Show Day', 'Show Day', 'Show Day'],
-  hero: ['Same-day tickets at face value', '當日演出票，原價轉讓', '공연 당일 티켓, 정가 거래'],
+  hero: ['Tonight’s tickets, fan to fan.', '今晚的票，粉絲互轉。', '오늘 밤 티켓, 팬끼리 양도해요.'],
   searchPh: ['Search artist or city', '搜尋藝人或城市', '아티스트 또는 도시 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
   loginTitle: ['Log in', '登入', '로그인'],
