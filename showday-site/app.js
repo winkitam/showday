@@ -425,7 +425,7 @@ function homeView() {
       </div>
       <fieldset class="dates-field"><legend>${t('fDates')}</legend>
         ${Array.from({ length: S.newDates }, (_, i) => `<div class="row tight"><input name="date" type="date" min="${todayISO()}" aria-label="${t('fDate')} ${i + 1}" ${i === 0 ? 'required' : ''} value="${esc(S.draft && S.draft.dates[i] ? S.draft.dates[i] : '')}">${i > 0 ? `<button type="button" class="icon-btn" data-act="removeDate" data-id="${i}" aria-label="${t('removeDate')}">✕</button>` : ''}</div>`).join('')}
-        ${S.newDates < 7 ? `<button type="button" class="text" style="align-self:flex-start" data-act="addDate">${t('addDate')}</button>` : ''}
+        <button type="button" class="text" style="align-self:flex-start" data-act="addDate">${t('addDate')}</button>
       </fieldset>
       ${flashFor('create')}
       <div class="row"><button type="submit" class="primary">${t('createBtn')}</button><button type="button" class="text" data-act="cancelCreate">${t('cancel')}</button></div>
@@ -969,7 +969,7 @@ const actions = {
   cancelCreate() { S.creating = false; S.flash = null; S.draft = null; S.newDates = 1; renderMain(); },
   addDate() {
     const f = document.querySelector('form[data-form="create"]'); if (f) S.draft = readDraft(f);
-    S.newDates = Math.min(7, S.newDates + 1); renderMain();
+    S.newDates += 1; renderMain();
     const inputs = document.querySelectorAll('form[data-form="create"] input[type=date]'); inputs[inputs.length - 1]?.focus();
   },
   removeDate(i) {
