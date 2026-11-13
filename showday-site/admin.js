@@ -55,6 +55,8 @@ async function load() {
     }
     S.items.sort((a, b) => (b.hidden - a.hidden) || (b.reports - a.reports));
   }
+  const fb = await sb.from('feedback').select('id, reply_email, message, page, is_read, created_at').order('created_at', { ascending: false }).limit(200);
+  S.feedback = fb.error ? null : fb.data;
   S.loaded = true;
 }
 
@@ -87,9 +89,9 @@ function render() {
           <button type="button" class="text" data-act="logout">Log out</button>
         </div>
       </div>
-      <div class="seg" role="group">${seg('concerts', 'New concerts', nC)}${seg('reports', 'Reported posts', nR)}</div>
+      <div class="seg" role="group">${seg('concerts', 'New concerts', nC)}${seg('reports', 'Reported posts', nR)}${seg('feedback', 'Feedback', (S.feedback || []).filter((x) => !x.is_read).length)}</div>
       ${noteHtml()}
-      <div class="list">${!S.loaded ? '<p class="muted">Loading…</p>' : S.tab === 'concerts' ? concerts() : reports()}</div>`;
+      <div class="list">${!S.loaded ? '<p class="muted">Loading…</p>' : S.tab === 'concerts' ? concerts() : S.tab === 'feedback' ? feedbackList() : reports()}</div>`;
   }
   app.innerHTML = `<header class="topbar"><a class="brand" href="./" style="text-decoration:none;color:inherit">Show Day</a></header>${body}`;
 }
@@ -155,6 +157,20 @@ function itemCard(x) {
   </article>`;
 }
 
+function feedbackList() {
+  if (S.feedback === null) return '<p class="muted empty">Feedback is not set up yet. Run supabase/004_feedback.sql.</p>';
+  if (!S.feedback.length) return '<p class="muted empty">No feedback yet.</p>';
+  return S.feedback.map((x) => `<article class="listing ${x.is_read ? 'is-done' : ''}">
+    <div class="row tight">${x.is_read ? '<span class="chip done">Read</span>' : '<span class="chip sell">New</span>'}<span class="small muted">${esc(new Date(x.created_at).toLocaleString('en-GB'))}</span></div>
+    <p style="white-space:pre-wrap">${esc(x.message)}</p>
+    <p class="small muted">${x.reply_email ? `Reply to <a href="mailto:${esc(x.reply_email)}">${esc(x.reply_email)}</a>` : 'No reply email'}${x.page ? ' · from ' + esc(x.page) : ''}</p>
+    <div class="row">
+      ${x.is_read ? '' : `<button type="button" class="outline" data-act="fbRead" data-id="${x.id}">Mark as read</button>`}
+      <button type="button" class="text danger" data-act="fbDel" data-id="${x.id}">${S.armed === x.id ? 'Tap again to delete' : 'Delete'}</button>
+    </div>
+  </article>`).join('');
+}
+
 // ---------- Actions ----------
 const actions = {
   tab(id) { S.tab = id; S.note = null; S.armed = null; render(); },
@@ -177,6 +193,18 @@ const actions = {
     const { error } = await sb.from({ swap: 'swaps', buddy: 'buddies', merch: 'merch' }[type]).delete().eq('id', id);
     if (error) setNote('Could not delete: ' + error.message, 'err');
     else { S.items = S.items.filter((x) => !(x.type === type && x.id === id)); setNote('Post deleted.'); }
+    render();
+  },
+  async fbRead(id) {
+    const { error } = await sb.from('feedback').update({ is_read: true }).eq('id', id);
+    if (error) setNote('Could not update: ' + error.message, 'err'); else { const x = S.feedback.find((f) => f.id === id); if (x) x.is_read = true; S.note = null; }
+    render();
+  },
+  async fbDel(id) {
+    if (S.armed !== id) { S.armed = id; render(); return; }
+    S.armed = null;
+    const { error } = await sb.from('feedback').delete().eq('id', id);
+    if (error) setNote('Could not delete: ' + error.message, 'err'); else { S.feedback = S.feedback.filter((f) => f.id !== id); setNote('Feedback deleted.'); }
     render();
   },
   async hide(id) { await setHidden(id, true); },

@@ -109,6 +109,14 @@ const T = {
   typeListing: ['Ticket', '門票', '티켓'], typeSwap: ['Swap', '換位', '교환'], typeBuddy: ['Buddy', '同行', '동행'], typeMerch: ['Merch', '周邊', '굿즈'],
   needLoginMe: ['Log in to see your posts and settings.', '登入後查看你的貼文和設定。', '로그인하면 내 게시글과 설정을 볼 수 있어요.'],
   errSetup: ['This section is not set up yet.', '此功能尚未設定。', '아직 준비 중이에요.'],
+  feedback: ['Feedback', '意見回饋', '의견 보내기'],
+  feedbackTitle: ['Send feedback', '發送意見', '의견 보내기'],
+  feedbackSub: ['Ideas, bugs or problems. Only the Show Day team can read this.', '建議、問題或錯誤，只有 Show Day 團隊看得到。', '아이디어, 버그, 문제 등. Show Day 팀만 볼 수 있어요.'],
+  fMessage: ['Your message', '你的意見', '메시지'],
+  fReply: ['Email for a reply (optional)', '回覆電郵（選填）', '답장 받을 이메일 (선택)'],
+  sendFeedback: ['Send', '發送', '보내기'],
+  feedbackSent: ['Thank you. Your feedback was sent.', '謝謝，你的意見已送出。', '감사해요. 의견이 전송되었어요.'],
+  feedbackShort: ['Please write a little more.', '請多寫一點。', '조금 더 적어 주세요.'],
   privacy: ['Privacy', '私隱政策', '개인정보'], contactUs: ['Contact us', '聯絡我們', '문의']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
@@ -192,6 +200,7 @@ const S = {
   merchKind: 'swap',
   postQ: '',
   newDates: 1,
+  feedbackOpen: false,
   draft: null
 };
 function guessLang() {
@@ -614,10 +623,24 @@ function itemsView(type) {
     ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(cta)}</button></div>`}`;
 }
 
+function feedbackBox() {
+  return `<details class="panel collapse" id="feedback" ${S.feedbackOpen ? 'open' : ''}><summary>${t('feedbackTitle')}</summary>
+    <form data-form="feedback" class="stack" style="gap:12px;margin-top:12px">
+      <p class="small muted">${t('feedbackSub')}</p>
+      <label for="fb-msg" class="sr-only">${t('fMessage')}</label>
+      <textarea id="fb-msg" name="message" rows="4" maxlength="1000" placeholder="${t('fMessage')}" required></textarea>
+      ${S.user ? '' : `<input name="reply" type="email" maxlength="120" autocomplete="email" placeholder="${t('fReply')}" aria-label="${t('fReply')}">`}
+      ${flashFor('feedback')}
+      <button type="submit" class="primary">${t('sendFeedback')}</button>
+    </form>
+  </details>`;
+}
+
 function meView() {
   if (!S.user) {
     return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('needLoginMe')}</p></section>
-      <button type="button" class="primary big" data-act="toggleLogin">${t('login')}</button>`;
+      <button type="button" class="primary big" data-act="toggleLogin">${t('login')}</button>
+      ${feedbackBox()}`;
   }
   const typeLabel = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch' };
   const describe = (x) => x.type === 'listing' ? `${x.section} · ${fmtMoney(x.price, x.events && x.events.currency)}`
@@ -639,6 +662,7 @@ function meView() {
         <button type="submit" class="primary">${t('savePw')}</button>
       </form>
     </details>
+    ${feedbackBox()}
     ${S.blocked.length ? `<div class="row between"><span class="muted">${esc(t('blockedN', { n: S.blocked.length }))}</span><button type="button" class="text" data-act="unblockAll">${t('unblockAll')}</button></div>` : ''}
     <button type="button" class="outline" data-act="logout">${t('logout')}</button>`;
 }
@@ -650,7 +674,7 @@ function footer() {
     : isIOS ? `<span>${t('iosHint')}</span>` : '';
   return `<footer>
     <p>${t('footRule')}</p>
-    <p class="row tight">${install}<a href="privacy.html">${t('privacy')}</a>${mail}</p>
+    <p class="row tight">${install}<button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="privacy.html">${t('privacy')}</a>${mail}</p>
   </footer>`;
 }
 
@@ -766,6 +790,11 @@ const actions = {
     if (error) flash('me', 'errGeneric'); else S.mine = S.mine.filter((x) => !(x.type === type && x.id === id));
     renderMain();
   },
+  async openFeedback() {
+    S.feedbackOpen = true;
+    if (S.view !== 'me') await setView('me'); else renderMain();
+    const el = document.getElementById('feedback'); if (el) { el.open = true; el.scrollIntoView({ block: 'center' }); document.getElementById('fb-msg')?.focus(); }
+  },
   unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
   back() { if (history.state && history.state.ev) history.back(); else goHome(); },
   authMode(id) {
@@ -844,6 +873,18 @@ const actions = {
 };
 
 const forms = {
+  async feedback(f) {
+    const d = new FormData(f);
+    const message = String(d.get('message') || '').trim();
+    if (message.length < 3) { flash('feedback', 'feedbackShort'); S.feedbackOpen = true; renderMain(); return; }
+    const row = { message, reply_email: S.user ? S.user.email : (String(d.get('reply') || '').trim() || null), page: (location.pathname + location.search).slice(0, 200) };
+    if (!S.user) row.user_id = null;
+    const { error } = await sb.from('feedback').insert(row);
+    S.feedbackOpen = true;
+    if (error) { flash('feedback', /Too many/.test(error.message) ? 'errRate' : 'errGeneric'); renderMain(); return; }
+    flash('feedback', 'feedbackSent', 'ok');
+    renderMain();
+  },
   async item(f) {
     const type = f.dataset.type;
     const d = new FormData(f);
