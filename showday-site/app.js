@@ -124,6 +124,8 @@ const T = {
   confirmDelete: ['Tap again to delete', '再按一次確認刪除', '한 번 더 눌러 삭제'],
   eventDeleted: ['Concert deleted.', '已刪除演出。', '공연이 삭제되었어요.'],
   postTo: ['Posting to', '發佈到', '게시 대상'],
+  theme: ['Appearance', '外觀', '테마'],
+  themeCute: ['Kawaii pink', '咕卡粉', '꾸카 핑크'], themeSimple: ['Simple', '簡約', '심플'], themeNight: ['Night', '夜晚', '나이트'],
   feedback: ['Feedback', '意見回饋', '의견 보내기'],
   feedbackTitle: ['Send feedback', '發送意見', '의견 보내기'],
   feedbackSub: ['Ideas, bugs or problems. Only the Show Day team can read this.', '建議、問題或錯誤，只有 Show Day 團隊看得到。', '아이디어, 버그, 문제 등. Show Day 팀만 볼 수 있어요.'],
@@ -186,6 +188,7 @@ const icon = {
   buddies: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 5 5"/></svg>',
   merch: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
   me: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  palette: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1-.1-2.2 1.1-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.2" r="1.2"/><circle cx="14.5" cy="7.2" r="1.2"/></svg>',
   chev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
 };
 
@@ -221,6 +224,7 @@ const S = {
   newDates: 1,
   feedbackOpen: false,
   v5: false,
+  theme: ['cute', 'simple', 'night'].includes(store.get('theme', 'cute')) ? store.get('theme', 'cute') : 'cute',
   evQ: '',
   armDel: null,
   draft: null
@@ -232,6 +236,21 @@ function guessLang() {
 const flash = (area, key, kind = 'err') => { S.flash = { area, text: t(key), kind }; };
 const flashFor = (area) => S.flash && S.flash.area === area
   ? `<p class="note ${S.flash.kind}" role="${S.flash.kind === 'err' ? 'alert' : 'status'}">${esc(S.flash.text)}</p>` : '';
+
+// ---------- Theme ----------
+const THEMES = { cute: { key: 'themeCute', color: '#FFB3D1' }, simple: { key: 'themeSimple', color: '#FFFFFF' }, night: { key: 'themeNight', color: '#14101C' } };
+function applyTheme() {
+  document.documentElement.dataset.theme = S.theme;
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', THEMES[S.theme].color);
+}
+function themePicker() {
+  return `<section class="stack" style="gap:8px" aria-label="${t('theme')}">
+    <h2 class="list-title" style="margin-top:8px">${t('theme')}</h2>
+    <div class="theme-pick" role="group" aria-label="${t('theme')}">${Object.keys(THEMES).map((k) =>
+      `<button type="button" class="${S.theme === k ? 'on' : ''}" aria-pressed="${S.theme === k}" data-act="setTheme" data-id="${k}"><span class="swatch ${k}" aria-hidden="true"></span>${t(THEMES[k].key)}</button>`).join('')}</div>
+  </section>`;
+}
 
 // ---------- Data ----------
 async function loadEvents() {
@@ -349,6 +368,7 @@ function topBar() {
   return `<header class="topbar">
     <button type="button" class="brand" data-act="home">${t('brand')}</button>
     <div class="row">
+      <button type="button" class="icon-btn" data-act="cycleTheme" aria-label="${t('theme')}: ${t(THEMES[S.theme].key)}" title="${t('theme')}: ${t(THEMES[S.theme].key)}">${icon.palette}</button>
       <select id="lang" class="lang" aria-label="Language">${opts}</select>
       <button type="button" class="text" data-act="${S.user ? 'logout' : 'toggleLogin'}">${S.user ? t('logout') : t('login')}</button>
     </div>
@@ -718,6 +738,7 @@ function meView() {
   if (!S.user) {
     return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('needLoginMe')}</p></section>
       <button type="button" class="primary big" data-act="toggleLogin">${t('login')}</button>
+      ${themePicker()}
       ${feedbackBox()}`;
   }
   const typeLabel = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch' };
@@ -740,6 +761,7 @@ function meView() {
         <button type="submit" class="primary">${t('savePw')}</button>
       </form>
     </details>
+    ${themePicker()}
     ${feedbackBox()}
     ${S.blocked.length ? `<div class="row between"><span class="muted">${esc(t('blockedN', { n: S.blocked.length }))}</span><button type="button" class="text" data-act="unblockAll">${t('unblockAll')}</button></div>` : ''}
     <button type="button" class="outline" data-act="logout">${t('logout')}</button>`;
@@ -759,6 +781,7 @@ function footer() {
 function render() {
   const app = document.getElementById('app');
   document.documentElement.lang = HTML_LANG[S.lang];
+  applyTheme();
   if (!CONFIGURED) {
     app.innerHTML = `<section class="panel"><h1>Setup needed</h1><p>Open <code>config.js</code> and paste your Supabase URL and key. See README.md, step 3.</p></section>`;
     return;
@@ -885,6 +908,8 @@ const actions = {
     if (S.view !== 'me') await setView('me'); else renderMain();
     const el = document.getElementById('feedback'); if (el) { el.open = true; el.scrollIntoView({ block: 'center' }); document.getElementById('fb-msg')?.focus(); }
   },
+  setTheme(id) { if (!THEMES[id]) return; S.theme = id; store.set('theme', id); applyTheme(); render(); },
+  cycleTheme() { const k = Object.keys(THEMES); actions.setTheme(k[(k.indexOf(S.theme) + 1) % k.length]); },
   unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
   back() { if (history.state && history.state.ev) history.back(); else tabHome(); },
   authMode(id) {
