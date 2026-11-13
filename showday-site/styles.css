@@ -369,8 +369,6 @@ html[data-theme="cute"] .install-card b{font-family:var(--cute-font)}
 html[data-theme="night"] .install-card{background:linear-gradient(135deg,#3A2352 0%,#262A52 100%);border-color:#4E3D66}
 
 /* Tab-specific tools: filters, tags, match chips, stale posts, photos */
-.tabbar.six{grid-template-columns:repeat(6,minmax(0,1fr))}
-.tabbar.six button{font-size:10.5px}
 .filters{gap:10px}
 .seg.wrap{flex-wrap:wrap}
 .sort select{min-height:40px;padding:0 10px;font-size:14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}

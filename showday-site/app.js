@@ -98,7 +98,7 @@ const T = {
   buddyCta: ['I am going solo', '我一個人去', '혼자 가요'],
   fNote: ['A line about you', '介紹一下自己', '한 줄 소개'],
   phNote: ['First time at this venue, happy to queue together', '第一次來這個場館，想找人一起排隊', '이 공연장은 처음이에요. 같이 줄 서요'],
-  merchSub: ['Swap or sell fan goods. No tickets here.', '交換或出售周邊，此區不可放票。', '굿즈 교환·판매. 티켓은 안 돼요.'],
+  merchSub: ['Swap, sell or give away fan goods. No tickets here.', '交換、出售或派發周邊，此區不可放票。', '굿즈 교환·판매·나눔. 티켓은 안 돼요.'],
   merchCta: ['Post an item', '發佈周邊', '굿즈 올리기'],
   forSwap: ['Swap', '交換', '교환'], forSale: ['For sale', '出售', '판매'],
   fTitle: ['Item', '物品', '물품'], phTitle: ['[MEMBER] photocard', '[成員] 小卡', '[멤버] 포토카드'],
@@ -411,6 +411,7 @@ async function setView(v, push = true) {
   if (push) history.pushState({ v }, '', location.pathname + '?v=' + v);
   render(); window.scrollTo(0, 0);
   if (v === 'me') await loadMine(); else await loadItems(v);
+  if (v === 'merch' && S.v7) await loadItems('free');
   renderMain();
 }
 function subscribe() {
@@ -438,6 +439,7 @@ async function openEvent(id, push = true, view) {
   if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   render(); window.scrollTo(0, 0);
   if (!Array.isArray(S.items[S.view])) { await loadItems(S.view); renderMain(); }
+  if (S.view === 'merch' && S.v7 && !Array.isArray(S.items.free)) { await loadItems('free'); renderMain(); }
 }
 function tabHome(push = true) { if (S.view === 'board' || S.view === 'me') return goHome(push); return setView(S.view, push); }
 function goHome(push = true) {
@@ -547,7 +549,7 @@ function itemsFor(type, evId) {
   return d.filter((x) => (evId === 'general' ? !x.event_id : x.event_id === evId)
     && (!S.blocked.includes(x.user_id) || (S.user && x.user_id === S.user.id)));
 }
-function countFor(e) { return S.view === 'board' ? (S.counts[e.id] || 0) : itemsFor(S.view, e.id).filter((x) => x.status !== 'done').length; }
+function countFor(e) { return S.view === 'board' ? (S.counts[e.id] || 0) : withFree(S.view, e.id).filter((x) => x.status !== 'done').length; }
 function countLabel(n) { return S.view === 'board' ? t('availableN', { n }) : t('postsN', { n }); }
 
 function showRow(g) {
@@ -657,7 +659,7 @@ const tagLabel = (k) => t('tag' + k[0].toUpperCase() + k.slice(1));
 const CATS = ['photocard', 'lightstick', 'slogan', 'album', 'clothing', 'other'];
 const catLabel = (k) => t('cat' + k[0].toUpperCase() + k.slice(1));
 const MERCH_KINDS = { sale: 'wts', buy: 'wtb', swap: 'wtt' };
-const CTA = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta', free: 'freeCta' };
+const CTA = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta', free: 'merchCta' };
 
 // Your own open swaps at this concert, used to find matches
 function mySwaps() {
@@ -688,7 +690,7 @@ function filterBar(type) {
   }
   if (type === 'merch') {
     const seg = (k, label) => `<button type="button" class="${S.mf.kind === k ? 'on' : ''}" aria-pressed="${S.mf.kind === k}" data-act="mfKind" data-id="${k}">${label}</button>`;
-    let html = `<div class="seg wrap" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}</div>`;
+    let html = `<div class="seg wrap" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}${S.v7 && S.selEv !== 'general' ? seg('free', '🎁 ' + t('navFree')) : ''}</div>`;
     if (S.v7) {
       const cats = CATS.filter((k) => all.some((x) => x.category === k));
       const members = [...new Map(all.filter((x) => x.member).map((x) => [x.member.trim().toLowerCase(), x.member.trim()])).values()].slice(0, 20);
@@ -700,12 +702,18 @@ function filterBar(type) {
   return '';
 }
 
+// The Merch tab also shows freebies for the same concert
+function withFree(type, evId = S.selEv) {
+  const list = itemsFor(type, evId);
+  if (type !== 'merch' || !S.v7 || evId === 'general') return list;
+  return [...list, ...itemsFor('free', evId).map((x) => ({ ...x, _t: 'free' }))];
+}
 function itemList(type) {
   const d = S.items[type];
   if (d === null) return `<p class="muted">${t('loading')}</p>`;
   if (d && d.error) return `<p class="muted empty">${t('errSetup')}</p>`;
   const q = S.evQ.trim().toLowerCase();
-  let shown = itemsFor(type, S.selEv).filter((x) => !q
+  let shown = withFree(type).filter((x) => !q
     || [x.have, x.want, x.note, x.title, x.details, x.member, x.what, x.place, x.meet_place].filter(Boolean).join(' ').toLowerCase().includes(q));
   if (type === 'swap') {
     if (S.swapFilter !== 'all') shown = shown.filter((x) => seatClass(x.have) === S.swapFilter);
@@ -715,17 +723,17 @@ function itemList(type) {
   }
   if (type === 'buddy' && S.buddyTag) shown = shown.filter((x) => (x.tags || []).includes(S.buddyTag));
   if (type === 'merch') {
-    if (S.mf.kind !== 'all') shown = shown.filter((x) => x.kind === S.mf.kind);
+    if (S.mf.kind !== 'all') shown = shown.filter((x) => (x._t === 'free' ? 'free' : x.kind) === S.mf.kind);
     if (S.mf.cat) shown = shown.filter((x) => x.category === S.mf.cat);
     if (S.mf.member) shown = shown.filter((x) => (x.member || '').trim().toLowerCase() === S.mf.member.toLowerCase());
   }
-  if (type === 'free') shown = shown.sort((a, b) => (a.status === 'done') - (b.status === 'done'));
-  return shown.length ? shown.map((x) => itemCard(type, x, true)).join('')
+  if (type === 'merch' || type === 'free') shown = shown.sort(SORTERS.new).sort((a, b) => (a.status === 'done') - (b.status === 'done'));
+  return shown.length ? shown.map((x) => itemCard(x._t || type, x, true)).join('')
     : `<p class="muted empty">${q ? esc(t('noResults', { q: S.evQ.trim() })) : t('noPosts')}</p>`;
 }
 
 function itemsEventView(type, e) {
-  const n = itemsFor(type, S.selEv).filter((x) => x.status !== 'done').length;
+  const n = withFree(type).filter((x) => x.status !== 'done').length;
   const head = e === 'general'
     ? `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
        <section class="event-head"><h1>${t('generalMerch')}</h1><p class="sub">${t('merchSub')}</p></section>`
@@ -823,9 +831,9 @@ function postArea(e) {
 }
 
 function tabBar() {
-  const tabs = [['board', 'navBoard'], ['swap', 'navSwap'], ['buddy', 'navBuddies'], ['merch', 'navMerch'], ...(S.v7 ? [['free', 'navFree']] : []), ['me', 'navMe']];
+  const tabs = [['board', 'navBoard'], ['swap', 'navSwap'], ['buddy', 'navBuddies'], ['merch', 'navMerch'], ['me', 'navMe']];
   const ic = { board: icon.board, swap: icon.swap, buddy: icon.buddies, merch: icon.merch, free: icon.gift, me: icon.me };
-  return `<nav class="tabbar ${S.v7 ? 'six' : ''}" aria-label="Sections">${tabs.map(([v, k]) =>
+  return `<nav class="tabbar" aria-label="Sections">${tabs.map(([v, k]) =>
     `<button type="button" data-act="nav" data-id="${v}" ${S.view === v ? 'aria-current="page" class="on"' : ''}>${ic[v]}<span>${t(k)}</span></button>`).join('')}</nav>`;
 }
 
@@ -900,6 +908,12 @@ const photoField = () => S.v7 ? `<div class="field"><label for="c-photo">${t('fP
 
 function composer(type) {
   const ev = S.events.find((x) => x.id === S.selEv);
+  // Merch and freebies share one tab: "Freebie" is a fourth kind next to WTS / WTB / WTT
+  const canFree = type === 'merch' && S.v7 && !!ev;
+  const k = S.merchKind === 'free' && !canFree ? 'sale' : S.merchKind;
+  const kindSeg = type !== 'merch' ? '' : `<div class="seg wrap" role="group">${(S.v7 ? ['sale', 'buy', 'swap', ...(canFree ? ['free'] : [])] : ['swap', 'sale']).map((x) =>
+      `<button type="button" class="${k === x ? 'on' : ''}" aria-pressed="${k === x}" data-act="merchKind" data-id="${x}">${x === 'free' ? '🎁 ' + t('navFree') : S.v7 ? t(MERCH_KINDS[x]) : x === 'sale' ? t('forSale') : t('forSwap')}</button>`).join('')}</div>`;
+  if (type === 'merch' && k === 'free') type = 'free';
   const pickEv = ev ? `<div class="field"><span style="font-size:14px;font-weight:500">${t('postTo')}</span><div class="note info">${esc(evName(ev))}</div>
       <input type="hidden" name="${type === 'merch' ? 'mevent' : 'event'}" value="${ev.id}"></div>` : '';
   let fields = '', confirm = '';
@@ -917,18 +931,15 @@ function composer(type) {
         <div class="field"><label for="c-mtime">${t('fMeetTime')}</label><input id="c-mtime" name="meet_time" maxlength="40" placeholder="${t('phMeetTime')}"></div>
         <div class="field"><label for="c-mplace">${t('fMeetPlace')}</label><input id="c-mplace" name="meet_place" maxlength="80" placeholder="${t('phMeetPlace')}"></div></div>` : ''}`;
   } else if (type === 'free') {
-    fields = `<div class="field"><label for="c-what">${t('fWhat')}</label><input id="c-what" name="what" maxlength="80" placeholder="${t('phWhat')}" required></div>
+    fields = `${kindSeg}<div class="field"><label for="c-what">${t('fWhat')}</label><input id="c-what" name="what" maxlength="80" placeholder="${t('phWhat')}" required></div>
       <div class="grid2">
         <div class="field"><label for="c-gtime">${t('fGiveTime')}</label><input id="c-gtime" name="give_time" maxlength="40" placeholder="${t('phGiveTime')}"></div>
         <div class="field"><label for="c-place">${t('fPlace')}</label><input id="c-place" name="place" maxlength="80" placeholder="${t('phPlace')}"></div></div>
       <div class="field"><label for="c-details">${t('freeDetails')}</label><textarea id="c-details" name="details" rows="2" maxlength="200" placeholder="${t('phFreeDetails')}"></textarea></div>
       ${photoField()}`;
   } else {
-    const k = S.merchKind;
-    const kinds = S.v7 ? ['sale', 'buy', 'swap'] : ['swap', 'sale'];
     const cur = ev ? ev.currency : 'GBP';
-    fields = `<div class="seg wrap" role="group">${kinds.map((x) =>
-        `<button type="button" class="${k === x ? 'on' : ''}" aria-pressed="${k === x}" data-act="merchKind" data-id="${x}">${S.v7 ? t(MERCH_KINDS[x]) : x === 'sale' ? t('forSale') : t('forSwap')}</button>`).join('')}</div>
+    fields = `${kindSeg}
       <div class="grid2">
         <div class="field"><label for="c-title">${t('fTitle')}</label><input id="c-title" name="title" maxlength="80" placeholder="${t('phTitle')}" required></div>
         ${k === 'sale' ? `<div class="field"><label for="c-price">${t('fPrice', { c: curSym(cur) })}</label><input id="c-price" name="price" inputmode="decimal" required></div>`
@@ -1279,7 +1290,7 @@ const forms = {
     } else if (type === 'free') {
       row = { event_id: val('event'), what: val('what'), details: opt('details'), give_time: opt('give_time'), place: opt('place') };
     } else {
-      const k = S.merchKind;
+      const k = S.merchKind === 'free' ? 'sale' : S.merchKind;
       const price = k !== 'swap' && val('price') ? parseFloat(val('price')) : null;
       row = { kind: k, title: val('title'), details: val('details') || null, price, contact: val('contact') };
       if (S.v7) Object.assign(row, { category: CATS.includes(val('category')) ? val('category') : null, member: opt('member') });
@@ -1429,11 +1440,11 @@ document.addEventListener('change', (e) => {
     if (box) box.innerHTML = S.view === 'board' ? boardList() : itemList(S.view);
   }
 });
-const VIEWS = ['swap', 'buddy', 'merch', 'free', 'me'];
+const VIEWS = ['swap', 'buddy', 'merch', 'me'];
 const routeTo = async (push) => {
   const p = new URLSearchParams(location.search);
   const id = p.get('e'); const v = p.get('v');
-  const view = VIEWS.includes(v) ? v : 'board';
+  const view = v === 'free' ? 'merch' : VIEWS.includes(v) ? v : 'board';
   const okId = id && ((id === 'general' && view === 'merch') || (UUID.test(id) && S.events.some((x) => x.id === id)));
   if (okId && view !== 'me') await openEvent(id, push, view);
   else if (view !== 'board') await setView(view, push);
@@ -1456,7 +1467,7 @@ async function start() {
     if ((S.user && S.user.id) !== before) {
       S.showLogin = false; S.contacts = {};
       await checkAdmin(); await loadEvents(); await loadCounts(); await loadListings();
-      if (S.view === 'me') await loadMine(); else if (S.view !== 'board') await loadItems(S.view);
+      if (S.view === 'me') await loadMine(); else if (S.view !== 'board') { await loadItems(S.view); if (S.view === 'merch' && S.v7) await loadItems('free'); }
       render();
     }
   });
