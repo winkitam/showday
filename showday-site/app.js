@@ -4,78 +4,63 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, CONTACT_EMAIL } from './config.js';
 const CONFIGURED = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
 const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } }) : null;
 
-// ---------- Text in three languages: [English, 繁體中文, 한국어] ----------
+// ---------- Text: [English, 繁體中文, 한국어] ----------
 const T = {
-  brand: ['Show Day Board', '當日演出票板', '공연 당일 티켓 게시판'],
-  badge: ['Fan to fan, face value only', '粉絲對粉絲，只限原價', '팬끼리, 정가 거래만'],
+  brand: ['Show Day', 'Show Day', 'Show Day'],
+  hero: ['Same-day tickets at face value', '當日演出票，原價轉讓', '공연 당일 티켓, 정가 거래'],
+  searchPh: ['Search artist or venue', '搜尋藝人或場館', '아티스트 또는 공연장 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
   loginTitle: ['Log in with email', '以電郵登入', '이메일로 로그인'],
-  loginBody: ['We email you a one-time link. No password needed.', '我們會寄一條一次性連結給你，不需要密碼。', '일회용 링크를 이메일로 보내드려요. 비밀번호는 필요 없어요.'],
-  email: ['Email', '電郵', '이메일'], sendLink: ['Send link', '發送連結', '링크 보내기'],
-  linkSent: ['Check your inbox and tap the link to log in.', '請查看電郵並按下連結登入。', '메일함을 확인하고 링크를 눌러 로그인하세요.'],
-  install: ['Add to Home Screen', '加入主畫面', '홈 화면에 추가'],
-  installBody: ['Open the board in one tap on show day.', '演出當天一按即開。', '공연 당일 한 번에 열 수 있어요.'],
-  iosHint: ['Tap the Share button, then "Add to Home Screen".', '按「分享」按鈕，再選「加入主畫面」。', '공유 버튼을 누른 뒤 "홈 화면에 추가"를 선택하세요.'],
-  add: ['Add', '加入', '추가'], later: ['Later', '稍後', '나중에'],
-  searchTitle: ['Find your concert', '搜尋演出', '공연 찾기'],
-  searchPh: ['Search artist, venue or date', '搜尋藝人、場館或日期', '아티스트, 공연장, 날짜 검색'],
-  open: ['Open', '開啟', '열기'], viewing: ['Viewing', '正在查看', '보는 중'],
-  noResults: ['No concert matches "{q}".', '找不到「{q}」的演出。', '"{q}"와 일치하는 공연이 없어요.'],
-  noEvents: ['No upcoming concerts yet.', '暫時沒有即將舉行的演出。', '아직 예정된 공연이 없어요.'],
-  cantFind: ['Can’t find your concert? Add it', '找不到演出？新增一個', '공연이 없나요? 직접 추가하기'],
-  newTitle: ['Add a concert', '新增演出', '공연 추가'],
-  fArtist: ['Artist', '藝人', '아티스트'], fVenue: ['Venue', '場館', '공연장'], fDate: ['Date', '日期', '날짜'],
-  newNote: ['New concerts are checked before everyone can see them.', '新增的演出會先經審核，才會公開顯示。', '새 공연은 확인 후 모두에게 공개돼요.'],
-  createBtn: ['Add concert', '新增演出', '공연 추가'], cancel: ['Cancel', '取消', '취소'],
-  created: ['Concert added. You can post to it now.', '已新增演出，現在可以發佈貼文。', '공연이 추가됐어요. 이제 글을 올릴 수 있어요.'],
-  dupWarn: ['This concert already exists. Search for it above.', '此演出已存在，請在上方搜尋。', '이미 있는 공연이에요. 위에서 검색해 주세요.'],
-  pendingReview: ['Pending review', '待審核', '검토 대기'],
-  loginToCreate: ['Log in to add a concert.', '登入後才可新增演出。', '로그인하면 공연을 추가할 수 있어요.'],
-  tonight: ['Tonight', '今晚', '오늘 밤'],
-  sdLive: ['SHOW DAY', '今日演出', '오늘 공연'], upcoming: ['UPCOMING', '即將舉行', '예정'],
-  shareLink: ['Copy link to this concert', '複製此演出連結', '이 공연 링크 복사'], copied: ['Link copied', '已複製連結', '링크 복사됨'],
-  stOpen: ['Available', '可交易', '거래 가능'], stMeeting: ['Meeting now', '面交中', '만나는 중'], stDone: ['Handed over', '已完成', '양도 완료'],
-  listingsTitle: ['Live listings', '最新貼文', '실시간 게시글'],
-  all: ['All', '全部', '전체'], has: ['Has ticket', '有票', '티켓 있음'], needs: ['Needs ticket', '求票', '티켓 구함'],
-  empty: ['Nothing here yet. Be the first to post.', '暫時沒有貼文，成為第一個發佈的人。', '아직 게시글이 없어요. 첫 글을 올려 보세요.'],
+  email: ['Email', '電郵', '이메일'], sendLink: ['Send login link', '發送登入連結', '로그인 링크 보내기'],
+  linkSent: ['Check your inbox and tap the link.', '請查看電郵並按下連結。', '메일함에서 링크를 눌러 주세요.'],
+  cancel: ['Cancel', '取消', '취소'],
+  noResults: ['No match for "{q}".', '找不到「{q}」。', '"{q}" 결과 없음.'],
+  noEvents: ['No upcoming concerts yet.', '暫時沒有演出。', '예정된 공연이 없어요.'],
   loading: ['Loading…', '載入中…', '불러오는 중…'],
-  priceSell: ['Asking per ticket', '每張要價', '장당 희망 가격'], priceBuy: ['Will pay up to, per ticket', '每張最高願付', '장당 최대 지불 가격'],
-  meetLabel: ['Meeting point', '面交地點', '만날 장소'],
+  addMissing: ['Add a missing concert', '新增演出', '공연 추가'],
+  fArtist: ['Artist', '藝人', '아티스트'], fVenue: ['Venue', '場館', '공연장'], fDate: ['Date', '日期', '날짜'],
+  createBtn: ['Add concert', '新增演出', '공연 추가'],
+  dupWarn: ['Already listed. Search for it instead.', '此演出已存在，請直接搜尋。', '이미 있어요. 검색해 주세요.'],
+  pendingReview: ['Pending review', '待審核', '검토 대기'],
+  tonight: ['Tonight', '今晚', '오늘 밤'],
+  back: ['All concerts', '所有演出', '전체 공연'],
+  copyLink: ['Copy link', '複製連結', '링크 복사'], copied: ['Link copied', '已複製連結', '링크 복사됨'],
+  statsLine: ['{a} available · {m} meeting · {d} done', '{a} 可交易 · {m} 面交中 · {d} 已完成', '거래 가능 {a} · 만나는 중 {m} · 완료 {d}'],
+  all: ['All', '全部', '전체'], has: ['Selling', '有票', '판매'], needs: ['Looking', '求票', '구함'],
+  empty: ['No listings yet.', '暫時沒有貼文。', '아직 게시글이 없어요.'],
+  stMeeting: ['Meeting now', '面交中', '만나는 중'], stDone: ['Handed over', '已完成', '양도 완료'],
+  upTo: ['up to', '最高', '최대'],
   qty1: ['{n} ticket', '{n} 張', '{n}장'], qtyN: ['{n} tickets', '{n} 張', '{n}장'],
-  showContact: ['Show contact', '顯示聯絡方式', '연락처 보기'], hideContact: ['Hide contact', '隱藏聯絡方式', '연락처 숨기기'],
-  loginToContact: ['Log in to see contact', '登入後查看聯絡方式', '로그인 후 연락처 보기'],
-  report: ['Report', '舉報', '신고'], reported: ['Reported', '已舉報', '신고됨'], block: ['Block', '封鎖', '차단'],
-  del: ['Delete', '刪除', '삭제'], yours: ['Your post', '你的貼文', '내 게시글'],
-  markMeeting: ['We are meeting', '正在面交', '만나는 중으로 표시'], confirmTransfer: ['Transfer confirmed', '確認已轉讓', '양도 확인'],
-  contactPrefix: ['Contact:', '聯絡：', '연락처:'],
-  payAfter: ['Pay only after the ticket arrives in your official app.', '請在票出現在官方 App 後才付款。', '티켓이 공식 앱에 도착한 뒤에만 결제하세요.'],
-  postTitle: ['Post a listing', '發佈貼文', '게시글 올리기'], postingTo: ['Posting to', '發佈到', '게시 대상'],
-  iHave: ['I have a ticket', '我有票', '티켓이 있어요'], iNeed: ['I need a ticket', '我要買票', '티켓이 필요해요'],
-  fSection: ['Section, row, seat (or standing)', '區域、排、座位（或企位）', '구역, 열, 좌석 (또는 스탠딩)'],
-  phSection: ['Block 105, Row 12', '105 區 12 排', '105구역 12열'], fQty: ['Quantity', '數量', '수량'],
-  fOriginal: ['Original price per ticket (£)', '每張原價（£）', '장당 정가 (£)'],
-  phOriginal: ['From your purchase email', '見購票確認電郵', '구매 확인 이메일 기준'],
-  askSell: ['Asking price per ticket (£)', '每張要價（£）', '장당 희망 가격 (£)'],
-  askBuy: ['Highest you will pay per ticket (£)', '每張最高願付（£）', '장당 최대 지불 가격 (£)'],
-  over: ['This is above face value. Only the original price plus unavoidable fees is allowed.', '價格高於原價。只允許原價加不可避免的費用。', '정가를 초과했어요. 원래 가격에 불가피한 수수료만 허용돼요.'],
-  fMeet: ['Meeting point near the venue', '場館附近的面交地點', '공연장 근처 만날 장소'], phMeet: ['e.g. by the main entrance', '例如：正門旁', '예: 정문 옆'],
-  fHandle: ['How to reach you', '聯絡方式', '연락 방법'], phHandle: ['@instagram or WhatsApp', '@IG 或 WhatsApp', '@인스타그램 또는 WhatsApp'],
-  confirmSell: ['I bought this ticket myself, the price is not higher than face value, and I will only hand it over through the official app.', '我自己購買了這張票，價格沒有高於原價，並且只會透過官方 App 轉讓。', '이 티켓은 제가 직접 구매했고, 가격은 정가를 넘지 않으며, 공식 앱으로만 양도하겠습니다.'],
-  confirmBuy: ['I will not offer more than face value, and I will only pay after the ticket arrives in my official app.', '我不會出價高於原價，並且只會在票出現在官方 App 後才付款。', '정가보다 높게 제시하지 않으며, 티켓이 공식 앱에 도착한 뒤에만 결제하겠습니다.'],
-  submit: ['Post to the board', '發佈到票板', '게시판에 올리기'], posted: ['Posted. Your listing is live.', '已發佈，你的貼文已上線。', '게시되었어요.'],
-  loginToPost: ['Log in to post a listing.', '登入後才可發佈貼文。', '로그인하면 글을 올릴 수 있어요.'],
-  fillAll: ['Please fill in every field and tick the box.', '請填寫所有欄位並勾選確認。', '모든 항목을 입력하고 확인란을 체크해 주세요.'],
-  errGeneric: ['Something went wrong. Please try again.', '出現問題，請再試一次。', '문제가 생겼어요. 다시 시도해 주세요.'],
-  errRate: ['Too many posts. Please try again later.', '發佈太頻繁，請稍後再試。', '게시가 너무 많아요. 나중에 다시 시도해 주세요.'],
-  selectEvent: ['Pick a concert above to see its listings.', '請在上方選擇演出查看貼文。', '위에서 공연을 선택하면 게시글을 볼 수 있어요.'],
-  safetyTitle: ['Staying safe.', '安全提示。', '안전 수칙.'],
-  safetyBody: ['Meet somewhere busy and well lit near the venue. Check the transfer in the official ticketing app before any money changes hands. Never pay in advance. This board only connects fans and does not hold tickets or payments.', '請在場館附近人多、光線充足的地方面交。付款前先在官方售票 App 確認轉讓成功。切勿預付。本票板只負責連結粉絲，不持有票或款項。', '공연장 근처의 사람이 많고 밝은 곳에서 만나세요. 돈을 주고받기 전에 공식 앱에서 양도를 확인하세요. 선결제는 하지 마세요. 이 게시판은 팬을 연결할 뿐 티켓이나 결제를 보관하지 않아요.'],
-  privacy: ['Privacy', '私隱政策', '개인정보'], contactUs: ['Contact', '聯絡我們', '문의']
+  contact: ['Contact', '聯絡', '연락하기'], hide: ['Hide', '隱藏', '숨기기'],
+  more: ['More actions', '更多操作', '더보기'],
+  report: ['Report', '舉報', '신고'], reported: ['Reported', '已舉報', '신고됨'], block: ['Block user', '封鎖用戶', '사용자 차단'],
+  del: ['Delete', '刪除', '삭제'], yours: ['Yours', '你的', '내 글'],
+  markMeeting: ['Mark as meeting', '標記為面交中', '만나는 중으로 표시'], confirmTransfer: ['Transfer confirmed', '確認已轉讓', '양도 확인'],
+  payAfter: ['Pay only after the ticket is in your official app.', '票轉到官方 App 後才付款。', '티켓이 공식 앱에 도착한 뒤에 결제하세요.'],
+  postCta: ['Post a listing', '發佈貼文', '글 올리기'],
+  iHave: ['Selling', '我有票', '판매'], iNeed: ['Looking', '求票', '구함'],
+  fSection: ['Section or standing', '區域或企位', '구역 또는 스탠딩'], fQty: ['Qty', '數量', '수량'],
+  fOriginal: ['Face value (£)', '原價（£）', '정가 (£)'],
+  askSell: ['Your price (£)', '要價（£）', '희망 가격 (£)'], askBuy: ['Max you pay (£)', '最高願付（£）', '최대 지불 (£)'],
+  over: ['Above face value. Lower the price.', '高於原價，請調低價格。', '정가 초과. 가격을 낮춰 주세요.'],
+  fMeet: ['Meeting point', '面交地點', '만날 장소'], fHandle: ['Your contact', '你的聯絡方式', '연락처'],
+  phHandle: ['@instagram or WhatsApp', '@IG 或 WhatsApp', '@인스타그램 또는 WhatsApp'],
+  confirmSell: ['I bought it myself, the price is at or below face value, and I will transfer it through the official app.', '票是我自己買的，價格不高於原價，並會透過官方 App 轉讓。', '직접 구매했고 정가 이하이며 공식 앱으로 양도합니다.'],
+  confirmBuy: ['I will not pay above face value, and only after the transfer.', '我不會付高於原價，並在轉讓後才付款。', '정가 이하로, 양도 후에만 결제합니다.'],
+  submit: ['Post', '發佈', '올리기'], posted: ['Posted.', '已發佈。', '게시됨.'],
+  fillAll: ['Fill in every field and tick the box.', '請填寫所有欄位並勾選。', '모든 항목을 입력하고 체크해 주세요.'],
+  errGeneric: ['Something went wrong. Try again.', '出現問題，請再試。', '문제가 생겼어요. 다시 시도해 주세요.'],
+  errRate: ['Too many posts. Try later.', '發佈太頻繁，請稍後再試。', '너무 많아요. 나중에 시도해 주세요.'],
+  footRule: ['Face value only. Meet in person. Never pay in advance.', '只限原價。當面交易。切勿預付。', '정가 거래만. 직접 만나서. 선결제 금지.'],
+  install: ['Add to Home Screen', '加入主畫面', '홈 화면에 추가'],
+  iosHint: ['In Safari, tap Share, then Add to Home Screen.', '在 Safari 按「分享」，再選「加入主畫面」。', 'Safari에서 공유 → 홈 화면에 추가.'],
+  privacy: ['Privacy', '私隱政策', '개인정보'], contactUs: ['Contact us', '聯絡我們', '문의']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
 const HTML_LANG = ['en', 'zh-Hant', 'ko'];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-// ---------- Small helpers ----------
+// ---------- Helpers ----------
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
@@ -91,13 +76,19 @@ const todayISO = () => new Date().toLocaleDateString('en-CA');
 const fmtMoney = (n) => '£' + Number(n).toFixed(2).replace(/\.00$/, '');
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
   : new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { weekday: 'short', day: 'numeric', month: 'short' });
-const evLabel = (e) => `${e.artist} / ${e.venue}, ${fmtDate(e.event_date)}`;
 const ago = (ts) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 60000));
   const f = new Intl.RelativeTimeFormat(LOCALES[S.lang], { numeric: 'auto' });
   return m < 60 ? f.format(-m, 'minute') : f.format(-Math.floor(m / 60), 'hour');
 };
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
+const icon = {
+  search: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+  link: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+  dots: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  chev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
+};
 
 // ---------- State ----------
 const S = {
@@ -109,6 +100,7 @@ const S = {
   listings: [], listingsLoaded: false,
   tab: 'all',
   formKind: 'sell',
+  posting: false,
   creating: false,
   showLogin: false,
   contacts: {},
@@ -116,7 +108,6 @@ const S = {
   blocked: store.get('blocked', []),
   flash: null,
   installPrompt: null,
-  installDismissed: store.get('installDismissed', false),
   channel: null
 };
 function guessLang() {
@@ -125,7 +116,7 @@ function guessLang() {
 }
 const flash = (area, key, kind = 'err') => { S.flash = { area, text: t(key), kind }; };
 const flashFor = (area) => S.flash && S.flash.area === area
-  ? `<div class="note ${S.flash.kind}" role="${S.flash.kind === 'err' ? 'alert' : 'status'}">${esc(S.flash.text)}</div>` : '';
+  ? `<p class="note ${S.flash.kind}" role="${S.flash.kind === 'err' ? 'alert' : 'status'}">${esc(S.flash.text)}</p>` : '';
 
 // ---------- Data ----------
 async function loadEvents() {
@@ -152,85 +143,63 @@ function subscribe() {
   if (!S.selEv) return;
   S.channel = sb.channel('listings-' + S.selEv)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'listings', filter: 'event_id=eq.' + S.selEv },
-      async () => { await loadListings(); renderBoard(); })
+      async () => { await loadListings(); renderMain(); })
     .subscribe();
 }
-async function selectEvent(id) {
-  S.selEv = id; S.listings = []; S.listingsLoaded = false; S.contacts = {}; S.tab = 'all';
-  history.replaceState(null, '', location.pathname + '?e=' + id);
-  store.set('lastEvent', id);
-  render();
-  await loadListings(); subscribe(); renderBoard();
+async function openEvent(id, push = true) {
+  S.selEv = id; S.listings = []; S.listingsLoaded = false; S.contacts = {};
+  S.tab = 'all'; S.posting = false; S.creating = false;
+  if (push) history.pushState({ ev: id }, '', location.pathname + '?e=' + id);
+  render(); window.scrollTo(0, 0);
+  await loadListings(); subscribe(); renderMain();
+}
+function goHome(push = true) {
+  S.selEv = null; S.posting = false; S.flash = null;
+  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
+  if (push) history.pushState({}, '', location.pathname);
+  render(); window.scrollTo(0, 0);
 }
 
 // ---------- Views ----------
-function header() {
-  const langs = ['EN', '繁中', '한국어'].map((l, i) =>
-    `<button type="button" class="${S.lang === i ? 'on' : ''}" lang="${HTML_LANG[i]}" aria-pressed="${S.lang === i}" data-act="lang" data-id="${i}">${l}</button>`).join('');
-  return `<header class="row between">
-    <div class="stack" style="gap:4px">
-      <div class="brand">${t('brand')}</div>
-      <span class="badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>${t('badge')}</span>
-    </div>
+function topBar() {
+  const opts = ['EN', '繁中', '한국어'].map((l, i) => `<option value="${i}" ${S.lang === i ? 'selected' : ''}>${l}</option>`).join('');
+  return `<header class="topbar">
+    <button type="button" class="brand" data-act="home">${t('brand')}</button>
     <div class="row">
-      <div class="row" role="group" aria-label="Language" style="gap:4px">${langs}</div>
-      ${S.user
-        ? `<button type="button" data-act="logout">${t('logout')}</button>`
-        : `<button type="button" class="primary" data-act="toggleLogin">${t('login')}</button>`}
+      <select id="lang" class="lang" aria-label="Language">${opts}</select>
+      <button type="button" class="text" data-act="${S.user ? 'logout' : 'toggleLogin'}">${S.user ? t('logout') : t('login')}</button>
     </div>
   </header>`;
 }
 
-function installBanner() {
-  if (S.installDismissed || window.matchMedia('(display-mode: standalone)').matches) return '';
-  if (!S.installPrompt && !isIOS) return '';
-  return `<div class="card row" style="flex-direction:row">
-    <img src="icon.svg" width="40" height="40" alt="" style="border-radius:10px">
-    <div style="flex:1 1 200px"><b>${t('install')}</b><p class="muted">${isIOS ? t('iosHint') : t('installBody')}</p></div>
-    <div class="row">
-      ${S.installPrompt ? `<button type="button" class="primary" data-act="install">${t('add')}</button>` : ''}
-      <button type="button" data-act="installLater">${t('later')}</button>
-    </div>
-  </div>`;
-}
-
 function loginPanel() {
   if (S.user || !S.showLogin) return '';
-  return `<section class="card" aria-label="${t('loginTitle')}">
-    <h2>${t('loginTitle')}</h2>
-    <p class="muted">${t('loginBody')}</p>
-    <form data-form="login" class="row" style="align-items:flex-end">
-      <div class="field"><label for="login-email">${t('email')}</label><input id="login-email" name="email" type="email" autocomplete="email" required></div>
-      <button type="submit" class="primary">${t('sendLink')}</button>
-    </form>
+  return `<form data-form="login" class="panel" aria-label="${t('loginTitle')}">
+    <label for="login-email">${t('loginTitle')}</label>
+    <input id="login-email" name="email" type="email" autocomplete="email" placeholder="${t('email')}" required>
     ${flashFor('login')}
-  </section>`;
+    <div class="row"><button type="submit" class="primary">${t('sendLink')}</button><button type="button" class="text" data-act="toggleLogin">${t('cancel')}</button></div>
+  </form>`;
 }
 
-function searchSection() {
-  const createForm = S.creating ? `
-    <form data-form="create" class="stack" style="border-top:1px solid #EAECF0;padding-top:14px">
-      <h3>${t('newTitle')}</h3>
-      <div class="row" style="align-items:flex-start">
+function homeView() {
+  const create = S.creating ? `
+    <form data-form="create" class="panel">
+      <div class="grid3">
         <div class="field"><label for="new-artist">${t('fArtist')}</label><input id="new-artist" name="artist" maxlength="80" required value="${esc(S.q)}"></div>
         <div class="field"><label for="new-venue">${t('fVenue')}</label><input id="new-venue" name="venue" maxlength="80" required></div>
         <div class="field"><label for="new-date">${t('fDate')}</label><input id="new-date" name="date" type="date" min="${todayISO()}" required></div>
       </div>
-      <p class="muted small">${t('newNote')}</p>
       ${flashFor('create')}
-      <div class="row"><button type="submit" class="primary">${t('createBtn')}</button><button type="button" data-act="cancelCreate">${t('cancel')}</button></div>
-    </form>` : `
-    <button type="button" class="dashed" style="align-self:flex-start" data-act="openCreate">+ ${t('cantFind')}</button>
-    ${flashFor('created')}`;
-  return `<section class="card" aria-label="${t('searchTitle')}">
-    <label for="q" class="display" style="font-size:18px;font-weight:700">${t('searchTitle')}</label>
-    <div class="searchbox">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off">
-    </div>
-    <div id="results" class="stack" style="gap:8px"></div>
-    ${createForm}
-  </section>`;
+      <div class="row"><button type="submit" class="primary">${t('createBtn')}</button><button type="button" class="text" data-act="cancelCreate">${t('cancel')}</button></div>
+    </form>`
+    : `<button type="button" class="text" data-act="openCreate">+ ${t('addMissing')}</button>`;
+  return `<section class="hero">
+      <h1>${t('hero')}</h1>
+      <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
+    </section>
+    <div id="results" class="list"></div>
+    ${create}`;
 }
 
 function renderResults() {
@@ -238,165 +207,144 @@ function renderResults() {
   if (!box) return;
   if (!S.eventsLoaded) { box.innerHTML = `<p class="muted">${t('loading')}</p>`; return; }
   const q = S.q.trim().toLowerCase();
-  const matches = S.events.filter((e) => !q || (e.artist + ' ' + e.venue + ' ' + fmtDate(e.event_date) + ' ' + e.event_date).toLowerCase().includes(q));
+  const matches = S.events.filter((e) => !q || (e.artist + ' ' + e.venue + ' ' + e.event_date).toLowerCase().includes(q));
   if (!matches.length) {
     box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>`;
     return;
   }
-  box.innerHTML = matches.slice(0, 20).map((e) => {
-    const sel = e.id === S.selEv;
-    return `<div class="result ${sel ? 'sel' : ''}">
-      <div class="info"><b>${esc(evLabel(e))}</b>
-        ${e.status === 'pending' ? `<div class="small" style="color:#93370D;font-weight:600">${t('pendingReview')}</div>` : ''}</div>
-      <button type="button" class="${sel ? 'primary' : ''}" aria-pressed="${sel}" data-act="pick" data-id="${e.id}">${sel ? t('viewing') : t('open')}</button>
-    </div>`;
-  }).join('');
-}
-
-function showDay(e) {
-  const vis = visibleListings();
-  const c = (s) => vis.filter((l) => l.status === s).length;
-  return `<section class="card dark" aria-label="${esc(evLabel(e))}">
-    <div class="row between">
-      <span class="live">● ${e.event_date === todayISO() ? t('sdLive') : t('upcoming')}</span>
-      <button type="button" class="ghost-dark" data-act="share">${t('shareLink')}</button>
-    </div>
-    <div><h1>${esc(e.artist)}</h1><p class="muted" style="font-size:15px">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}</p>
-      ${e.status === 'pending' ? `<p class="small" style="color:#FDB022;font-weight:600;margin-top:6px">${t('pendingReview')}</p>` : ''}</div>
-    <div class="stats">
-      <div class="stat"><b>${c('open')}</b><span class="small muted">${t('stOpen')}</span></div>
-      <div class="stat"><b>${c('meeting')}</b><span class="small muted">${t('stMeeting')}</span></div>
-      <div class="stat"><b>${c('done')}</b><span class="small muted">${t('stDone')}</span></div>
-    </div>
-    ${flashFor('share')}
-  </section>`;
+  box.innerHTML = matches.slice(0, 30).map((e) => `
+    <button type="button" class="item" data-act="pick" data-id="${e.id}">
+      <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
+      ${icon.chev}
+    </button>`).join('');
 }
 
 function visibleListings() {
   return S.listings.filter((l) => !S.blocked.includes(l.user_id) || (S.user && l.user_id === S.user.id));
 }
 
-function listingsSection() {
+function eventView(e) {
   const vis = visibleListings();
+  const c = (s) => vis.filter((l) => l.status === s).length;
   const shown = vis.filter((l) => S.tab === 'all' || l.kind === S.tab);
-  const tab = (k, label, n) => `<button type="button" class="pill ${S.tab === k ? 'on' : ''}" data-act="tab" data-id="${k}">${label} ${n}</button>`;
-  const body = !S.listingsLoaded ? `<p class="muted">${t('loading')}</p>`
-    : shown.length ? shown.map(listingCard).join('')
-    : `<div class="card" style="border-style:dashed;text-align:center"><p class="muted">${t('empty')}</p></div>`;
-  return `<section class="stack" aria-label="${t('listingsTitle')}">
-    <div class="row between"><h2>${t('listingsTitle')}</h2>
-      <div class="row">${tab('all', t('all'), vis.length)}${tab('sell', t('has'), vis.filter((l) => l.kind === 'sell').length)}${tab('buy', t('needs'), vis.filter((l) => l.kind === 'buy').length)}</div>
+  const seg = (k, label) => `<button type="button" class="${S.tab === k ? 'on' : ''}" aria-pressed="${S.tab === k}" data-act="tab" data-id="${k}">${label}</button>`;
+  const list = !S.listingsLoaded ? `<p class="muted">${t('loading')}</p>`
+    : shown.length ? shown.map(listingCard).join('') : `<p class="muted empty">${t('empty')}</p>`;
+  return `<div class="row between">
+      <button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button>
+      <button type="button" class="icon-btn" data-act="share" aria-label="${t('copyLink')}" title="${t('copyLink')}">${icon.link}</button>
     </div>
+    <section class="event-head">
+      <h1>${esc(e.artist)}</h1>
+      <p class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
+      <p class="small muted">${esc(t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}</p>
+      ${flashFor('share')}
+    </section>
+    <div class="seg" role="group">${seg('all', t('all'))}${seg('sell', t('has'))}${seg('buy', t('needs'))}</div>
     ${flashFor('list')}
-    ${body}
-  </section>`;
+    <div class="list">${list}</div>
+    ${postArea(e)}`;
 }
 
 function listingCard(l) {
   const sell = l.kind === 'sell';
   const mine = S.user && l.user_id === S.user.id;
   const contact = S.contacts[l.id];
-  const statusLabel = { open: t('stOpen'), meeting: t('stMeeting'), done: t('stDone') }[l.status];
   const n = String(l.qty);
-  let actions = '';
+  const status = l.status === 'meeting' ? `<span class="chip meeting">${t('stMeeting')}</span>` : l.status === 'done' ? `<span class="chip done">${t('stDone')}</span>` : '';
+  let main = '', menu = '';
   if (mine) {
-    if (l.status !== 'done') actions += `<button type="button" class="primary" data-act="advance" data-id="${l.id}">${l.status === 'open' ? t('markMeeting') : t('confirmTransfer')}</button>`;
-    actions += `<button type="button" class="danger" data-act="del" data-id="${l.id}">${t('del')}</button>`;
+    if (l.status !== 'done') main = `<button type="button" class="outline" data-act="advance" data-id="${l.id}">${l.status === 'open' ? t('markMeeting') : t('confirmTransfer')}</button>`;
+    menu = `<button type="button" class="menu-item danger" data-act="del" data-id="${l.id}">${t('del')}</button>`;
   } else {
-    actions += S.user
-      ? `<button type="button" class="primary" data-act="contact" data-id="${l.id}">${contact ? t('hideContact') : t('showContact')}</button>`
-      : `<button type="button" class="primary" data-act="toggleLogin">${t('loginToContact')}</button>`;
-    actions += `<button type="button" data-act="report" data-id="${l.id}" ${S.reported[l.id] ? 'disabled' : ''}>${S.reported[l.id] ? t('reported') : t('report')}</button>`;
-    if (S.user) actions += `<button type="button" class="danger" data-act="block" data-id="${l.user_id}">${t('block')}</button>`;
+    main = S.user
+      ? `<button type="button" class="outline" data-act="contact" data-id="${l.id}" aria-expanded="${!!contact}">${contact ? t('hide') : t('contact')}</button>`
+      : `<button type="button" class="outline" data-act="toggleLogin">${t('contact')}</button>`;
+    menu = `<button type="button" class="menu-item" data-act="report" data-id="${l.id}" ${S.reported[l.id] ? 'disabled' : ''}>${S.reported[l.id] ? t('reported') : t('report')}</button>`
+      + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${l.user_id}">${t('block')}</button>` : '');
   }
-  return `<article class="card">
-    <div class="row between">
-      <div class="row" style="gap:6px">
-        <span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>
-        <span class="chip ${l.status}">${statusLabel}</span>
-        ${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}
+  return `<article class="listing ${l.status === 'done' ? 'is-done' : ''}">
+    <div class="listing-top">
+      <div class="listing-info">
+        <div class="row tight"><span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>${status}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}</div>
+        <h3>${esc(l.section)}</h3>
+        <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)} · ${esc(ago(l.created_at))}</p>
       </div>
-      <span class="small muted">${esc(ago(l.created_at))}</span>
+      <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price)}</div>
     </div>
-    <div><h3>${esc(l.section)}</h3><p class="muted">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))}</p></div>
-    <div class="row" style="gap:24px;align-items:flex-start">
-      <div><div class="small muted">${sell ? t('priceSell') : t('priceBuy')}</div><div class="price">${fmtMoney(l.price)}</div></div>
-      <div><div class="small muted">${t('meetLabel')}</div><div style="font-weight:500;padding-top:4px">${esc(l.meet_point)}</div></div>
+    <div class="row">
+      ${main}
+      <details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details>
     </div>
-    <div class="row">${actions}</div>
-    ${contact ? `<div class="note info">${t('contactPrefix')} <b>${esc(contact)}</b><br><span class="muted">${t('payAfter')}</span></div>` : ''}
+    ${contact ? `<p class="note info"><b>${esc(contact)}</b><br>${t('payAfter')}</p>` : ''}
   </article>`;
 }
 
-function postSection(e) {
-  if (!S.user) {
-    return `<section class="card"><h2>${t('postTitle')}</h2><p class="muted">${t('loginToPost')}</p>
-      <button type="button" class="primary" style="align-self:flex-start" data-act="toggleLogin">${t('login')}</button></section>`;
+function postArea(e) {
+  if (!S.posting) {
+    return `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openPost">${t('postCta')}</button></div>`;
   }
   const sell = S.formKind === 'sell';
-  return `<section class="card" aria-label="${t('postTitle')}">
-    <h2>${t('postTitle')}</h2>
-    <div class="row">
-      <button type="button" class="pill ${sell ? 'on' : ''}" data-act="kind" data-id="sell">${t('iHave')}</button>
-      <button type="button" class="pill ${!sell ? 'on' : ''}" data-act="kind" data-id="buy">${t('iNeed')}</button>
+  return `<form data-form="post" class="panel" aria-label="${t('postCta')}">
+    <div class="row between"><h2>${t('postCta')}</h2><button type="button" class="text" data-act="closePost">${t('cancel')}</button></div>
+    <div class="seg" role="group">
+      <button type="button" class="${sell ? 'on' : ''}" aria-pressed="${sell}" data-act="kind" data-id="sell">${t('iHave')}</button>
+      <button type="button" class="${!sell ? 'on' : ''}" aria-pressed="${!sell}" data-act="kind" data-id="buy">${t('iNeed')}</button>
     </div>
-    <form data-form="post" class="stack">
-      <div class="field"><span style="font-size:14px;font-weight:500">${t('postingTo')}</span>
-        <div class="note info" style="font-weight:500">${esc(evLabel(e))}</div></div>
-      <div class="row" style="align-items:flex-start">
-        <div class="field" style="flex:2 1 220px"><label for="p-section">${t('fSection')}</label><input id="p-section" name="section" maxlength="80" placeholder="${t('phSection')}" required></div>
-        <div class="field" style="flex:1 1 100px"><label for="p-qty">${t('fQty')}</label>
-          <select id="p-qty" name="qty"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
-      </div>
-      <div class="row" style="align-items:flex-start">
-        ${sell ? `<div class="field"><label for="p-original">${t('fOriginal')}</label><input id="p-original" name="original" inputmode="decimal" placeholder="${t('phOriginal')}" required></div>` : ''}
-        <div class="field"><label for="p-price">${sell ? t('askSell') : t('askBuy')}</label><input id="p-price" name="price" inputmode="decimal" placeholder="0.00" required></div>
-      </div>
-      <div id="over-warning" class="note err hidden" role="alert">${t('over')}</div>
-      <div class="row" style="align-items:flex-start">
-        <div class="field"><label for="p-meet">${t('fMeet')}</label><input id="p-meet" name="meet" maxlength="80" placeholder="${t('phMeet')}" required></div>
-        <div class="field"><label for="p-contact">${t('fHandle')}</label><input id="p-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>
-      </div>
-      <div class="row" style="align-items:flex-start;flex-wrap:nowrap;gap:10px">
-        <input id="p-confirm" name="confirm" type="checkbox" required>
-        <label for="p-confirm" style="font-weight:400;color:#344054">${sell ? t('confirmSell') : t('confirmBuy')}</label>
-      </div>
-      ${flashFor('post')}
-      <button type="submit" class="primary" style="align-self:flex-start;min-height:48px;font-size:16px">${t('submit')}</button>
-    </form>
-  </section>`;
+    <div class="grid2">
+      <div class="field"><label for="p-section">${t('fSection')}</label><input id="p-section" name="section" maxlength="80" required></div>
+      <div class="field narrow"><label for="p-qty">${t('fQty')}</label><select id="p-qty" name="qty"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+    </div>
+    <div class="grid2">
+      ${sell ? `<div class="field"><label for="p-original">${t('fOriginal')}</label><input id="p-original" name="original" inputmode="decimal" required></div>` : ''}
+      <div class="field"><label for="p-price">${sell ? t('askSell') : t('askBuy')}</label><input id="p-price" name="price" inputmode="decimal" required></div>
+    </div>
+    <p id="over-warning" class="note err hidden" role="alert">${t('over')}</p>
+    <div class="grid2">
+      <div class="field"><label for="p-meet">${t('fMeet')}</label><input id="p-meet" name="meet" maxlength="80" required></div>
+      <div class="field"><label for="p-contact">${t('fHandle')}</label><input id="p-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>
+    </div>
+    <div class="check"><input id="p-confirm" name="confirm" type="checkbox" required><label for="p-confirm">${sell ? t('confirmSell') : t('confirmBuy')}</label></div>
+    ${flashFor('post')}
+    <button type="submit" class="primary big">${t('submit')}</button>
+  </form>`;
 }
 
 function footer() {
-  const mail = CONTACT_EMAIL.startsWith('YOUR_') ? '' : ` · <a href="mailto:${esc(CONTACT_EMAIL)}">${t('contactUs')}</a>`;
-  return `<footer><b style="color:#101828">${t('safetyTitle')}</b> ${t('safetyBody')}
-    <p style="margin-top:8px"><a href="privacy.html">${t('privacy')}</a>${mail}</p></footer>`;
+  const mail = CONTACT_EMAIL.startsWith('YOUR_') ? '' : `<a href="mailto:${esc(CONTACT_EMAIL)}">${t('contactUs')}</a>`;
+  const standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  const install = standalone ? '' : S.installPrompt ? `<button type="button" class="text small" data-act="install">${t('install')}</button>`
+    : isIOS ? `<span>${t('iosHint')}</span>` : '';
+  return `<footer>
+    <p>${t('footRule')}</p>
+    <p class="row tight">${install}<a href="privacy.html">${t('privacy')}</a>${mail}</p>
+  </footer>`;
 }
 
 function render() {
   const app = document.getElementById('app');
   document.documentElement.lang = HTML_LANG[S.lang];
-  document.title = t('brand');
   if (!CONFIGURED) {
-    app.innerHTML = `<section class="card"><h1>Setup needed</h1><p>Open <code>config.js</code> and paste your Supabase URL and anon key. See README.md, step 3.</p></section>`;
+    app.innerHTML = `<section class="panel"><h1>Setup needed</h1><p>Open <code>config.js</code> and paste your Supabase URL and key. See README.md, step 3.</p></section>`;
     return;
   }
-  app.innerHTML = header() + installBanner() + loginPanel() + searchSection() + `<div id="board"></div>` + footer();
-  renderResults();
-  renderBoard();
+  const e = S.events.find((x) => x.id === S.selEv);
+  document.title = e ? `${e.artist} · ${t('brand')}` : `${t('brand')} · ${t('hero')}`;
+  app.innerHTML = topBar() + loginPanel() + `<div id="main" class="stack"></div>` + footer();
+  renderMain();
 }
 
-function renderBoard() {
-  const board = document.getElementById('board');
-  if (!board) return;
+function renderMain() {
+  const main = document.getElementById('main');
+  if (!main) return;
   const e = S.events.find((x) => x.id === S.selEv);
-  if (!e) { board.innerHTML = S.eventsLoaded ? `<p class="muted">${t('selectEvent')}</p>` : ''; return; }
-  // Keep whatever the user is typing in the post form across live refreshes.
-  const form = board.querySelector('form[data-form="post"]');
+  if (!e) { main.innerHTML = homeView(); renderResults(); return; }
+  // Keep what the user is typing in the post form across live refreshes.
+  const form = main.querySelector('form[data-form="post"]');
   const saved = form ? Object.fromEntries(new FormData(form)) : null;
-  board.innerHTML = `<div class="stack" style="gap:20px">${showDay(e)}${listingsSection()}${postSection(e)}</div>`;
+  main.innerHTML = eventView(e);
   if (saved) {
-    const f = board.querySelector('form[data-form="post"]');
+    const f = main.querySelector('form[data-form="post"]');
     if (f) for (const [k, v] of Object.entries(saved)) {
       const el = f.elements[k];
       if (!el) continue;
@@ -417,52 +365,62 @@ function checkOver() {
 }
 
 // ---------- Actions ----------
+const closeMenus = () => document.querySelectorAll('details.menu[open]').forEach((d) => d.removeAttribute('open'));
 const actions = {
-  lang(id) { S.lang = Number(id); store.set('lang', S.lang); render(); },
-  toggleLogin() { S.showLogin = !S.showLogin; S.flash = null; render(); if (S.showLogin) document.getElementById('login-email')?.focus(); },
+  home() { if (S.selEv) goHome(); },
+  back() { if (history.state && history.state.ev) history.back(); else goHome(); },
+  toggleLogin() {
+    S.showLogin = !S.showLogin; S.flash = null; render();
+    if (S.showLogin) { window.scrollTo(0, 0); document.getElementById('login-email')?.focus(); }
+  },
   async logout() { await sb.auth.signOut(); },
   async install() { if (!S.installPrompt) return; S.installPrompt.prompt(); await S.installPrompt.userChoice; S.installPrompt = null; render(); },
-  installLater() { S.installDismissed = true; store.set('installDismissed', true); render(); },
-  pick(id) { S.flash = null; selectEvent(id); },
+  pick(id) { S.flash = null; openEvent(id); },
   openCreate() {
     S.flash = null;
-    if (!S.user) { S.showLogin = true; flash('login', 'loginToCreate', 'info'); render(); return; }
-    S.creating = true; render(); document.getElementById('new-venue')?.focus();
+    if (!S.user) { actions.toggleLogin(); return; }
+    S.creating = true; renderMain(); document.getElementById('new-venue')?.focus();
   },
-  cancelCreate() { S.creating = false; S.flash = null; render(); },
-  tab(id) { S.tab = id; renderBoard(); },
-  kind(id) { S.formKind = id; S.flash = null; renderBoard(); },
+  cancelCreate() { S.creating = false; S.flash = null; renderMain(); },
+  tab(id) { S.tab = id; renderMain(); },
+  kind(id) { S.formKind = id; S.flash = null; renderMain(); },
+  openPost() {
+    S.flash = null;
+    if (!S.user) { actions.toggleLogin(); return; }
+    S.posting = true; renderMain(); document.getElementById('p-section')?.focus();
+  },
+  closePost() { S.posting = false; S.flash = null; renderMain(); },
   async share() {
     const link = location.origin + location.pathname + '?e=' + S.selEv;
     try { await navigator.clipboard.writeText(link); flash('share', 'copied', 'ok'); }
     catch (e) { S.flash = { area: 'share', text: link, kind: 'info' }; }
-    renderBoard();
+    renderMain();
   },
   async contact(id) {
-    if (S.contacts[id]) { delete S.contacts[id]; renderBoard(); return; }
+    if (S.contacts[id]) { delete S.contacts[id]; renderMain(); return; }
     const { data, error } = await sb.from('listing_contacts').select('contact').eq('listing_id', id).maybeSingle();
-    if (error || !data) { flash('list', 'errGeneric'); } else { S.contacts[id] = data.contact; S.flash = null; }
-    renderBoard();
+    if (error || !data) flash('list', 'errGeneric'); else { S.contacts[id] = data.contact; S.flash = null; }
+    renderMain();
   },
   async report(id) {
-    if (!S.user) { S.showLogin = true; render(); return; }
+    if (!S.user) { actions.toggleLogin(); return; }
     const { error } = await sb.from('reports').insert({ listing_id: id });
-    if (error && error.code !== '23505') { flash('list', 'errGeneric'); }
+    if (error && error.code !== '23505') flash('list', 'errGeneric');
     else { S.reported[id] = true; store.set('reported', S.reported); }
-    renderBoard();
+    renderMain();
   },
-  block(uid) { if (!S.blocked.includes(uid)) S.blocked.push(uid); store.set('blocked', S.blocked); renderBoard(); },
+  block(uid) { if (!S.blocked.includes(uid)) S.blocked.push(uid); store.set('blocked', S.blocked); renderMain(); },
   async advance(id) {
     const l = S.listings.find((x) => x.id === id); if (!l) return;
     const next = l.status === 'open' ? 'meeting' : 'done';
     const { error } = await sb.from('listings').update({ status: next }).eq('id', id);
     if (error) flash('list', 'errGeneric'); else l.status = next;
-    renderBoard();
+    renderMain();
   },
   async del(id) {
     const { error } = await sb.from('listings').delete().eq('id', id);
     if (error) flash('list', 'errGeneric'); else S.listings = S.listings.filter((x) => x.id !== id);
-    renderBoard();
+    renderMain();
   }
 };
 
@@ -479,14 +437,14 @@ const forms = {
     if (!row.artist || !row.venue || !row.event_date) return;
     const { data, error } = await sb.from('events').insert(row).select('id, artist, venue, event_date, status, created_by').single();
     if (error) {
-      flash('create', error.code === '23505' ? 'dupWarn' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric', error.code === '23505' ? 'warn' : 'err');
-      render(); return;
+      const dup = error.code === '23505';
+      flash('create', dup ? 'dupWarn' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric', dup ? 'warn' : 'err');
+      renderMain(); return;
     }
     S.events.push(data);
     S.events.sort((a, b) => a.event_date.localeCompare(b.event_date));
-    S.creating = false; S.q = '';
-    flash('created', 'created', 'ok');
-    selectEvent(data.id);
+    S.creating = false; S.q = ''; S.flash = null;
+    openEvent(data.id);
   },
   async post(f) {
     const d = new FormData(f);
@@ -496,7 +454,7 @@ const forms = {
     const section = String(d.get('section') || '').trim();
     const meet = String(d.get('meet') || '').trim();
     const contact = String(d.get('contact') || '').trim();
-    if (!section || !meet || !contact || !(price > 0) || (sell && !(original > 0)) || d.get('confirm') !== 'on') { flash('post', 'fillAll'); renderBoard(); return; }
+    if (!section || !meet || !contact || !(price > 0) || (sell && !(original > 0)) || d.get('confirm') !== 'on') { flash('post', 'fillAll'); renderMain(); return; }
     if (sell && price > original) { checkOver(); return; }
     const { error } = await sb.rpc('create_listing', {
       p_event: S.selEv, p_kind: S.formKind, p_section: section, p_qty: Number(d.get('qty')),
@@ -504,21 +462,21 @@ const forms = {
     });
     if (error) {
       flash('post', error.code === '23514' ? 'over' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric');
-      renderBoard(); return;
+      renderMain(); return;
     }
-    f.reset();
-    flash('post', 'posted', 'ok');
+    S.posting = false;
+    flash('posted', 'posted', 'ok');
     await loadListings();
-    const board = document.getElementById('board');
-    if (board) board.innerHTML = '';
-    renderBoard();
+    renderMain();
   }
 };
 
 // ---------- Wiring ----------
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
+  if (!e.target.closest('details.menu')) closeMenus();
   if (!b || b.disabled) return;
+  closeMenus();
   const fn = actions[b.dataset.act];
   if (fn) fn(b.dataset.id);
 });
@@ -532,6 +490,13 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('input', (e) => {
   if (e.target.id === 'q') { S.q = e.target.value; renderResults(); }
   if (e.target.id === 'p-price' || e.target.id === 'p-original') checkOver();
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'lang') { S.lang = Number(e.target.value); store.set('lang', S.lang); render(); }
+});
+window.addEventListener('popstate', () => {
+  const id = new URLSearchParams(location.search).get('e');
+  if (id && S.events.some((x) => x.id === id)) openEvent(id, false); else goHome(false);
 });
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); S.installPrompt = e; render(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -550,10 +515,12 @@ async function start() {
     }
   });
   await loadEvents();
-  const wanted = new URLSearchParams(location.search).get('e') || store.get('lastEvent', null);
-  const fromLink = wanted && S.events.find((e) => e.id === wanted);
-  const tonight = S.events.find((e) => e.event_date === todayISO());
-  const first = fromLink || tonight;
-  if (first) await selectEvent(first.id); else render();
+  const wanted = new URLSearchParams(location.search).get('e');
+  if (wanted && UUID.test(wanted) && S.events.some((x) => x.id === wanted)) {
+    history.replaceState({ ev: wanted }, '', location.pathname + '?e=' + wanted);
+    await openEvent(wanted, false);
+  } else {
+    render();
+  }
 }
 start();
