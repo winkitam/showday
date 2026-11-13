@@ -9,7 +9,8 @@ const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { 
 // ---------- Text: [English, 繁體中文, 한국어] ----------
 const T = {
   brand: ['Show Day', 'Show Day', 'Show Day'],
-  hero: ['Same-day tickets at face value', '當日演出票，原價轉讓', '공연 당일 티켓, 정가 거래'],
+  hero: ['Today’s show tickets at face value or less', '今日演出門票・原價或以下讓票', '오늘 공연 티켓을 원가 이하로 양도해요'],
+  heroSub: ['Meet in person near the venue', '場館附近面交', '공연장 근처에서 직거래해요'],
   searchPh: ['Search artist or city', '搜尋藝人或城市', '아티스트 또는 도시 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
   loginTitle: ['Log in', '登入', '로그인'],
@@ -64,18 +65,18 @@ const T = {
   postCta: ['Post a listing', '發佈貼文', '글 올리기'],
   iHave: ['Selling', '我有票', '판매'], iNeed: ['Looking', '求票', '구함'],
   fSection: ['Section or standing', '區域或企位', '구역 또는 스탠딩'], fQty: ['Qty', '數量', '수량'],
-  fOriginal: ['Face value ({c})', '原價（{c}）', '정가 ({c})'],
+  fOriginal: ['Face value ({c})', '原價（{c}）', '원가 ({c})'],
   askSell: ['Your price ({c})', '要價（{c}）', '희망 가격 ({c})'], askBuy: ['Max you pay ({c})', '最高願付（{c}）', '최대 지불 ({c})'],
-  over: ['Above face value. Lower the price.', '高於原價，請調低價格。', '정가 초과. 가격을 낮춰 주세요.'],
+  over: ['Above face value. Lower the price.', '高於原價，請調低價格。', '원가 초과. 가격을 낮춰 주세요.'],
   fMeet: ['Meeting point', '面交地點', '만날 장소'], fHandle: ['Your contact', '你的聯絡方式', '연락처'],
   phHandle: ['@instagram or WhatsApp', '@IG 或 WhatsApp', '@인스타그램 또는 WhatsApp'],
-  confirmSell: ['I bought it myself, the price is at or below face value, and I will transfer it through the official app.', '票是我自己買的，價格不高於原價，並會透過官方 App 轉讓。', '직접 구매했고 정가 이하이며 공식 앱으로 양도합니다.'],
-  confirmBuy: ['I will not pay above face value, and only after the transfer.', '我不會付高於原價，並在轉讓後才付款。', '정가 이하로, 양도 후에만 결제합니다.'],
+  confirmSell: ['I bought it myself, the price is face value or less, and I will transfer it through the official app.', '票是我自己買的，價格不高於原價，並會透過官方 App 轉讓。', '직접 구매했고 원가 이하이며 공식 앱으로 양도합니다.'],
+  confirmBuy: ['I will not pay above face value, and only after the transfer.', '我不會付高於原價，並在轉讓後才付款。', '원가 이하로, 양도 후에만 결제합니다.'],
   submit: ['Post', '發佈', '올리기'], posted: ['Posted.', '已發佈。', '게시됨.'],
   fillAll: ['Fill in every field and tick the box.', '請填寫所有欄位並勾選。', '모든 항목을 입력하고 체크해 주세요.'],
   errGeneric: ['Something went wrong. Try again.', '出現問題，請再試。', '문제가 생겼어요. 다시 시도해 주세요.'],
   errRate: ['Too many posts. Try later.', '發佈太頻繁，請稍後再試。', '너무 많아요. 나중에 시도해 주세요.'],
-  footRule: ['Face value only. Meet in person. Never pay in advance.', '只限原價。當面交易。切勿預付。', '정가 거래만. 직접 만나서. 선결제 금지.'],
+  footRule: ['Face value only. Meet in person. Never pay in advance.', '只限原價。當面交易。切勿預付。', '원가 거래만. 직접 만나서. 선결제 금지.'],
   install: ['Add to Home Screen', '加入主畫面', '홈 화면에 추가'],
   iosHint: ['In Safari, tap Share, then Add to Home Screen.', '在 Safari 按「分享」，再選「加入主畫面」。', 'Safari에서 공유 → 홈 화면에 추가.'],
   navBoard: ['Board', '票板', '게시판'], navSwap: ['Seat swap', '換位', '좌석 교환'], navBuddies: ['Buddies', '同行', '동행'], navMerch: ['Merch', '周邊', '굿즈'], navMe: ['Me', '我的', '내 정보'],
@@ -86,7 +87,7 @@ const T = {
   swapCta: ['Offer a swap', '發佈換位', '교환 올리기'],
   fHave: ['Your ticket', '你的票', '내 티켓'], fWant: ['Ticket you want', '想換的票', '원하는 티켓'],
   phHave: ['Standing', '企位', '스탠딩'], phWant: ['Any seat, block 100s', '100 區任何座位', '100번대 구역 좌석'],
-  confirmSwap: ['Both tickets have a similar face value. No money will change hands.', '兩張票原價相近，不涉及金錢。', '두 티켓의 정가가 비슷하고 돈은 오가지 않아요.'],
+  confirmSwap: ['Both tickets have a similar face value. No money will change hands.', '兩張票原價相近，不涉及金錢。', '두 티켓의 원가가 비슷하고 돈은 오가지 않아요.'],
   hasLabel: ['Has', '有', '보유'], wantsLabel: ['Wants', '想換', '원함'],
   buddySub: ['Going solo? Find fans at the same show.', '一個人去？找同場的粉絲。', '혼자 가나요? 같은 공연 팬을 찾아요.'],
   buddyCta: ['I am going solo', '我一個人去', '혼자 가요'],
@@ -112,7 +113,7 @@ const T = {
   fDesc: ['Description (optional)', '描述（選填）', '설명 (선택)'],
   phDescTicket: ['e.g. Paper ticket, can meet before 6pm', '例如：實體票，6 點前可面交', '예: 종이 티켓, 6시 전 만남 가능'],
   phDescSwap: ['e.g. Row 3 near the stage, can meet at the gate', '例如：第 3 排近舞台，可在入口面交', '예: 무대 근처 3열, 입구에서 만남 가능'],
-  fMerchEvent: ['Meet at a concert (optional)', '在演出現場交收（選填）', '공연장에서 거래 (선택)'],
+  fMerchEvent: ['Meet at a concert (optional)', '在演出現場面交（選填）', '공연장에서 거래 (선택)'],
   noConcert: ['Not for a specific concert', '不限演出', '특정 공연 아님'],
   otherItems: ['Other items', '其他物品', '다른 물품'],
   postsN: ['{n} posts', '{n} 則', '{n}개'],
@@ -404,7 +405,7 @@ function homeView() {
     : `<button type="button" class="text" data-act="openCreate">+ ${t('addMissing')}</button>`;
   const heads = { swap: ['navSwap', 'swapSub'], buddy: ['navBuddies', 'buddySub'], merch: ['navMerch', 'merchSub'] }[S.view];
   return `<section class="hero">
-      <h1>${heads ? t(heads[0]) : t('hero')}</h1>${heads ? `<p class="sub muted">${t(heads[1])}</p>` : ''}
+      <h1>${heads ? t(heads[0]) : t('hero')}</h1><p class="sub muted">${heads ? t(heads[1]) : t('heroSub')}</p>
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
     </section>
     <div id="results" class="list"></div>
