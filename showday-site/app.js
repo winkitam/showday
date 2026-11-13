@@ -109,6 +109,12 @@ const T = {
   typeListing: ['Ticket', '門票', '티켓'], typeSwap: ['Swap', '換位', '교환'], typeBuddy: ['Buddy', '同行', '동행'], typeMerch: ['Merch', '周邊', '굿즈'],
   needLoginMe: ['Log in to see your posts and settings.', '登入後查看你的貼文和設定。', '로그인하면 내 게시글과 설정을 볼 수 있어요.'],
   errSetup: ['This section is not set up yet.', '此功能尚未設定。', '아직 준비 중이에요.'],
+  fDesc: ['Description (optional)', '描述（選填）', '설명 (선택)'],
+  phDescTicket: ['e.g. Paper ticket, can meet before 6pm', '例如：實體票，6 點前可面交', '예: 종이 티켓, 6시 전 만남 가능'],
+  phDescSwap: ['e.g. Row 3 near the stage, can meet at the gate', '例如：第 3 排近舞台，可在入口面交', '예: 무대 근처 3열, 입구에서 만남 가능'],
+  fMerchEvent: ['Meet at a concert (optional)', '在演出現場交收（選填）', '공연장에서 거래 (선택)'],
+  noConcert: ['Not for a specific concert', '不限演出', '특정 공연 아님'],
+  otherItems: ['Other items', '其他物品', '다른 물품'],
   feedback: ['Feedback', '意見回饋', '의견 보내기'],
   feedbackTitle: ['Send feedback', '發送意見', '의견 보내기'],
   feedbackSub: ['Ideas, bugs or problems. Only the Show Day team can read this.', '建議、問題或錯誤，只有 Show Day 團隊看得到。', '아이디어, 버그, 문제 등. Show Day 팀만 볼 수 있어요.'],
@@ -205,6 +211,7 @@ const S = {
   postQ: '',
   newDates: 1,
   feedbackOpen: false,
+  v5: false,
   draft: null
 };
 function guessLang() {
@@ -228,7 +235,7 @@ async function loadEvents() {
 async function loadListings() {
   if (!S.selEv) return;
   const { data, error } = await sb.from('listings')
-    .select('id, event_id, user_id, kind, section, qty, original_price, price, meet_point, status, hidden, created_at')
+    .select('id, event_id, user_id, kind, section, qty, original_price, price, meet_point, status, hidden, created_at' + (S.v5 ? ', note' : ''))
     .eq('event_id', S.selEv)
     .order('created_at', { ascending: false })
     .limit(200);
@@ -236,11 +243,16 @@ async function loadListings() {
   S.listingsLoaded = true;
 }
 const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
+const EV_EMBED = 'events(artist, city, venue, event_date, currency)';
 const ITEM_COLS = {
-  swap: 'id, event_id, user_id, have, want, status, hidden, created_at, events(artist, city, venue, event_date, currency)',
-  buddy: 'id, event_id, user_id, note, hidden, created_at, events(artist, city, venue, event_date, currency)',
-  merch: 'id, user_id, kind, title, details, price, status, hidden, created_at'
+  get swap() { return `id, event_id, user_id, have, want, status, hidden, created_at, ${S.v5 ? 'note, ' : ''}${EV_EMBED}`; },
+  get buddy() { return `id, event_id, user_id, note, hidden, created_at, ${EV_EMBED}`; },
+  get merch() { return `id, user_id, kind, title, details, price, status, hidden, created_at${S.v5 ? ', event_id, ' + EV_EMBED : ''}`; }
 };
+async function detectV5() {
+  const { error } = await sb.from('listings').select('note').limit(1);
+  S.v5 = !error;
+}
 async function loadCounts() {
   const ids = S.events.filter((e) => e.event_date === todayISO()).map((e) => e.id);
   S.counts = {};
@@ -477,7 +489,7 @@ function listingCard(l) {
     <div class="listing-top">
       <div class="listing-info">
         <div class="row tight"><span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>${status}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}</div>
-        <h3>${esc(l.section)}</h3>
+        <h3>${esc(l.section)}</h3>${l.note ? `<p class="desc">${esc(l.note)}</p>` : ''}
         <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)} · ${esc(ago(l.created_at))}</p>
       </div>
       <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, (S.events.find((x) => x.id === l.event_id) || {}).currency)}</div>
@@ -514,6 +526,7 @@ function postArea(e) {
       <div class="field"><label for="p-meet">${t('fMeet')}</label><input id="p-meet" name="meet" maxlength="80" required></div>
       <div class="field"><label for="p-contact">${t('fHandle')}</label><input id="p-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>
     </div>
+    ${S.v5 ? `<div class="field"><label for="p-note">${t('fDesc')}</label><textarea id="p-note" name="note" rows="2" maxlength="200" placeholder="${t('phDescTicket')}"></textarea></div>` : ''}
     <div class="check"><input id="p-confirm" name="confirm" type="checkbox" required><label for="p-confirm">${sell ? t('confirmSell') : t('confirmBuy')}</label></div>
     ${flashFor('post')}
     <button type="submit" class="primary big">${t('submit')}</button>
@@ -537,13 +550,14 @@ function itemCard(type, it) {
   let body = '';
   if (type === 'swap') {
     body = `<p class="muted small">${esc(evName(it.events))}</p>
-      <div class="swap-row"><div><span class="small muted">${t('hasLabel')}</span><b>${esc(it.have)}</b></div>${icon.swap}<div><span class="small muted">${t('wantsLabel')}</span><b>${esc(it.want)}</b></div></div>`;
+      <div class="swap-row"><div><span class="small muted">${t('hasLabel')}</span><b>${esc(it.have)}</b></div>${icon.swap}<div><span class="small muted">${t('wantsLabel')}</span><b>${esc(it.want)}</b></div></div>
+      ${it.note ? `<p class="desc">${esc(it.note)}</p>` : ''}`;
   } else if (type === 'buddy') {
     body = `<p class="muted small">${esc(evName(it.events))}</p><p>${esc(it.note)}</p>`;
   } else {
     body = `<div class="listing-top"><div class="listing-info">
         <div class="row tight"><span class="chip ${it.kind === 'swap' ? 'buy' : 'sell'}">${it.kind === 'swap' ? t('forSwap') : t('forSale')}</span></div>
-        <h3>${esc(it.title)}</h3>${it.details ? `<p class="muted small">${esc(it.details)}</p>` : ''}</div>
+        <h3>${esc(it.title)}</h3>${it.details ? `<p class="desc">${esc(it.details)}</p>` : ''}${it.events ? `<p class="muted small">${esc(evName(it.events))}</p>` : ''}</div>
         ${it.kind === 'sale' && it.price != null ? `<div class="price">${fmtMoney(it.price)}</div>` : ''}</div>`;
   }
   let main = '', menu = '';
@@ -566,10 +580,10 @@ function itemCard(type, it) {
   </article>`;
 }
 
-function eventOptions() {
+function eventOptions(noPreselect) {
   const today = todayISO();
   const list = S.events.filter((e) => e.event_date >= today);
-  return list.map((e) => `<option value="${e.id}" ${e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
+  return list.map((e) => `<option value="${e.id}" ${!noPreselect && e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
 }
 
 function composer(type) {
@@ -580,7 +594,8 @@ function composer(type) {
   if (type === 'swap') {
     fields = `<div class="grid2">
       <div class="field"><label for="c-have">${t('fHave')}</label><input id="c-have" name="have" maxlength="80" placeholder="${t('phHave')}" required></div>
-      <div class="field"><label for="c-want">${t('fWant')}</label><input id="c-want" name="want" maxlength="80" placeholder="${t('phWant')}" required></div></div>`;
+      <div class="field"><label for="c-want">${t('fWant')}</label><input id="c-want" name="want" maxlength="80" placeholder="${t('phWant')}" required></div></div>
+      ${S.v5 ? `<div class="field"><label for="c-desc">${t('fDesc')}</label><textarea id="c-desc" name="desc" rows="2" maxlength="200" placeholder="${t('phDescSwap')}"></textarea></div>` : ''}`;
     confirm = t('confirmSwap');
   } else if (type === 'buddy') {
     fields = `<div class="field"><label for="c-note">${t('fNote')}</label><input id="c-note" name="note" maxlength="140" placeholder="${t('phNote')}" required></div>`;
@@ -592,7 +607,8 @@ function composer(type) {
       <div class="grid2">
         <div class="field"><label for="c-title">${t('fTitle')}</label><input id="c-title" name="title" maxlength="80" placeholder="${t('phTitle')}" required></div>
         ${sale ? `<div class="field"><label for="c-price">${t('fPrice', { c: curSym('GBP') })}</label><input id="c-price" name="price" inputmode="decimal" required></div>` : ''}</div>
-      <div class="field"><label for="c-details">${t('fDetails')}</label><input id="c-details" name="details" maxlength="200" placeholder="${t('phDetails')}"></div>`;
+      <div class="field"><label for="c-details">${t('fDetails')}</label><textarea id="c-details" name="details" rows="2" maxlength="200" placeholder="${t('phDetails')}"></textarea></div>
+      ${S.v5 && S.events.some((e) => e.event_date >= todayISO()) ? `<div class="field"><label for="c-mevent">${t('fMerchEvent')}</label><select id="c-mevent" name="mevent"><option value="">${t('noConcert')}</option>${eventOptions(true)}</select></div>` : ''}`;
     confirm = t('confirmMerch');
   }
   const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
@@ -618,7 +634,15 @@ function itemsView(type) {
     const q = S.postQ.trim().toLowerCase();
     const shown = data.filter((x) => (!S.blocked.includes(x.user_id) || (S.user && x.user_id === S.user.id))
       && (!q || (type === 'merch' ? (x.title + ' ' + (x.details || '')) : evName(x.events)).toLowerCase().includes(q)));
-    list = shown.length ? shown.map((x) => itemCard(type, x)).join('') : `<p class="muted empty">${t('noPosts')}</p>`;
+    const today = todayISO();
+    const tonight = shown.filter((x) => x.events && x.events.event_date === today);
+    const rest = shown.filter((x) => !(x.events && x.events.event_date === today));
+    const sd = tonight.length ? `<section class="showday sd-posts" aria-label="${t('showDay')}">
+        <p class="live">● ${t('showDay')}</p>
+        ${tonight.map((x) => itemCard(type, x)).join('')}
+      </section>` : '';
+    list = !shown.length ? `<p class="muted empty">${t('noPosts')}</p>`
+      : sd + (rest.length ? (sd ? `<h2 class="list-title">${type === 'merch' ? t('otherItems') : t('upcoming')}</h2>` : '') + rest.map((x) => itemCard(type, x)).join('') : '');
   }
   return `<section class="event-head"><h1>${t(title)}</h1><p class="sub">${t(sub)}</p></section>
     <div class="searchbox small-search">${icon.search}<input id="postq" type="search" aria-label="${type === 'merch' ? t('filterMerchPh') : t('filterPh')}" placeholder="${type === 'merch' ? t('filterMerchPh') : t('filterPh')}" value="${esc(S.postQ)}" autocomplete="off"></div>
@@ -894,15 +918,17 @@ const forms = {
     const d = new FormData(f);
     const val = (k) => String(d.get(k) || '').trim();
     let row;
-    if (type === 'swap') row = { event_id: val('event'), have: val('have'), want: val('want'), contact: val('contact') };
+    if (type === 'swap') { row = { event_id: val('event'), have: val('have'), want: val('want'), contact: val('contact') }; if (S.v5 && val('desc')) row.note = val('desc'); }
     else if (type === 'buddy') row = { event_id: val('event'), note: val('note'), contact: val('contact') };
     else {
       const price = S.merchKind === 'sale' ? parseFloat(val('price')) : null;
       row = { kind: S.merchKind, title: val('title'), details: val('details') || null, price, contact: val('contact') };
+      if (S.v5 && val('mevent')) row.event_id = val('mevent');
       if (S.merchKind === 'sale' && !(price >= 0)) { flash('compose', 'fillAll'); renderMain(); return; }
     }
     const needConfirm = type !== 'buddy';
-    if (Object.entries(row).some(([k, v]) => ['event_id', 'have', 'want', 'note', 'title', 'contact'].includes(k) && !v) || (needConfirm && d.get('confirm') !== 'on')) {
+    const required = { swap: ['event_id', 'have', 'want', 'contact'], buddy: ['event_id', 'note', 'contact'], merch: ['title', 'contact'] }[type];
+    if (required.some((k) => !row[k]) || (needConfirm && d.get('confirm') !== 'on')) {
       flash('compose', 'fillAll'); renderMain(); return;
     }
     if (row.event_id) S.selEvForm = row.event_id;
@@ -987,7 +1013,8 @@ const forms = {
     if (sell && price > original) { checkOver(); return; }
     const { error } = await sb.rpc('create_listing', {
       p_event: S.selEv, p_kind: S.formKind, p_section: section, p_qty: Number(d.get('qty')),
-      p_original: original, p_price: price, p_meet: meet, p_contact: contact
+      p_original: original, p_price: price, p_meet: meet, p_contact: contact,
+      ...(S.v5 ? { p_note: String(d.get('note') || '').trim() || null } : {})
     });
     if (error) {
       flash('post', error.code === '23514' ? 'over' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric');
@@ -1057,6 +1084,7 @@ async function start() {
     }
   });
   await checkAdmin();
+  await detectV5();
   await loadEvents();
   await loadCounts();
   const params = new URLSearchParams(location.search);
