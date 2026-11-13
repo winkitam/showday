@@ -2,6 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, CONTACT_EMAIL } from './config.js';
 
 const CONFIGURED = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
+// Captured before the client reads the URL, so a password-reset link is recognised.
+const RECOVERY = /type=recovery/.test(location.hash);
 const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } }) : null;
 
 // ---------- Text: [English, 繁體中文, 한국어] ----------
@@ -10,7 +12,24 @@ const T = {
   hero: ['Same-day tickets at face value', '當日演出票，原價轉讓', '공연 당일 티켓, 정가 거래'],
   searchPh: ['Search artist or venue', '搜尋藝人或場館', '아티스트 또는 공연장 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
-  loginTitle: ['Log in with email', '以電郵登入', '이메일로 로그인'],
+  loginTitle: ['Log in', '登入', '로그인'],
+  signupTitle: ['Create an account', '建立帳號', '계정 만들기'],
+  resetTitle: ['Reset your password', '重設密碼', '비밀번호 재설정'],
+  newPwTitle: ['Set a new password', '設定新密碼', '새 비밀번호 설정'],
+  password: ['Password', '密碼', '비밀번호'], pwHint: ['At least 8 characters', '最少 8 個字元', '8자 이상'],
+  createAccount: ['Create account', '建立帳號', '계정 만들기'],
+  toSignup: ['New here? Create an account', '新用戶？建立帳號', '처음이세요? 계정 만들기'],
+  toLogin: ['Have an account? Log in', '已有帳號？登入', '계정이 있나요? 로그인'],
+  forgot: ['Forgot password?', '忘記密碼？', '비밀번호를 잊으셨나요?'],
+  sendReset: ['Send reset link', '發送重設連結', '재설정 링크 보내기'],
+  resetSent: ['Check your email for a reset link.', '請查看電郵中的重設連結。', '메일에서 재설정 링크를 확인하세요.'],
+  savePw: ['Save password', '儲存密碼', '비밀번호 저장'],
+  pwSaved: ['Password saved. You are logged in.', '密碼已儲存，你已登入。', '비밀번호가 저장되었어요. 로그인되었어요.'],
+  errCreds: ['Wrong email or password.', '電郵或密碼錯誤。', '이메일 또는 비밀번호가 틀렸어요.'],
+  errConfirm: ['Confirm your email first. Check your inbox.', '請先到電郵確認帳號。', '먼저 이메일에서 계정을 확인해 주세요.'],
+  errShortPw: ['Password must be at least 8 characters.', '密碼最少要 8 個字元。', '비밀번호는 8자 이상이어야 해요.'],
+  errExists: ['This email already has an account. Log in, or reset your password.', '此電郵已有帳號，請登入或重設密碼。', '이미 가입된 이메일이에요. 로그인하거나 비밀번호를 재설정하세요.'],
+  signupSent: ['Almost done. Tap the confirmation link in your email, then you are logged in.', '快完成了。請按電郵中的確認連結，之後就會登入。', '거의 다 됐어요. 이메일의 확인 링크를 누르면 로그인돼요.'],
   email: ['Email', '電郵', '이메일'], sendLink: ['Send login link', '發送登入連結', '로그인 링크 보내기'],
   linkSent: ['Check your inbox and tap the link.', '請查看電郵並按下連結。', '메일함에서 링크를 눌러 주세요.'],
   cancel: ['Cancel', '取消', '취소'],
@@ -103,6 +122,8 @@ const S = {
   posting: false,
   creating: false,
   showLogin: false,
+  authMode: 'login',
+  recovery: RECOVERY,
   contacts: {},
   reported: store.get('reported', {}),
   blocked: store.get('blocked', []),
@@ -173,12 +194,31 @@ function topBar() {
 }
 
 function loginPanel() {
+  if (S.recovery && S.user) {
+    return `<form data-form="newpw" class="panel" aria-label="${t('newPwTitle')}">
+      <label for="new-pw">${t('newPwTitle')}</label>
+      <input id="new-pw" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="${t('pwHint')}" required>
+      ${flashFor('login')}
+      <button type="submit" class="primary">${t('savePw')}</button>
+    </form>`;
+  }
   if (S.user || !S.showLogin) return '';
-  return `<form data-form="login" class="panel" aria-label="${t('loginTitle')}">
-    <label for="login-email">${t('loginTitle')}</label>
+  const m = S.authMode;
+  const title = m === 'signup' ? t('signupTitle') : m === 'reset' ? t('resetTitle') : t('loginTitle');
+  const submit = m === 'signup' ? t('createAccount') : m === 'reset' ? t('sendReset') : t('loginTitle');
+  const pw = m === 'reset' ? '' : `<label for="login-pw" class="sr-only">${t('password')}</label>
+      <input id="login-pw" name="password" type="password" autocomplete="${m === 'signup' ? 'new-password' : 'current-password'}" minlength="8" placeholder="${m === 'signup' ? t('pwHint') : t('password')}" required>`;
+  const links = m === 'login'
+    ? `<button type="button" class="text" data-act="authMode" data-id="signup">${t('toSignup')}</button><button type="button" class="text" data-act="authMode" data-id="reset">${t('forgot')}</button>`
+    : `<button type="button" class="text" data-act="authMode" data-id="login">${t('toLogin')}</button>`;
+  return `<form data-form="login" class="panel" aria-label="${title}">
+    <h2>${title}</h2>
+    <label for="login-email" class="sr-only">${t('email')}</label>
     <input id="login-email" name="email" type="email" autocomplete="email" placeholder="${t('email')}" required>
+    ${pw}
     ${flashFor('login')}
-    <div class="row"><button type="submit" class="primary">${t('sendLink')}</button><button type="button" class="text" data-act="toggleLogin">${t('cancel')}</button></div>
+    <button type="submit" class="primary">${submit}</button>
+    <div class="row tight">${links}<button type="button" class="text" data-act="toggleLogin">${t('cancel')}</button></div>
   </form>`;
 }
 
@@ -330,7 +370,7 @@ function render() {
   }
   const e = S.events.find((x) => x.id === S.selEv);
   document.title = e ? `${e.artist} · ${t('brand')}` : `${t('brand')} · ${t('hero')}`;
-  app.innerHTML = topBar() + loginPanel() + `<div id="main" class="stack"></div>` + footer();
+  app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer();
   renderMain();
 }
 
@@ -365,12 +405,17 @@ function checkOver() {
 }
 
 // ---------- Actions ----------
+const keepEmail = (email) => { const el = document.getElementById('login-email'); if (el && email) el.value = email; };
 const closeMenus = () => document.querySelectorAll('details.menu[open]').forEach((d) => d.removeAttribute('open'));
 const actions = {
   home() { if (S.selEv) goHome(); },
   back() { if (history.state && history.state.ev) history.back(); else goHome(); },
+  authMode(id) {
+    const email = document.getElementById('login-email')?.value || '';
+    S.authMode = id; S.flash = null; render(); keepEmail(email);
+  },
   toggleLogin() {
-    S.showLogin = !S.showLogin; S.flash = null; render();
+    S.showLogin = !S.showLogin; S.flash = null; S.authMode = 'login'; render();
     if (S.showLogin) { window.scrollTo(0, 0); document.getElementById('login-email')?.focus(); }
   },
   async logout() { await sb.auth.signOut(); },
@@ -426,9 +471,35 @@ const actions = {
 
 const forms = {
   async login(f) {
-    const email = new FormData(f).get('email');
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname + (S.selEv ? '?e=' + S.selEv : '') } });
-    if (error) flash('login', 'errGeneric'); else flash('login', 'linkSent', 'ok');
+    const d = new FormData(f);
+    const email = String(d.get('email') || '').trim();
+    const password = String(d.get('password') || '');
+    const back = location.origin + location.pathname + (S.selEv ? '?e=' + S.selEv : '');
+    if (S.authMode !== 'reset' && password.length < 8) { flash('login', 'errShortPw'); render(); keepEmail(email); return; }
+    if (S.authMode === 'login') {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (!error) return; // onAuthStateChange re-renders
+      flash('login', /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
+    } else if (S.authMode === 'signup') {
+      const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: back } });
+      if (error) flash('login', /registered|exists/i.test(error.message) ? 'errExists' : 'errGeneric');
+      else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) flash('login', 'errExists', 'warn');
+      else if (data.session) return; // confirmation is off: already logged in
+      else flash('login', 'signupSent', 'ok');
+    } else {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+      if (error) flash('login', 'errGeneric'); else flash('login', 'resetSent', 'ok');
+    }
+    render(); keepEmail(email);
+  },
+  async newpw(f) {
+    const password = String(new FormData(f).get('password') || '');
+    if (password.length < 8) { flash('login', 'errShortPw'); render(); return; }
+    const { error } = await sb.auth.updateUser({ password });
+    if (error) { flash('login', 'errGeneric'); render(); return; }
+    S.recovery = false;
+    history.replaceState(history.state, '', location.pathname + location.search);
+    flash('top', 'pwSaved', 'ok');
     render();
   },
   async create(f) {
@@ -506,7 +577,8 @@ async function start() {
   if (!CONFIGURED) return;
   const { data } = await sb.auth.getSession();
   S.user = data.session ? data.session.user : null;
-  sb.auth.onAuthStateChange(async (_evt, session) => {
+  sb.auth.onAuthStateChange(async (evt, session) => {
+    if (evt === 'PASSWORD_RECOVERY') { S.recovery = true; S.showLogin = false; }
     const before = S.user && S.user.id;
     S.user = session ? session.user : null;
     if ((S.user && S.user.id) !== before) {

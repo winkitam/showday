@@ -3,7 +3,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } });
 
-const S = { user: null, admin: false, tab: 'concerts', pending: [], reported: [], loaded: false, armed: null, note: null, linkSent: false };
+const S = { user: null, admin: false, tab: 'concerts', pending: [], reported: [], loaded: false, armed: null, note: null };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -40,10 +40,13 @@ function render() {
   if (!S.user) {
     body = `<form data-form="login" class="panel">
       <h1>Admin</h1>
-      <label for="email">Log in with your admin email</label>
+      <label for="email">Email</label>
       <input id="email" name="email" type="email" autocomplete="email" required>
-      ${S.linkSent ? '<p class="note ok" role="status">Check your inbox and tap the link.</p>' : ''}
-      <button type="submit" class="primary big">Send login link</button>
+      <label for="pw">Password</label>
+      <input id="pw" name="password" type="password" autocomplete="current-password" required>
+      ${noteHtml()}
+      <button type="submit" class="primary big">Log in</button>
+      <a class="small" href="./">No password yet, or forgot it? Use "Forgot password?" on the main site.</a>
     </form>`;
   } else if (!S.admin) {
     body = `<section class="panel"><h1>Not allowed</h1>
@@ -143,10 +146,13 @@ async function setHidden(id, hidden) {
 
 const forms = {
   async login(f) {
-    const email = new FormData(f).get('email');
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-    S.linkSent = !error;
+    const d = new FormData(f);
+    const email = String(d.get('email') || '').trim();
+    const { error } = await sb.auth.signInWithPassword({ email, password: String(d.get('password') || '') });
+    if (!error) { location.reload(); return; }
+    setNote(/invalid/i.test(error.message) ? 'Wrong email or password.' : error.message, 'err');
     render();
+    const el = document.getElementById('email'); if (el) el.value = email;
   },
   async approve(f) {
     const id = f.dataset.id;

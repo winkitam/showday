@@ -21,7 +21,7 @@ Time: about 1 to 2 hours the first time.
 - Every concert has its own link (`yoursite.com/?e=...`) to share on IG, Threads and WhatsApp
 - Listings: has ticket / needs ticket, live updates without refreshing
 - Face-value rule enforced by the database: a sell price above the original price is rejected
-- Login by email link (no passwords)
+- Login with email and password (sign up, log in, forgot password)
 - Contact details only visible to logged-in users
 - Status: Available, Meeting now, Handed over
 - Report (auto-hides a listing after 3 reports), block, delete your own post
@@ -87,7 +87,7 @@ Never paste the **service_role** key anywhere in this folder. Only the anon key.
 4. Save.
 5. Check **Authentication > Sign In / Providers > Email** is enabled.
 
-Test it: open your site, tap **Log in**, enter your email, tap the link in the email. You should come back logged in.
+Test it: open your site, tap **Log in > Create an account**, confirm via the email, and you are logged in. After that you log in with your password. **Forgot password?** emails a reset link that brings you back to set a new one.
 
 > 中文說明：這一步告訴 Supabase 登入後要把用戶帶回哪個網址。沒設定的話，登入連結會失效。
 
