@@ -28,6 +28,7 @@ const T = {
   errCreds: ['Wrong email or password.', '電郵或密碼錯誤。', '이메일 또는 비밀번호가 틀렸어요.'],
   errConfirm: ['Confirm your email first. Check your inbox.', '請先到電郵確認帳號。', '먼저 이메일에서 계정을 확인해 주세요.'],
   errShortPw: ['Password must be at least 8 characters.', '密碼最少要 8 個字元。', '비밀번호는 8자 이상이어야 해요.'],
+  errEmailLimit: ['Too many emails sent. Wait a few minutes and try again.', '寄出的電郵太多，請等幾分鐘再試。', '이메일을 너무 많이 보냈어요. 몇 분 후 다시 시도해 주세요.'],
   errExists: ['This email already has an account. Log in, or reset your password.', '此電郵已有帳號，請登入或重設密碼。', '이미 가입된 이메일이에요. 로그인하거나 비밀번호를 재설정하세요.'],
   signupSent: ['Almost done. Tap the confirmation link in your email, then you are logged in.', '快完成了。請按電郵中的確認連結，之後就會登入。', '거의 다 됐어요. 이메일의 확인 링크를 누르면 로그인돼요.'],
   email: ['Email', '電郵', '이메일'], sendLink: ['Send login link', '發送登入連結', '로그인 링크 보내기'],
@@ -73,6 +74,37 @@ const T = {
   footRule: ['Face value only. Meet in person. Never pay in advance.', '只限原價。當面交易。切勿預付。', '정가 거래만. 직접 만나서. 선결제 금지.'],
   install: ['Add to Home Screen', '加入主畫面', '홈 화면에 추가'],
   iosHint: ['In Safari, tap Share, then Add to Home Screen.', '在 Safari 按「分享」，再選「加入主畫面」。', 'Safari에서 공유 → 홈 화면에 추가.'],
+  navBoard: ['Board', '票板', '게시판'], navSwap: ['Seat swap', '換位', '좌석 교환'], navBuddies: ['Buddies', '同行', '동행'], navMerch: ['Merch', '周邊', '굿즈'], navMe: ['Me', '我的', '내 정보'],
+  showDay: ['SHOW DAY', '今日演出', '오늘 공연'], availableN: ['{n} available', '{n} 張可交易', '거래 가능 {n}'],
+  upcoming: ['Upcoming', '即將舉行', '예정'],
+  approve: ['Approve concert', '批准演出', '공연 승인'], approvedMsg: ['Approved. Everyone can see it now.', '已批准，所有人都看得到。', '승인됨. 이제 모두에게 보여요.'],
+  swapSub: ['Ticket for ticket. No money changes hands.', '以票換票，不涉及金錢。', '티켓끼리 교환. 돈은 오가지 않아요.'],
+  swapCta: ['Offer a swap', '發佈換位', '교환 올리기'],
+  fHave: ['Your ticket', '你的票', '내 티켓'], fWant: ['Ticket you want', '想換的票', '원하는 티켓'],
+  phHave: ['Standing', '企位', '스탠딩'], phWant: ['Any seat, block 100s', '100 區任何座位', '100번대 구역 좌석'],
+  confirmSwap: ['Both tickets have a similar face value. No money will change hands.', '兩張票原價相近，不涉及金錢。', '두 티켓의 정가가 비슷하고 돈은 오가지 않아요.'],
+  hasLabel: ['Has', '有', '보유'], wantsLabel: ['Wants', '想換', '원함'],
+  buddySub: ['Going solo? Find fans at the same show.', '一個人去？找同場的粉絲。', '혼자 가나요? 같은 공연 팬을 찾아요.'],
+  buddyCta: ['I am going solo', '我一個人去', '혼자 가요'],
+  fNote: ['A line about you', '介紹一下自己', '한 줄 소개'],
+  phNote: ['First time at this venue, happy to queue together', '第一次來這個場館，想找人一起排隊', '이 공연장은 처음이에요. 같이 줄 서요'],
+  merchSub: ['Swap or sell fan goods. No tickets here.', '交換或出售周邊，此區不可放票。', '굿즈 교환·판매. 티켓은 안 돼요.'],
+  merchCta: ['Post an item', '發佈周邊', '굿즈 올리기'],
+  forSwap: ['Swap', '交換', '교환'], forSale: ['For sale', '出售', '판매'],
+  fTitle: ['Item', '物品', '물품'], phTitle: ['[MEMBER] photocard', '[成員] 小卡', '[멤버] 포토카드'],
+  fDetails: ['Details (optional)', '詳情（選填）', '상세 (선택)'], phDetails: ['Condition, what you want in return', '狀況、想換什麼', '상태, 원하는 교환품'],
+  fPrice: ['Price (£)', '價格（£）', '가격 (£)'], confirmMerch: ['This is not a ticket.', '這不是門票。', '티켓이 아니에요.'],
+  markDone: ['Mark as done', '標記為完成', '완료로 표시'], doneLabel: ['Done', '已完成', '완료'],
+  fEvent: ['Concert', '演出', '공연'], noUpcoming: ['Add the concert on the Board tab first.', '請先在「票板」新增演出。', '먼저 게시판에서 공연을 추가하세요.'],
+  noPosts: ['Nothing yet.', '暫時沒有內容。', '아직 없어요.'],
+  filterPh: ['Filter by artist or venue', '按藝人或場館篩選', '아티스트 또는 공연장으로 필터'],
+  filterMerchPh: ['Search items', '搜尋物品', '물품 검색'],
+  myPosts: ['My posts', '我的貼文', '내 게시글'], adminPage: ['Admin page', '管理頁面', '관리자 페이지'],
+  blockedN: ['{n} blocked users', '已封鎖 {n} 位用戶', '차단한 사용자 {n}명'], unblockAll: ['Unblock all', '全部解除封鎖', '모두 차단 해제'],
+  changePw: ['Change password', '更改密碼', '비밀번호 변경'], loggedInAs: ['Logged in as', '已登入：', '로그인:'],
+  typeListing: ['Ticket', '門票', '티켓'], typeSwap: ['Swap', '換位', '교환'], typeBuddy: ['Buddy', '同行', '동행'], typeMerch: ['Merch', '周邊', '굿즈'],
+  needLoginMe: ['Log in to see your posts and settings.', '登入後查看你的貼文和設定。', '로그인하면 내 게시글과 설정을 볼 수 있어요.'],
+  errSetup: ['This section is not set up yet.', '此功能尚未設定。', '아직 준비 중이에요.'],
   privacy: ['Privacy', '私隱政策', '개인정보'], contactUs: ['Contact us', '聯絡我們', '문의']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
@@ -106,6 +138,11 @@ const icon = {
   back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
   link: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
   dots: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  board: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/></svg>',
+  swap: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"/></svg>',
+  buddies: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 5 5"/></svg>',
+  merch: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
+  me: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   chev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
 };
 
@@ -129,7 +166,15 @@ const S = {
   blocked: store.get('blocked', []),
   flash: null,
   installPrompt: null,
-  channel: null
+  channel: null,
+  view: 'board',
+  isAdmin: false,
+  counts: {},
+  items: { swap: null, buddy: null, merch: null },
+  mine: null,
+  composing: false,
+  merchKind: 'swap',
+  postQ: ''
 };
 function guessLang() {
   const l = (navigator.language || 'en').toLowerCase();
@@ -159,6 +204,57 @@ async function loadListings() {
   if (!error) S.listings = data.filter((l) => !l.hidden || (S.user && l.user_id === S.user.id));
   S.listingsLoaded = true;
 }
+const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
+const ITEM_COLS = {
+  swap: 'id, event_id, user_id, have, want, status, hidden, created_at, events(artist, venue, event_date)',
+  buddy: 'id, event_id, user_id, note, hidden, created_at, events(artist, venue, event_date)',
+  merch: 'id, user_id, kind, title, details, price, status, hidden, created_at'
+};
+async function loadCounts() {
+  const ids = S.events.filter((e) => e.event_date === todayISO()).map((e) => e.id);
+  S.counts = {};
+  if (!ids.length) return;
+  const { data, error } = await sb.from('listings').select('event_id').in('event_id', ids).eq('status', 'open');
+  if (!error) data.forEach((r) => { S.counts[r.event_id] = (S.counts[r.event_id] || 0) + 1; });
+}
+async function loadItems(type) {
+  const { data, error } = await sb.from(TABLE[type]).select(ITEM_COLS[type]).order('created_at', { ascending: false }).limit(200);
+  if (error) { S.items[type] = { error: true }; return; }
+  const today = todayISO();
+  S.items[type] = data.filter((x) => (!x.hidden || (S.user && x.user_id === S.user.id))
+    && (type === 'merch' || (x.events && x.events.event_date >= today)));
+  if (type !== 'merch') S.items[type].sort((a, b) => a.events.event_date.localeCompare(b.events.event_date));
+}
+async function loadMine() {
+  if (!S.user) { S.mine = null; return; }
+  const uid = S.user.id;
+  const [l, sw, bu, me] = await Promise.all([
+    sb.from('listings').select('id, kind, section, price, status, created_at, events(artist, venue, event_date)').eq('user_id', uid).order('created_at', { ascending: false }),
+    sb.from('swaps').select(ITEM_COLS.swap).eq('user_id', uid).order('created_at', { ascending: false }),
+    sb.from('buddies').select(ITEM_COLS.buddy).eq('user_id', uid).order('created_at', { ascending: false }),
+    sb.from('merch').select(ITEM_COLS.merch).eq('user_id', uid).order('created_at', { ascending: false })
+  ]);
+  S.mine = [
+    ...(l.data || []).map((x) => ({ type: 'listing', ...x })),
+    ...(sw.data || []).map((x) => ({ type: 'swap', ...x })),
+    ...(bu.data || []).map((x) => ({ type: 'buddy', ...x })),
+    ...(me.data || []).map((x) => ({ type: 'merch', ...x }))
+  ].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+async function checkAdmin() {
+  if (!S.user) { S.isAdmin = false; return; }
+  const { data } = await sb.rpc('is_admin');
+  S.isAdmin = data === true;
+}
+async function setView(v, push = true) {
+  if (v === 'board') { S.view = 'board'; goHome(push); return; }
+  S.view = v; S.selEv = null; S.composing = false; S.flash = null; S.postQ = '';
+  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
+  if (push) history.pushState({ v }, '', location.pathname + '?v=' + v);
+  render(); window.scrollTo(0, 0);
+  if (v === 'me') await loadMine(); else await loadItems(v);
+  renderMain();
+}
 function subscribe() {
   if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   if (!S.selEv) return;
@@ -168,6 +264,7 @@ function subscribe() {
     .subscribe();
 }
 async function openEvent(id, push = true) {
+  S.view = 'board';
   S.selEv = id; S.listings = []; S.listingsLoaded = false; S.contacts = {};
   S.tab = 'all'; S.posting = false; S.creating = false;
   if (push) history.pushState({ ev: id }, '', location.pathname + '?e=' + id);
@@ -175,6 +272,7 @@ async function openEvent(id, push = true) {
   await loadListings(); subscribe(); renderMain();
 }
 function goHome(push = true) {
+  S.view = 'board';
   S.selEv = null; S.posting = false; S.flash = null;
   if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   if (push) history.pushState({}, '', location.pathname);
@@ -252,6 +350,25 @@ function renderResults() {
     box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>`;
     return;
   }
+  const row = (e) => `
+    <button type="button" class="item" data-act="pick" data-id="${e.id}">
+      <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
+      ${icon.chev}
+    </button>`;
+  if (!q) {
+    const today = todayISO();
+    const tonight = matches.filter((e) => e.event_date === today);
+    const later = matches.filter((e) => e.event_date !== today);
+    const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
+        <p class="live">● ${t('showDay')}</p>
+        ${tonight.map((e) => `<button type="button" class="sd-item" data-act="pick" data-id="${e.id}">
+          <span class="item-main"><b>${esc(e.artist)}</b><span>${esc(e.venue)}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
+          <span class="sd-count">${esc(t('availableN', { n: S.counts[e.id] || 0 }))}</span>
+        </button>`).join('')}
+      </section>` : '';
+    box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + later.slice(0, 30).map(row).join('') : '');
+    return;
+  }
   box.innerHTML = matches.slice(0, 30).map((e) => `
     <button type="button" class="item" data-act="pick" data-id="${e.id}">
       <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
@@ -274,10 +391,12 @@ function eventView(e) {
       <button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button>
       <button type="button" class="icon-btn" data-act="share" aria-label="${t('copyLink')}" title="${t('copyLink')}">${icon.link}</button>
     </div>
-    <section class="event-head">
+    <section class="event-head ${e.event_date === todayISO() ? 'showday' : ''}">
+      ${e.event_date === todayISO() ? `<p class="live">● ${t('showDay')}</p>` : ''}
       <h1>${esc(e.artist)}</h1>
-      <p class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
-      <p class="small muted">${esc(t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}</p>
+      <p class="sub">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
+      <p class="small sub">${esc(t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}</p>
+      ${S.isAdmin && e.status === 'pending' ? `<button type="button" class="primary" style="align-self:flex-start" data-act="approveEvent">${t('approve')}</button>` : ''}
       ${flashFor('share')}
     </section>
     <div class="seg" role="group">${seg('all', t('all'))}${seg('sell', t('has'))}${seg('buy', t('needs'))}</div>
@@ -350,6 +469,142 @@ function postArea(e) {
   </form>`;
 }
 
+function tabBar() {
+  const tabs = [['board', 'navBoard'], ['swap', 'navSwap'], ['buddy', 'navBuddies'], ['merch', 'navMerch'], ['me', 'navMe']];
+  const ic = { board: icon.board, swap: icon.swap, buddy: icon.buddies, merch: icon.merch, me: icon.me };
+  return `<nav class="tabbar" aria-label="Sections">${tabs.map(([v, k]) =>
+    `<button type="button" data-act="nav" data-id="${v}" ${S.view === v ? 'aria-current="page" class="on"' : ''}>${ic[v]}<span>${t(k)}</span></button>`).join('')}</nav>`;
+}
+
+function evName(ev) { return ev ? `${ev.artist} · ${ev.venue} · ${fmtDate(ev.event_date)}` : ''; }
+
+function itemCard(type, it) {
+  const mine = S.user && it.user_id === S.user.id;
+  const key = type + ':' + it.id;
+  const contact = S.contacts[key];
+  const done = it.status === 'done';
+  let body = '';
+  if (type === 'swap') {
+    body = `<p class="muted small">${esc(evName(it.events))}</p>
+      <div class="swap-row"><div><span class="small muted">${t('hasLabel')}</span><b>${esc(it.have)}</b></div>${icon.swap}<div><span class="small muted">${t('wantsLabel')}</span><b>${esc(it.want)}</b></div></div>`;
+  } else if (type === 'buddy') {
+    body = `<p class="muted small">${esc(evName(it.events))}</p><p>${esc(it.note)}</p>`;
+  } else {
+    body = `<div class="listing-top"><div class="listing-info">
+        <div class="row tight"><span class="chip ${it.kind === 'swap' ? 'buy' : 'sell'}">${it.kind === 'swap' ? t('forSwap') : t('forSale')}</span></div>
+        <h3>${esc(it.title)}</h3>${it.details ? `<p class="muted small">${esc(it.details)}</p>` : ''}</div>
+        ${it.kind === 'sale' && it.price != null ? `<div class="price">${fmtMoney(it.price)}</div>` : ''}</div>`;
+  }
+  let main = '', menu = '';
+  if (mine) {
+    if (type !== 'buddy' && !done) main = `<button type="button" class="outline" data-act="itemDone" data-id="${key}">${t('markDone')}</button>`;
+    menu = `<button type="button" class="menu-item danger" data-act="itemDel" data-id="${key}">${t('del')}</button>`;
+  } else {
+    main = S.user
+      ? `<button type="button" class="outline" data-act="itemContact" data-id="${key}" aria-expanded="${!!contact}">${contact ? t('hide') : t('contact')}</button>`
+      : `<button type="button" class="outline" data-act="toggleLogin">${t('contact')}</button>`;
+    menu = `<button type="button" class="menu-item" data-act="itemReport" data-id="${key}" ${S.reported[key] ? 'disabled' : ''}>${S.reported[key] ? t('reported') : t('report')}</button>`
+      + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${it.user_id}">${t('block')}</button>` : '');
+  }
+  return `<article class="listing ${done ? 'is-done' : ''}">
+    ${mine || done ? `<div class="row tight">${done ? `<span class="chip done">${t('doneLabel')}</span>` : ''}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}</div>` : ''}
+    ${body}
+    <div class="row">${main}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
+    ${contact ? `<p class="note info"><b>${esc(contact)}</b>${type === 'merch' ? `<br>${t('footRule')}` : ''}</p>` : ''}
+    <p class="small muted">${esc(ago(it.created_at))}</p>
+  </article>`;
+}
+
+function eventOptions() {
+  const today = todayISO();
+  const list = S.events.filter((e) => e.event_date >= today);
+  return list.map((e) => `<option value="${e.id}" ${e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(e.venue)} · ${esc(fmtDate(e.event_date))}</option>`).join('');
+}
+
+function composer(type) {
+  const pickEv = type !== 'merch' ? (S.events.some((e) => e.event_date >= todayISO())
+    ? `<div class="field"><label for="c-event">${t('fEvent')}</label><select id="c-event" name="event" required>${eventOptions()}</select></div>`
+    : `<p class="note warn">${t('noUpcoming')}</p>`) : '';
+  let fields = '', confirm = '';
+  if (type === 'swap') {
+    fields = `<div class="grid2">
+      <div class="field"><label for="c-have">${t('fHave')}</label><input id="c-have" name="have" maxlength="80" placeholder="${t('phHave')}" required></div>
+      <div class="field"><label for="c-want">${t('fWant')}</label><input id="c-want" name="want" maxlength="80" placeholder="${t('phWant')}" required></div></div>`;
+    confirm = t('confirmSwap');
+  } else if (type === 'buddy') {
+    fields = `<div class="field"><label for="c-note">${t('fNote')}</label><input id="c-note" name="note" maxlength="140" placeholder="${t('phNote')}" required></div>`;
+  } else {
+    const sale = S.merchKind === 'sale';
+    fields = `<div class="seg" role="group">
+        <button type="button" class="${!sale ? 'on' : ''}" aria-pressed="${!sale}" data-act="merchKind" data-id="swap">${t('forSwap')}</button>
+        <button type="button" class="${sale ? 'on' : ''}" aria-pressed="${sale}" data-act="merchKind" data-id="sale">${t('forSale')}</button></div>
+      <div class="grid2">
+        <div class="field"><label for="c-title">${t('fTitle')}</label><input id="c-title" name="title" maxlength="80" placeholder="${t('phTitle')}" required></div>
+        ${sale ? `<div class="field"><label for="c-price">${t('fPrice')}</label><input id="c-price" name="price" inputmode="decimal" required></div>` : ''}</div>
+      <div class="field"><label for="c-details">${t('fDetails')}</label><input id="c-details" name="details" maxlength="200" placeholder="${t('phDetails')}"></div>`;
+    confirm = t('confirmMerch');
+  }
+  const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
+  return `<form data-form="item" data-type="${type}" class="panel" aria-label="${t(cta)}">
+    <div class="row between"><h2>${t(cta)}</h2><button type="button" class="text" data-act="closeCompose">${t('cancel')}</button></div>
+    ${pickEv}${fields}
+    <div class="field"><label for="c-contact">${t('fHandle')}</label><input id="c-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>
+    ${confirm ? `<div class="check"><input id="c-confirm" name="confirm" type="checkbox" required><label for="c-confirm">${confirm}</label></div>` : ''}
+    ${flashFor('compose')}
+    <button type="submit" class="primary big">${t('submit')}</button>
+  </form>`;
+}
+
+function itemsView(type) {
+  const title = { swap: 'navSwap', buddy: 'navBuddies', merch: 'navMerch' }[type];
+  const sub = { swap: 'swapSub', buddy: 'buddySub', merch: 'merchSub' }[type];
+  const cta = { swap: 'swapCta', buddy: 'buddyCta', merch: 'merchCta' }[type];
+  const data = S.items[type];
+  let list;
+  if (data === null) list = `<p class="muted">${t('loading')}</p>`;
+  else if (data.error) list = `<p class="muted empty">${t('errSetup')}</p>`;
+  else {
+    const q = S.postQ.trim().toLowerCase();
+    const shown = data.filter((x) => (!S.blocked.includes(x.user_id) || (S.user && x.user_id === S.user.id))
+      && (!q || (type === 'merch' ? (x.title + ' ' + (x.details || '')) : evName(x.events)).toLowerCase().includes(q)));
+    list = shown.length ? shown.map((x) => itemCard(type, x)).join('') : `<p class="muted empty">${t('noPosts')}</p>`;
+  }
+  return `<section class="event-head"><h1>${t(title)}</h1><p class="sub">${t(sub)}</p></section>
+    <div class="searchbox small-search">${icon.search}<input id="postq" type="search" aria-label="${type === 'merch' ? t('filterMerchPh') : t('filterPh')}" placeholder="${type === 'merch' ? t('filterMerchPh') : t('filterPh')}" value="${esc(S.postQ)}" autocomplete="off"></div>
+    ${flashFor('list')}
+    <div class="list" id="items">${list}</div>
+    ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(cta)}</button></div>`}`;
+}
+
+function meView() {
+  if (!S.user) {
+    return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('needLoginMe')}</p></section>
+      <button type="button" class="primary big" data-act="toggleLogin">${t('login')}</button>`;
+  }
+  const typeLabel = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch' };
+  const describe = (x) => x.type === 'listing' ? `${x.section} · ${fmtMoney(x.price)}`
+    : x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : x.title;
+  const posts = S.mine === null ? `<p class="muted">${t('loading')}</p>`
+    : S.mine.length ? S.mine.map((x) => `<div class="mine-row">
+        <div class="item-main"><span class="small muted">${t(typeLabel[x.type])}${x.events ? ' · ' + esc(evName(x.events)) : ''}</span><b>${esc(describe(x))}</b>
+          ${x.hidden ? `<span class="small warn-text">${t('reported')}</span>` : ''}</div>
+        <button type="button" class="text danger" data-act="mineDel" data-id="${x.type}:${x.id}">${t('del')}</button>
+      </div>`).join('') : `<p class="muted">${t('noPosts')}</p>`;
+  return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('loggedInAs')} ${esc(S.user.email)}</p></section>
+    ${flashFor('me')}
+    ${S.isAdmin ? `<a class="outline-link" href="admin.html">${t('adminPage')}</a>` : ''}
+    <h2 class="list-title">${t('myPosts')}</h2>
+    <div class="list">${posts}</div>
+    <details class="panel collapse"><summary>${t('changePw')}</summary>
+      <form data-form="changepw" class="stack" style="gap:12px;margin-top:12px">
+        <input name="password" type="password" autocomplete="new-password" minlength="8" placeholder="${t('pwHint')}" aria-label="${t('password')}" required>
+        <button type="submit" class="primary">${t('savePw')}</button>
+      </form>
+    </details>
+    ${S.blocked.length ? `<div class="row between"><span class="muted">${esc(t('blockedN', { n: S.blocked.length }))}</span><button type="button" class="text" data-act="unblockAll">${t('unblockAll')}</button></div>` : ''}
+    <button type="button" class="outline" data-act="logout">${t('logout')}</button>`;
+}
+
 function footer() {
   const mail = CONTACT_EMAIL.startsWith('YOUR_') ? '' : `<a href="mailto:${esc(CONTACT_EMAIL)}">${t('contactUs')}</a>`;
   const standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
@@ -370,13 +625,22 @@ function render() {
   }
   const e = S.events.find((x) => x.id === S.selEv);
   document.title = e ? `${e.artist} · ${t('brand')}` : `${t('brand')} · ${t('hero')}`;
-  app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer();
+  app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer() + tabBar();
   renderMain();
 }
 
 function renderMain() {
   const main = document.getElementById('main');
   if (!main) return;
+  if (S.view === 'me') { main.innerHTML = meView(); return; }
+  if (S.view !== 'board') {
+    const cf = main.querySelector('form[data-form="item"]');
+    const keep = cf ? Object.fromEntries(new FormData(cf)) : null;
+    main.innerHTML = itemsView(S.view);
+    const nf = main.querySelector('form[data-form="item"]');
+    if (keep && nf) for (const [k, v] of Object.entries(keep)) { const el = nf.elements[k]; if (el) { if (el.type === 'checkbox') el.checked = v === 'on'; else el.value = v; } }
+    return;
+  }
   const e = S.events.find((x) => x.id === S.selEv);
   if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   // Keep what the user is typing in the post form across live refreshes.
@@ -405,10 +669,61 @@ function checkOver() {
 }
 
 // ---------- Actions ----------
+const isRateLimit = (e) => e && (e.status === 429 || /rate limit|security purposes|seconds/i.test(e.message || ''));
 const keepEmail = (email) => { const el = document.getElementById('login-email'); if (el && email) el.value = email; };
 const closeMenus = () => document.querySelectorAll('details.menu[open]').forEach((d) => d.removeAttribute('open'));
+const parseKey = (k) => { const i = k.indexOf(':'); return [k.slice(0, i), k.slice(i + 1)]; };
 const actions = {
-  home() { if (S.selEv) goHome(); },
+  home() { setView('board'); },
+  nav(v) { if (v === S.view && v !== 'board') return; setView(v); },
+  async approveEvent() {
+    const { error } = await sb.from('events').update({ status: 'approved' }).eq('id', S.selEv);
+    if (error) flash('share', 'errGeneric');
+    else { const e = S.events.find((x) => x.id === S.selEv); if (e) e.status = 'approved'; flash('share', 'approvedMsg', 'ok'); }
+    renderMain();
+  },
+  openCompose() {
+    S.flash = null;
+    if (!S.user) { actions.toggleLogin(); return; }
+    S.composing = true; S.selEvForm = S.selEvForm || (S.events.find((e) => e.event_date === todayISO()) || {}).id;
+    renderMain(); document.querySelector('form[data-form="item"] input:not([type=checkbox])')?.focus();
+  },
+  closeCompose() { S.composing = false; S.flash = null; renderMain(); },
+  merchKind(id) { S.merchKind = id; renderMain(); },
+  async itemContact(key) {
+    if (S.contacts[key]) { delete S.contacts[key]; renderMain(); return; }
+    const [type, id] = parseKey(key);
+    const { data, error } = await sb.from(TABLE[type]).select('contact').eq('id', id).maybeSingle();
+    if (error || !data) flash('list', 'errGeneric'); else { S.contacts[key] = data.contact; S.flash = null; }
+    renderMain();
+  },
+  async itemReport(key) {
+    if (!S.user) { actions.toggleLogin(); return; }
+    const [type, id] = parseKey(key);
+    const { error } = await sb.from('item_reports').insert({ item_type: type, item_id: id });
+    if (error && error.code !== '23505') flash('list', 'errGeneric');
+    else { S.reported[key] = true; store.set('reported', S.reported); }
+    renderMain();
+  },
+  async itemDone(key) {
+    const [type, id] = parseKey(key);
+    const { error } = await sb.from(TABLE[type]).update({ status: 'done' }).eq('id', id);
+    if (error) flash('list', 'errGeneric'); else { const x = (S.items[type] || []).find((i) => i.id === id); if (x) x.status = 'done'; }
+    renderMain();
+  },
+  async itemDel(key) {
+    const [type, id] = parseKey(key);
+    const { error } = await sb.from(TABLE[type]).delete().eq('id', id);
+    if (error) flash('list', 'errGeneric'); else S.items[type] = (S.items[type] || []).filter((i) => i.id !== id);
+    renderMain();
+  },
+  async mineDel(key) {
+    const [type, id] = parseKey(key);
+    const { error } = await sb.from(type === 'listing' ? 'listings' : TABLE[type]).delete().eq('id', id);
+    if (error) flash('me', 'errGeneric'); else S.mine = S.mine.filter((x) => !(x.type === type && x.id === id));
+    renderMain();
+  },
+  unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
   back() { if (history.state && history.state.ev) history.back(); else goHome(); },
   authMode(id) {
     const email = document.getElementById('login-email')?.value || '';
@@ -454,7 +769,7 @@ const actions = {
     else { S.reported[id] = true; store.set('reported', S.reported); }
     renderMain();
   },
-  block(uid) { if (!S.blocked.includes(uid)) S.blocked.push(uid); store.set('blocked', S.blocked); renderMain(); },
+  block(uid) { if (!S.blocked.includes(uid)) S.blocked.push(uid); store.set('blocked', S.blocked); closeMenus(); renderMain(); },
   async advance(id) {
     const l = S.listings.find((x) => x.id === id); if (!l) return;
     const next = l.status === 'open' ? 'meeting' : 'done';
@@ -470,6 +785,37 @@ const actions = {
 };
 
 const forms = {
+  async item(f) {
+    const type = f.dataset.type;
+    const d = new FormData(f);
+    const val = (k) => String(d.get(k) || '').trim();
+    let row;
+    if (type === 'swap') row = { event_id: val('event'), have: val('have'), want: val('want'), contact: val('contact') };
+    else if (type === 'buddy') row = { event_id: val('event'), note: val('note'), contact: val('contact') };
+    else {
+      const price = S.merchKind === 'sale' ? parseFloat(val('price')) : null;
+      row = { kind: S.merchKind, title: val('title'), details: val('details') || null, price, contact: val('contact') };
+      if (S.merchKind === 'sale' && !(price >= 0)) { flash('compose', 'fillAll'); renderMain(); return; }
+    }
+    const needConfirm = type !== 'buddy';
+    if (Object.entries(row).some(([k, v]) => ['event_id', 'have', 'want', 'note', 'title', 'contact'].includes(k) && !v) || (needConfirm && d.get('confirm') !== 'on')) {
+      flash('compose', 'fillAll'); renderMain(); return;
+    }
+    if (row.event_id) S.selEvForm = row.event_id;
+    const { error } = await sb.from(TABLE[type]).insert(row);
+    if (error) { flash('compose', /Too many/.test(error.message) ? 'errRate' : 'errGeneric'); renderMain(); return; }
+    S.composing = false;
+    flash('posted', 'posted', 'ok');
+    await loadItems(type);
+    renderMain();
+  },
+  async changepw(f) {
+    const password = String(new FormData(f).get('password') || '');
+    if (password.length < 8) { flash('me', 'errShortPw'); renderMain(); return; }
+    const { error } = await sb.auth.updateUser({ password });
+    flash('me', error ? 'errGeneric' : 'pwSaved', error ? 'err' : 'ok');
+    renderMain();
+  },
   async login(f) {
     const d = new FormData(f);
     const email = String(d.get('email') || '').trim();
@@ -479,16 +825,16 @@ const forms = {
     if (S.authMode === 'login') {
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (!error) return; // onAuthStateChange re-renders
-      flash('login', /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
+      flash('login', isRateLimit(error) ? 'errEmailLimit' : /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
     } else if (S.authMode === 'signup') {
       const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: back } });
-      if (error) flash('login', /registered|exists/i.test(error.message) ? 'errExists' : 'errGeneric');
+      if (error) flash('login', isRateLimit(error) ? 'errEmailLimit' : /registered|exists/i.test(error.message) ? 'errExists' : 'errGeneric');
       else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) flash('login', 'errExists', 'warn');
       else if (data.session) return; // confirmation is off: already logged in
       else flash('login', 'signupSent', 'ok');
     } else {
       const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-      if (error) flash('login', 'errGeneric'); else flash('login', 'resetSent', 'ok');
+      if (error) flash('login', isRateLimit(error) ? 'errEmailLimit' : 'errGeneric'); else flash('login', 'resetSent', 'ok');
     }
     render(); keepEmail(email);
   },
@@ -560,14 +906,24 @@ document.addEventListener('submit', (e) => {
 });
 document.addEventListener('input', (e) => {
   if (e.target.id === 'q') { S.q = e.target.value; renderResults(); }
+  if (e.target.id === 'postq') {
+    S.postQ = e.target.value;
+    const box = document.getElementById('items');
+    if (box) { const tmp = document.createElement('div'); tmp.innerHTML = itemsView(S.view); const nb = tmp.querySelector('#items'); if (nb) box.innerHTML = nb.innerHTML; }
+  }
+  if (e.target.id === 'c-event') S.selEvForm = e.target.value;
   if (e.target.id === 'p-price' || e.target.id === 'p-original') checkOver();
 });
 document.addEventListener('change', (e) => {
   if (e.target.id === 'lang') { S.lang = Number(e.target.value); store.set('lang', S.lang); render(); }
 });
+const VIEWS = ['swap', 'buddy', 'merch', 'me'];
 window.addEventListener('popstate', () => {
-  const id = new URLSearchParams(location.search).get('e');
-  if (id && S.events.some((x) => x.id === id)) openEvent(id, false); else goHome(false);
+  const p = new URLSearchParams(location.search);
+  const id = p.get('e'); const v = p.get('v');
+  if (id && S.events.some((x) => x.id === id)) openEvent(id, false);
+  else if (VIEWS.includes(v)) setView(v, false);
+  else goHome(false);
 });
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); S.installPrompt = e; render(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -583,14 +939,22 @@ async function start() {
     S.user = session ? session.user : null;
     if ((S.user && S.user.id) !== before) {
       S.showLogin = false; S.contacts = {};
-      await loadEvents(); await loadListings(); render();
+      await checkAdmin(); await loadEvents(); await loadCounts(); await loadListings();
+      if (S.view === 'me') await loadMine(); else if (S.view !== 'board') await loadItems(S.view);
+      render();
     }
   });
+  await checkAdmin();
   await loadEvents();
-  const wanted = new URLSearchParams(location.search).get('e');
+  await loadCounts();
+  const params = new URLSearchParams(location.search);
+  const wanted = params.get('e');
+  const v = params.get('v');
   if (wanted && UUID.test(wanted) && S.events.some((x) => x.id === wanted)) {
     history.replaceState({ ev: wanted }, '', location.pathname + '?e=' + wanted);
     await openEvent(wanted, false);
+  } else if (VIEWS.includes(v)) {
+    await setView(v, false);
   } else {
     render();
   }

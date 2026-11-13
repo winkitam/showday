@@ -30,6 +30,29 @@ async function load() {
     S.reported = (data || []).map((l) => ({ ...l, reports: counts[l.id] || 0 }))
       .sort((a, b) => (b.hidden - a.hidden) || (b.reports - a.reports));
   }
+  // Seat swaps, buddies and merch (needs supabase/002_tabs.sql)
+  S.items = [];
+  const ir = await sb.from('item_reports').select('item_type, item_id');
+  if (!ir.error) {
+    const ic = {};
+    (ir.data || []).forEach((r) => { const k = r.item_type + ':' + r.item_id; ic[k] = (ic[k] || 0) + 1; });
+    const TBL = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
+    for (const type of Object.keys(TBL)) {
+      const cols = type === 'merch' ? 'id, title, details, price, contact, hidden, created_at' : type === 'swap'
+        ? 'id, have, want, contact, hidden, created_at, events(artist, venue, event_date)' : 'id, note, contact, hidden, created_at, events(artist, venue, event_date)';
+      const reportedIds = Object.keys(ic).filter((k) => k.startsWith(type + ':')).map((k) => k.slice(type.length + 1));
+      const [a, b] = await Promise.all([
+        reportedIds.length ? sb.from(TBL[type]).select(cols).in('id', reportedIds) : Promise.resolve({ data: [] }),
+        sb.from(TBL[type]).select(cols).eq('hidden', true)
+      ]);
+      const seen = new Set();
+      [...(a.data || []), ...(b.data || [])].forEach((x) => {
+        if (seen.has(x.id)) return; seen.add(x.id);
+        S.items.push({ ...x, type, reports: ic[type + ':' + x.id] || 0 });
+      });
+    }
+    S.items.sort((a, b) => (b.hidden - a.hidden) || (b.reports - a.reports));
+  }
   S.loaded = true;
 }
 
@@ -53,7 +76,7 @@ function render() {
       <p class="muted">${esc(S.user.email)} is not an admin. Run <code>supabase/001_admin.sql</code> with this email in Supabase.</p>
       <button type="button" class="outline" data-act="logout">Log out</button></section>`;
   } else {
-    const nC = S.pending.length, nR = S.reported.length;
+    const nC = S.pending.length, nR = S.reported.length + (S.items || []).length;
     const seg = (k, label, n) => `<button type="button" class="${S.tab === k ? 'on' : ''}" aria-pressed="${S.tab === k}" data-act="tab" data-id="${k}">${label}${n ? ` (${n})` : ''}</button>`;
     body = `<div class="row between">
         <h1>Admin</h1>
@@ -87,8 +110,8 @@ function concerts() {
 }
 
 function reports() {
-  if (!S.reported.length) return '<p class="muted empty">No reported posts.</p>';
-  return S.reported.map((l) => {
+  if (!S.reported.length && !(S.items || []).length) return '<p class="muted empty">No reported posts.</p>';
+  return (S.items || []).map(itemCard).join('') + S.reported.map((l) => {
     const ev = l.events || {};
     return `<article class="listing">
       <div class="listing-top">
@@ -112,6 +135,22 @@ function reports() {
   }).join('');
 }
 
+function itemCard(x) {
+  const label = { swap: 'Seat swap', buddy: 'Buddy', merch: 'Merch' }[x.type];
+  const text = x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : `${x.title}${x.price != null ? ' · ' + money(x.price) : ''}`;
+  const ev = x.events ? `${x.events.artist} · ${x.events.venue}` : (x.details || '');
+  const key = x.type + ':' + x.id;
+  return `<article class="listing">
+    <div class="row tight"><span class="chip buy">${label}</span>${x.hidden ? '<span class="chip meeting">Hidden</span>' : ''}<span class="chip done">${x.reports} report${x.reports === 1 ? '' : 's'}</span></div>
+    <h3>${esc(text)}</h3>
+    <p class="small muted">${esc(ev)}${ev ? ' · ' : ''}contact ${esc(x.contact)}</p>
+    <div class="row">
+      <button type="button" class="outline" data-act="${x.hidden ? 'itemRestore' : 'itemHide'}" data-id="${key}">${x.hidden ? 'Restore' : 'Hide'}</button>
+      <button type="button" class="text danger" data-act="itemDel" data-id="${key}">${S.armed === key ? 'Tap again to delete' : 'Delete'}</button>
+    </div>
+  </article>`;
+}
+
 // ---------- Actions ----------
 const actions = {
   tab(id) { S.tab = id; S.note = null; S.armed = null; render(); },
@@ -125,6 +164,17 @@ const actions = {
     else { S.pending = S.pending.filter((e) => e.id !== id); setNote('Concert deleted.'); }
     render();
   },
+  async itemHide(key) { await setItemHidden(key, true); },
+  async itemRestore(key) { await setItemHidden(key, false); },
+  async itemDel(key) {
+    if (S.armed !== key) { S.armed = key; render(); return; }
+    S.armed = null;
+    const [type, id] = key.split(':');
+    const { error } = await sb.from({ swap: 'swaps', buddy: 'buddies', merch: 'merch' }[type]).delete().eq('id', id);
+    if (error) setNote('Could not delete: ' + error.message, 'err');
+    else { S.items = S.items.filter((x) => !(x.type === type && x.id === id)); setNote('Post deleted.'); }
+    render();
+  },
   async hide(id) { await setHidden(id, true); },
   async restore(id) { await setHidden(id, false); },
   async delListing(id) {
@@ -136,6 +186,14 @@ const actions = {
     render();
   }
 };
+async function setItemHidden(key, hidden) {
+  S.armed = null;
+  const [type, id] = key.split(':');
+  const { error } = await sb.rpc('admin_set_item_hidden', { p_type: type, p_id: id, p_hidden: hidden });
+  if (error) { setNote('Could not update: ' + error.message, 'err'); render(); return; }
+  setNote(hidden ? 'Post hidden.' : 'Post restored and its reports cleared.');
+  await load(); render();
+}
 async function setHidden(id, hidden) {
   S.armed = null;
   const { error } = await sb.rpc('admin_set_hidden', { p_listing: id, p_hidden: hidden });

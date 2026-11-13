@@ -29,7 +29,10 @@ Time: about 1 to 2 hours the first time.
 - Add to Home Screen
 - Spam limits: 10 listings per hour, 5 new concerts per day per user
 
-**Not in this version yet (phase 2):** seat swap, buddies, merch, membership, artist alerts, in-app account deletion.
+**Tabs:** Board (tickets, with a Show Day section for tonight's concerts), Seat swap, Buddies, Merch, Me (your posts, change password, admin link).
+Seat swap, Buddies and Merch need `supabase/002_tabs.sql` to be run once.
+
+**Not in this version yet:** membership, artist alerts, photos on merch, in-app account deletion.
 
 > 中文說明：第一版已有搜尋、新增演出、貼文、原價檢查、登入、舉報、封鎖、三語和加入主畫面。換位、同行、周邊、會員和提醒留待第二版。
 
