@@ -150,3 +150,23 @@ textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
 /* Keep Netlify's badge above the bottom tab bar instead of covering it */
 #nl-badge-frame{bottom:calc(72px + env(safe-area-inset-bottom)) !important}
+
+/* Descriptions */
+.desc{font-size:14px;color:#344054;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:2px}
+
+/* Show Day box with posts inside (Seat swap, Buddies, Merch) */
+.sd-posts{gap:0}
+.sd-posts .listing{border-bottom-color:#344054}
+.sd-posts .listing:last-child{border-bottom:0;padding-bottom:4px}
+.sd-posts .muted,.sd-posts .small.muted{color:#D0D5DD}
+.sd-posts .desc,.sd-posts p{color:#EAECF0}
+.sd-posts h3{color:#fff}
+.sd-posts .swap-row>div{background:#1D2939}
+.sd-posts .swap-row svg{color:#FDB022}
+.sd-posts button.outline{background:transparent;border-color:#475467;color:#fff}
+.sd-posts details.menu summary{color:#D0D5DD}
+.sd-posts details.menu summary:hover{background:#1D2939}
+.sd-posts .menu-pop{color:var(--ink)}
+.sd-posts .note.info{background:#1D2939;color:#fff}
+.sd-posts .note.info b{color:#FDB022}
+.sd-posts .price{color:#fff}
