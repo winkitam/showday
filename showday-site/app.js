@@ -28,6 +28,7 @@ const T = {
   errCreds: ['Wrong email or password.', '電郵或密碼錯誤。', '이메일 또는 비밀번호가 틀렸어요.'],
   errConfirm: ['Confirm your email first. Check your inbox.', '請先到電郵確認帳號。', '먼저 이메일에서 계정을 확인해 주세요.'],
   errShortPw: ['Password must be at least 8 characters.', '密碼最少要 8 個字元。', '비밀번호는 8자 이상이어야 해요.'],
+  errEmailLimit: ['Too many emails sent. Wait a few minutes and try again.', '寄出的電郵太多，請等幾分鐘再試。', '이메일을 너무 많이 보냈어요. 몇 분 후 다시 시도해 주세요.'],
   errExists: ['This email already has an account. Log in, or reset your password.', '此電郵已有帳號，請登入或重設密碼。', '이미 가입된 이메일이에요. 로그인하거나 비밀번호를 재설정하세요.'],
   signupSent: ['Almost done. Tap the confirmation link in your email, then you are logged in.', '快完成了。請按電郵中的確認連結，之後就會登入。', '거의 다 됐어요. 이메일의 확인 링크를 누르면 로그인돼요.'],
   email: ['Email', '電郵', '이메일'], sendLink: ['Send login link', '發送登入連結', '로그인 링크 보내기'],
@@ -405,6 +406,7 @@ function checkOver() {
 }
 
 // ---------- Actions ----------
+const isRateLimit = (e) => e && (e.status === 429 || /rate limit|security purposes|seconds/i.test(e.message || ''));
 const keepEmail = (email) => { const el = document.getElementById('login-email'); if (el && email) el.value = email; };
 const closeMenus = () => document.querySelectorAll('details.menu[open]').forEach((d) => d.removeAttribute('open'));
 const actions = {
@@ -479,16 +481,16 @@ const forms = {
     if (S.authMode === 'login') {
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (!error) return; // onAuthStateChange re-renders
-      flash('login', /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
+      flash('login', isRateLimit(error) ? 'errEmailLimit' : /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
     } else if (S.authMode === 'signup') {
       const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: back } });
-      if (error) flash('login', /registered|exists/i.test(error.message) ? 'errExists' : 'errGeneric');
+      if (error) flash('login', isRateLimit(error) ? 'errEmailLimit' : /registered|exists/i.test(error.message) ? 'errExists' : 'errGeneric');
       else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) flash('login', 'errExists', 'warn');
       else if (data.session) return; // confirmation is off: already logged in
       else flash('login', 'signupSent', 'ok');
     } else {
       const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-      if (error) flash('login', 'errGeneric'); else flash('login', 'resetSent', 'ok');
+      if (error) flash('login', isRateLimit(error) ? 'errEmailLimit' : 'errGeneric'); else flash('login', 'resetSent', 'ok');
     }
     render(); keepEmail(email);
   },
