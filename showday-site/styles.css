@@ -202,7 +202,7 @@ a{color:var(--accent-ink)}a:hover{color:var(--ink)}
 .brand{color:var(--accent);font-size:20px;font-weight:700}
 .brand::after{content:" ♡";color:var(--pink-deep)}
 .hero{padding-top:18px}
-.hero h1{font-size:34px;position:relative;display:inline;background:linear-gradient(transparent 62%,var(--butter) 62%,var(--butter) 92%,transparent 92%)}
+.hero h1{font-size:34px;position:relative;display:inline;background:linear-gradient(transparent 62%,var(--butter) 62%,var(--butter) 92%,transparent 92%);-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .hero h1::after{content:"✦";color:var(--pink-deep);font-size:22px;margin-left:6px;vertical-align:top}
 .hero .sub{margin-top:2px;font-weight:600}
 .hero .sub::before{content:"♡ ";color:var(--pink-deep)}
@@ -238,7 +238,7 @@ input,select,textarea{border:2px solid #EFD0E0;border-radius:14px;background:#ff
 .list>:nth-child(3n+2)::before{background:repeating-linear-gradient(45deg,#CDB8FF 0 6px,#EEE6FF 6px 12px);left:auto;right:26px;transform:rotate(4deg)}
 .list>:nth-child(3n+3)::before{background:repeating-linear-gradient(90deg,#A9D8FF 0 5px,#E2F1FF 5px 10px);transform:rotate(-2deg)}
 .list-title{color:var(--accent-ink);font-family:var(--cute-font);font-size:16px;margin-top:22px}
-.list-title::before{content:"✿ ";color:var(--pink-deep)}
+.list-title::before{content:"✧ ";color:var(--pink-deep)}
 
 /* Candy tags */
 .chip{border-radius:999px;padding:3px 10px;font-weight:700}
@@ -300,7 +300,7 @@ details.menu summary:hover{background:var(--soft)}
 .menu-item:hover{background:var(--soft)}
 
 /* Floating bubble tab bar */
-body{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
 .tabbar{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));padding:6px;border:2px solid var(--line);border-radius:26px;
   background:rgba(255,255,255,.95);box-shadow:0 8px 24px rgba(196,140,220,.25)}
 .tabbar button{min-height:54px;border-radius:20px;color:var(--muted);font-weight:700}
