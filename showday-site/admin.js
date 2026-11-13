@@ -8,7 +8,7 @@ const S = { user: null, admin: false, tab: 'concerts', pending: [], reported: []
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 const CURRENCIES = ['GBP', 'HKD', 'KRW', 'JPY', 'TWD', 'SGD', 'MYR', 'THB', 'USD', 'EUR', 'AUD'];
-const place = (e) => e ? [e.venue, e.city].filter(Boolean).join(', ') : '';
+const place = (e) => { if (!e) return ''; const v = (e.venue || '').trim(), c = (e.city || '').trim(); return v && c && v.toLowerCase() !== c.toLowerCase() ? `${v}, ${c}` : (c || v); };
 const money = (n) => '£' + Number(n).toFixed(2).replace(/\.00$/, '');
 const noteHtml = () => S.note ? `<p class="note ${S.note.kind}" role="${S.note.kind === 'err' ? 'alert' : 'status'}">${esc(S.note.text)}</p>` : '';
 const setNote = (text, kind = 'ok') => { S.note = { text, kind }; };

@@ -146,7 +146,11 @@ const curSym = (cur = 'GBP') => {
   catch (e) { return cur; }
 };
 const CURRENCIES = ['GBP', 'HKD', 'KRW', 'JPY', 'TWD', 'SGD', 'MYR', 'THB', 'USD', 'EUR', 'AUD'];
-const place = (e) => e ? (e.venue ? `${e.venue}, ${e.city || ''}` : (e.city || '')).replace(/, $/, '') : '';
+const place = (e) => {
+  if (!e) return '';
+  const v = (e.venue || '').trim(), c = (e.city || '').trim();
+  return v && c && v.toLowerCase() !== c.toLowerCase() ? `${v}, ${c}` : (c || v);
+};
 const showKey = (e) => [e.artist, e.city || '', e.venue || ''].map((x) => x.trim().toLowerCase()).join('|');
 const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { day: 'numeric', month: 'short' });
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
