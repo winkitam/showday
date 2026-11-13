@@ -1,0 +1,3 @@
+[build]
+  # The site's files live in the showday-site folder, not the repository root.
+  publish = "showday-site"
