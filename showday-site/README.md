@@ -21,7 +21,7 @@ Time: about 1 to 2 hours the first time.
 - Every concert has its own link (`yoursite.com/?e=...`) to share on IG, Threads and WhatsApp
 - Listings: has ticket / needs ticket, live updates without refreshing
 - Face-value rule enforced by the database: a sell price above the original price is rejected
-- Login by email link (no passwords)
+- Login with email and password (sign up, log in, forgot password)
 - Contact details only visible to logged-in users
 - Status: Available, Meeting now, Handed over
 - Report (auto-hides a listing after 3 reports), block, delete your own post
@@ -87,7 +87,7 @@ Never paste the **service_role** key anywhere in this folder. Only the anon key.
 4. Save.
 5. Check **Authentication > Sign In / Providers > Email** is enabled.
 
-Test it: open your site, tap **Log in**, enter your email, tap the link in the email. You should come back logged in.
+Test it: open your site, tap **Log in > Create an account**, confirm via the email, and you are logged in. After that you log in with your password. **Forgot password?** emails a reset link that brings you back to set a new one.
 
 > 中文說明：這一步告訴 Supabase 登入後要把用戶帶回哪個網址。沒設定的話，登入連結會失效。
 
@@ -102,6 +102,18 @@ Option B (faster for many): Supabase **Table Editor > events > Insert row**:
 > 中文說明：開站前先加好未來 1 至 2 個月的倫敦演出，用戶一來就有東西可以搜尋。
 
 ## Step 7. Your daily admin (5 minutes)
+
+**Easiest: the admin page**
+1. One-time setup: log in on the website once, then run `supabase/001_admin.sql` (in the repository root) in Supabase SQL Editor. Change the email at the bottom if needed.
+2. Open `yoursite/admin.html` and log in with the same email.
+3. **New concerts**: fix the name or date if needed, tap **Approve**, or **Delete** (tap twice).
+4. **Reported posts**: **Hide**, **Restore** (also clears its reports) or **Delete**.
+
+Only emails in the `admins` table can use it. Everyone else sees "Not allowed".
+
+> 中文說明：管理頁面只有你可以使用，在網址後面加 `/admin.html` 就能進入，用手機也可以審核演出和處理舉報。
+
+**Or directly in Supabase:**
 
 **Approve new concerts**
 Table Editor > **events** > filter `status` = `pending` > change to `approved`.
