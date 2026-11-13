@@ -10,7 +10,7 @@ const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { 
 const T = {
   brand: ['Show Day', 'Show Day', 'Show Day'],
   hero: ['Same-day tickets at face value', '當日演出票，原價轉讓', '공연 당일 티켓, 정가 거래'],
-  searchPh: ['Search artist or venue', '搜尋藝人或場館', '아티스트 또는 공연장 검색'],
+  searchPh: ['Search artist or city', '搜尋藝人或城市', '아티스트 또는 도시 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
   loginTitle: ['Log in', '登入', '로그인'],
   signupTitle: ['Create an account', '建立帳號', '계정 만들기'],
@@ -38,7 +38,11 @@ const T = {
   noEvents: ['No upcoming concerts yet.', '暫時沒有演出。', '예정된 공연이 없어요.'],
   loading: ['Loading…', '載入中…', '불러오는 중…'],
   addMissing: ['Add a missing concert', '新增演出', '공연 추가'],
-  fArtist: ['Artist', '藝人', '아티스트'], fVenue: ['Venue', '場館', '공연장'], fDate: ['Date', '日期', '날짜'],
+  fArtist: ['Artist', '藝人', '아티스트'], fVenue: ['Venue (optional)', '場館（選填）', '공연장 (선택)'], fDate: ['Date', '日期', '날짜'],
+  fCity: ['City', '城市', '도시'], phCity: ['London', '香港', '서울'], fCurrency: ['Ticket currency', '門票貨幣', '티켓 통화'],
+  fDates: ['Dates', '日期', '날짜'], addDate: ['+ Add another date', '+ 加一個日期', '+ 날짜 추가'], removeDate: ['Remove date', '移除日期', '날짜 삭제'],
+  datesN: ['{n} dates', '{n} 場', '{n}회'], datesLabel: ['Dates', '場次', '날짜'],
+  someDup: ['Some dates already existed and were skipped.', '部分日期已存在，已略過。', '일부 날짜는 이미 있어서 건너뛰었어요.'],
   createBtn: ['Add concert', '新增演出', '공연 추가'],
   dupWarn: ['Already listed. Search for it instead.', '此演出已存在，請直接搜尋。', '이미 있어요. 검색해 주세요.'],
   pendingReview: ['Pending review', '待審核', '검토 대기'],
@@ -60,8 +64,8 @@ const T = {
   postCta: ['Post a listing', '發佈貼文', '글 올리기'],
   iHave: ['Selling', '我有票', '판매'], iNeed: ['Looking', '求票', '구함'],
   fSection: ['Section or standing', '區域或企位', '구역 또는 스탠딩'], fQty: ['Qty', '數量', '수량'],
-  fOriginal: ['Face value (£)', '原價（£）', '정가 (£)'],
-  askSell: ['Your price (£)', '要價（£）', '희망 가격 (£)'], askBuy: ['Max you pay (£)', '最高願付（£）', '최대 지불 (£)'],
+  fOriginal: ['Face value ({c})', '原價（{c}）', '정가 ({c})'],
+  askSell: ['Your price ({c})', '要價（{c}）', '희망 가격 ({c})'], askBuy: ['Max you pay ({c})', '最高願付（{c}）', '최대 지불 ({c})'],
   over: ['Above face value. Lower the price.', '高於原價，請調低價格。', '정가 초과. 가격을 낮춰 주세요.'],
   fMeet: ['Meeting point', '面交地點', '만날 장소'], fHandle: ['Your contact', '你的聯絡方式', '연락처'],
   phHandle: ['@instagram or WhatsApp', '@IG 或 WhatsApp', '@인스타그램 또는 WhatsApp'],
@@ -93,11 +97,11 @@ const T = {
   forSwap: ['Swap', '交換', '교환'], forSale: ['For sale', '出售', '판매'],
   fTitle: ['Item', '物品', '물품'], phTitle: ['[MEMBER] photocard', '[成員] 小卡', '[멤버] 포토카드'],
   fDetails: ['Details (optional)', '詳情（選填）', '상세 (선택)'], phDetails: ['Condition, what you want in return', '狀況、想換什麼', '상태, 원하는 교환품'],
-  fPrice: ['Price (£)', '價格（£）', '가격 (£)'], confirmMerch: ['This is not a ticket.', '這不是門票。', '티켓이 아니에요.'],
+  fPrice: ['Price ({c})', '價格（{c}）', '가격 ({c})'], confirmMerch: ['This is not a ticket.', '這不是門票。', '티켓이 아니에요.'],
   markDone: ['Mark as done', '標記為完成', '완료로 표시'], doneLabel: ['Done', '已完成', '완료'],
   fEvent: ['Concert', '演出', '공연'], noUpcoming: ['Add the concert on the Board tab first.', '請先在「票板」新增演出。', '먼저 게시판에서 공연을 추가하세요.'],
   noPosts: ['Nothing yet.', '暫時沒有內容。', '아직 없어요.'],
-  filterPh: ['Filter by artist or venue', '按藝人或場館篩選', '아티스트 또는 공연장으로 필터'],
+  filterPh: ['Filter by artist or city', '按藝人或城市篩選', '아티스트 또는 도시로 필터'],
   filterMerchPh: ['Search items', '搜尋物品', '물품 검색'],
   myPosts: ['My posts', '我的貼文', '내 게시글'], adminPage: ['Admin page', '管理頁面', '관리자 페이지'],
   blockedN: ['{n} blocked users', '已封鎖 {n} 位用戶', '차단한 사용자 {n}명'], unblockAll: ['Unblock all', '全部解除封鎖', '모두 차단 해제'],
@@ -124,7 +128,19 @@ const t = (k, vars) => {
   return s;
 };
 const todayISO = () => new Date().toLocaleDateString('en-CA');
-const fmtMoney = (n) => '£' + Number(n).toFixed(2).replace(/\.00$/, '');
+const fmtMoney = (n, cur = 'GBP') => {
+  const v = Number(n);
+  try { return new Intl.NumberFormat(LOCALES[S.lang], { style: 'currency', currency: cur, maximumFractionDigits: v % 1 ? 2 : 0 }).format(v); }
+  catch (e) { return cur + ' ' + v; }
+};
+const curSym = (cur = 'GBP') => {
+  try { return new Intl.NumberFormat('en-GB', { style: 'currency', currency: cur }).formatToParts(0).find((p) => p.type === 'currency').value; }
+  catch (e) { return cur; }
+};
+const CURRENCIES = ['GBP', 'HKD', 'KRW', 'JPY', 'TWD', 'SGD', 'MYR', 'THB', 'USD', 'EUR', 'AUD'];
+const place = (e) => e ? (e.venue ? `${e.venue}, ${e.city || ''}` : (e.city || '')).replace(/, $/, '') : '';
+const showKey = (e) => [e.artist, e.city || '', e.venue || ''].map((x) => x.trim().toLowerCase()).join('|');
+const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { day: 'numeric', month: 'short' });
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
   : new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { weekday: 'short', day: 'numeric', month: 'short' });
 const ago = (ts) => {
@@ -174,7 +190,9 @@ const S = {
   mine: null,
   composing: false,
   merchKind: 'swap',
-  postQ: ''
+  postQ: '',
+  newDates: 1,
+  draft: null
 };
 function guessLang() {
   const l = (navigator.language || 'en').toLowerCase();
@@ -187,7 +205,7 @@ const flashFor = (area) => S.flash && S.flash.area === area
 // ---------- Data ----------
 async function loadEvents() {
   const { data, error } = await sb.from('events')
-    .select('id, artist, venue, event_date, status, created_by')
+    .select('id, artist, city, venue, currency, event_date, status, created_by')
     .gte('event_date', todayISO())
     .order('event_date', { ascending: true })
     .limit(300);
@@ -206,8 +224,8 @@ async function loadListings() {
 }
 const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
 const ITEM_COLS = {
-  swap: 'id, event_id, user_id, have, want, status, hidden, created_at, events(artist, venue, event_date)',
-  buddy: 'id, event_id, user_id, note, hidden, created_at, events(artist, venue, event_date)',
+  swap: 'id, event_id, user_id, have, want, status, hidden, created_at, events(artist, city, venue, event_date, currency)',
+  buddy: 'id, event_id, user_id, note, hidden, created_at, events(artist, city, venue, event_date, currency)',
   merch: 'id, user_id, kind, title, details, price, status, hidden, created_at'
 };
 async function loadCounts() {
@@ -229,7 +247,7 @@ async function loadMine() {
   if (!S.user) { S.mine = null; return; }
   const uid = S.user.id;
   const [l, sw, bu, me] = await Promise.all([
-    sb.from('listings').select('id, kind, section, price, status, created_at, events(artist, venue, event_date)').eq('user_id', uid).order('created_at', { ascending: false }),
+    sb.from('listings').select('id, kind, section, price, status, created_at, events(artist, city, venue, event_date, currency)').eq('user_id', uid).order('created_at', { ascending: false }),
     sb.from('swaps').select(ITEM_COLS.swap).eq('user_id', uid).order('created_at', { ascending: false }),
     sb.from('buddies').select(ITEM_COLS.buddy).eq('user_id', uid).order('created_at', { ascending: false }),
     sb.from('merch').select(ITEM_COLS.merch).eq('user_id', uid).order('created_at', { ascending: false })
@@ -323,11 +341,18 @@ function loginPanel() {
 function homeView() {
   const create = S.creating ? `
     <form data-form="create" class="panel">
-      <div class="grid3">
-        <div class="field"><label for="new-artist">${t('fArtist')}</label><input id="new-artist" name="artist" maxlength="80" required value="${esc(S.q)}"></div>
-        <div class="field"><label for="new-venue">${t('fVenue')}</label><input id="new-venue" name="venue" maxlength="80" required></div>
-        <div class="field"><label for="new-date">${t('fDate')}</label><input id="new-date" name="date" type="date" min="${todayISO()}" required></div>
+      <div class="grid2">
+        <div class="field"><label for="new-artist">${t('fArtist')}</label><input id="new-artist" name="artist" maxlength="80" required value="${esc(S.draft ? S.draft.artist : S.q)}"></div>
+        <div class="field"><label for="new-city">${t('fCity')}</label><input id="new-city" name="city" maxlength="60" placeholder="${t('phCity')}" required value="${esc(S.draft ? S.draft.city : '')}"></div>
       </div>
+      <div class="grid2">
+        <div class="field"><label for="new-venue">${t('fVenue')}</label><input id="new-venue" name="venue" maxlength="80" value="${esc(S.draft ? S.draft.venue : '')}"></div>
+        <div class="field"><label for="new-cur">${t('fCurrency')}</label><select id="new-cur" name="currency">${CURRENCIES.map((c) => `<option value="${c}" ${(S.draft ? S.draft.currency : 'GBP') === c ? 'selected' : ''}>${c} (${esc(curSym(c))})</option>`).join('')}</select></div>
+      </div>
+      <fieldset class="dates-field"><legend>${t('fDates')}</legend>
+        ${Array.from({ length: S.newDates }, (_, i) => `<div class="row tight"><input name="date" type="date" min="${todayISO()}" aria-label="${t('fDate')} ${i + 1}" ${i === 0 ? 'required' : ''} value="${esc(S.draft && S.draft.dates[i] ? S.draft.dates[i] : '')}">${i > 0 ? `<button type="button" class="icon-btn" data-act="removeDate" data-id="${i}" aria-label="${t('removeDate')}">✕</button>` : ''}</div>`).join('')}
+        ${S.newDates < 7 ? `<button type="button" class="text" style="align-self:flex-start" data-act="addDate">${t('addDate')}</button>` : ''}
+      </fieldset>
       ${flashFor('create')}
       <div class="row"><button type="submit" class="primary">${t('createBtn')}</button><button type="button" class="text" data-act="cancelCreate">${t('cancel')}</button></div>
     </form>`
@@ -340,44 +365,56 @@ function homeView() {
     ${create}`;
 }
 
+function groupShows(list) {
+  const map = new Map();
+  list.forEach((e) => { const k = showKey(e); if (!map.has(k)) map.set(k, []); map.get(k).push(e); });
+  return [...map.values()].map((g) => g.sort((a, b) => a.event_date.localeCompare(b.event_date)));
+}
+
+function showRow(g) {
+  const e = g[0];
+  const pending = g.some((x) => x.status === 'pending');
+  const when = g.length === 1 ? fmtDate(e.event_date)
+    : `${t('datesN', { n: g.length })} · ${shortDate(e.event_date)} – ${shortDate(g[g.length - 1].event_date)}`;
+  return `<button type="button" class="item" data-act="pick" data-id="${e.id}">
+      <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(place(e))} · ${esc(when)}${pending ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
+      ${icon.chev}
+    </button>`;
+}
+
 function renderResults() {
   const box = document.getElementById('results');
   if (!box) return;
   if (!S.eventsLoaded) { box.innerHTML = `<p class="muted">${t('loading')}</p>`; return; }
   const q = S.q.trim().toLowerCase();
-  const matches = S.events.filter((e) => !q || (e.artist + ' ' + e.venue + ' ' + e.event_date).toLowerCase().includes(q));
+  const matches = S.events.filter((e) => !q || [e.artist, e.city, e.venue, e.event_date].join(' ').toLowerCase().includes(q));
   if (!matches.length) {
     box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>`;
     return;
   }
-  const row = (e) => `
-    <button type="button" class="item" data-act="pick" data-id="${e.id}">
-      <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
-      ${icon.chev}
-    </button>`;
-  if (!q) {
-    const today = todayISO();
-    const tonight = matches.filter((e) => e.event_date === today);
-    const later = matches.filter((e) => e.event_date !== today);
-    const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
-        <p class="live">● ${t('showDay')}</p>
-        ${tonight.map((e) => `<button type="button" class="sd-item" data-act="pick" data-id="${e.id}">
-          <span class="item-main"><b>${esc(e.artist)}</b><span>${esc(e.venue)}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
-          <span class="sd-count">${esc(t('availableN', { n: S.counts[e.id] || 0 }))}</span>
-        </button>`).join('')}
-      </section>` : '';
-    box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + later.slice(0, 30).map(row).join('') : '');
-    return;
-  }
-  box.innerHTML = matches.slice(0, 30).map((e) => `
-    <button type="button" class="item" data-act="pick" data-id="${e.id}">
-      <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
-      ${icon.chev}
-    </button>`).join('');
+  if (q) { box.innerHTML = groupShows(matches).slice(0, 30).map(showRow).join(''); return; }
+  const today = todayISO();
+  const tonight = matches.filter((e) => e.event_date === today);
+  const later = matches.filter((e) => e.event_date !== today);
+  const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
+      <p class="live">● ${t('showDay')}</p>
+      ${tonight.map((e) => `<button type="button" class="sd-item" data-act="pick" data-id="${e.id}">
+        <span class="item-main"><b>${esc(e.artist)}</b><span>${esc(place(e))}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
+        <span class="sd-count">${esc(t('availableN', { n: S.counts[e.id] || 0 }))}</span>
+      </button>`).join('')}
+    </section>` : '';
+  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + groupShows(later).slice(0, 30).map(showRow).join('') : '');
 }
 
 function visibleListings() {
   return S.listings.filter((l) => !S.blocked.includes(l.user_id) || (S.user && l.user_id === S.user.id));
+}
+
+function dateChips(e) {
+  const sib = S.events.filter((x) => showKey(x) === showKey(e)).sort((a, b) => a.event_date.localeCompare(b.event_date));
+  if (sib.length < 2) return '';
+  return `<div class="dates" role="group" aria-label="${t('datesLabel')}">${sib.map((x) =>
+    `<button type="button" class="${x.id === e.id ? 'on' : ''}" aria-pressed="${x.id === e.id}" data-act="day" data-id="${x.id}">${esc(fmtDate(x.event_date))}</button>`).join('')}</div>`;
 }
 
 function eventView(e) {
@@ -394,7 +431,8 @@ function eventView(e) {
     <section class="event-head ${e.event_date === todayISO() ? 'showday' : ''}">
       ${e.event_date === todayISO() ? `<p class="live">● ${t('showDay')}</p>` : ''}
       <h1>${esc(e.artist)}</h1>
-      <p class="sub">${esc(e.venue)} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
+      <p class="sub">${esc(place(e))} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
+      ${dateChips(e)}
       <p class="small sub">${esc(t('statsLine', { a: c('open'), m: c('meeting'), d: c('done') }))}</p>
       ${S.isAdmin && e.status === 'pending' ? `<button type="button" class="primary" style="align-self:flex-start" data-act="approveEvent">${t('approve')}</button>` : ''}
       ${flashFor('share')}
@@ -429,7 +467,7 @@ function listingCard(l) {
         <h3>${esc(l.section)}</h3>
         <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)} · ${esc(ago(l.created_at))}</p>
       </div>
-      <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price)}</div>
+      <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, (S.events.find((x) => x.id === l.event_id) || {}).currency)}</div>
     </div>
     <div class="row">
       ${main}
@@ -455,8 +493,8 @@ function postArea(e) {
       <div class="field narrow"><label for="p-qty">${t('fQty')}</label><select id="p-qty" name="qty"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
     </div>
     <div class="grid2">
-      ${sell ? `<div class="field"><label for="p-original">${t('fOriginal')}</label><input id="p-original" name="original" inputmode="decimal" required></div>` : ''}
-      <div class="field"><label for="p-price">${sell ? t('askSell') : t('askBuy')}</label><input id="p-price" name="price" inputmode="decimal" required></div>
+      ${sell ? `<div class="field"><label for="p-original">${t('fOriginal', { c: curSym(e.currency) })}</label><input id="p-original" name="original" inputmode="decimal" required></div>` : ''}
+      <div class="field"><label for="p-price">${t(sell ? 'askSell' : 'askBuy', { c: curSym(e.currency) })}</label><input id="p-price" name="price" inputmode="decimal" required></div>
     </div>
     <p id="over-warning" class="note err hidden" role="alert">${t('over')}</p>
     <div class="grid2">
@@ -476,7 +514,7 @@ function tabBar() {
     `<button type="button" data-act="nav" data-id="${v}" ${S.view === v ? 'aria-current="page" class="on"' : ''}>${ic[v]}<span>${t(k)}</span></button>`).join('')}</nav>`;
 }
 
-function evName(ev) { return ev ? `${ev.artist} · ${ev.venue} · ${fmtDate(ev.event_date)}` : ''; }
+function evName(ev) { return ev ? `${ev.artist} · ${place(ev)} · ${fmtDate(ev.event_date)}` : ''; }
 
 function itemCard(type, it) {
   const mine = S.user && it.user_id === S.user.id;
@@ -518,7 +556,7 @@ function itemCard(type, it) {
 function eventOptions() {
   const today = todayISO();
   const list = S.events.filter((e) => e.event_date >= today);
-  return list.map((e) => `<option value="${e.id}" ${e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(e.venue)} · ${esc(fmtDate(e.event_date))}</option>`).join('');
+  return list.map((e) => `<option value="${e.id}" ${e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
 }
 
 function composer(type) {
@@ -540,7 +578,7 @@ function composer(type) {
         <button type="button" class="${sale ? 'on' : ''}" aria-pressed="${sale}" data-act="merchKind" data-id="sale">${t('forSale')}</button></div>
       <div class="grid2">
         <div class="field"><label for="c-title">${t('fTitle')}</label><input id="c-title" name="title" maxlength="80" placeholder="${t('phTitle')}" required></div>
-        ${sale ? `<div class="field"><label for="c-price">${t('fPrice')}</label><input id="c-price" name="price" inputmode="decimal" required></div>` : ''}</div>
+        ${sale ? `<div class="field"><label for="c-price">${t('fPrice', { c: curSym('GBP') })}</label><input id="c-price" name="price" inputmode="decimal" required></div>` : ''}</div>
       <div class="field"><label for="c-details">${t('fDetails')}</label><input id="c-details" name="details" maxlength="200" placeholder="${t('phDetails')}"></div>`;
     confirm = t('confirmMerch');
   }
@@ -582,7 +620,7 @@ function meView() {
       <button type="button" class="primary big" data-act="toggleLogin">${t('login')}</button>`;
   }
   const typeLabel = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch' };
-  const describe = (x) => x.type === 'listing' ? `${x.section} · ${fmtMoney(x.price)}`
+  const describe = (x) => x.type === 'listing' ? `${x.section} · ${fmtMoney(x.price, x.events && x.events.currency)}`
     : x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : x.title;
   const posts = S.mine === null ? `<p class="muted">${t('loading')}</p>`
     : S.mine.length ? S.mine.map((x) => `<div class="mine-row">
@@ -672,6 +710,11 @@ function checkOver() {
 const isRateLimit = (e) => e && (e.status === 429 || /rate limit|security purposes|seconds/i.test(e.message || ''));
 const keepEmail = (email) => { const el = document.getElementById('login-email'); if (el && email) el.value = email; };
 const closeMenus = () => document.querySelectorAll('details.menu[open]').forEach((d) => d.removeAttribute('open'));
+const readDraft = (f) => {
+  const d = new FormData(f);
+  const v = (k) => String(d.get(k) || '').trim();
+  return { artist: v('artist'), city: v('city'), venue: v('venue'), currency: v('currency') || 'GBP', dates: d.getAll('date').map(String) };
+};
 const parseKey = (k) => { const i = k.indexOf(':'); return [k.slice(0, i), k.slice(i + 1)]; };
 const actions = {
   home() { setView('board'); },
@@ -736,12 +779,28 @@ const actions = {
   async logout() { await sb.auth.signOut(); },
   async install() { if (!S.installPrompt) return; S.installPrompt.prompt(); await S.installPrompt.userChoice; S.installPrompt = null; render(); },
   pick(id) { S.flash = null; openEvent(id); },
+  day(id) {
+    if (id === S.selEv) return;
+    S.flash = null;
+    history.replaceState({ ev: id }, '', location.pathname + '?e=' + id);
+    openEvent(id, false);
+  },
   openCreate() {
     S.flash = null;
     if (!S.user) { actions.toggleLogin(); return; }
-    S.creating = true; renderMain(); document.getElementById('new-venue')?.focus();
+    S.creating = true; S.newDates = 1; S.draft = null; renderMain(); document.getElementById('new-city')?.focus();
   },
-  cancelCreate() { S.creating = false; S.flash = null; renderMain(); },
+  cancelCreate() { S.creating = false; S.flash = null; S.draft = null; S.newDates = 1; renderMain(); },
+  addDate() {
+    const f = document.querySelector('form[data-form="create"]'); if (f) S.draft = readDraft(f);
+    S.newDates = Math.min(7, S.newDates + 1); renderMain();
+    const inputs = document.querySelectorAll('form[data-form="create"] input[type=date]'); inputs[inputs.length - 1]?.focus();
+  },
+  removeDate(i) {
+    const f = document.querySelector('form[data-form="create"]'); if (f) S.draft = readDraft(f);
+    if (S.draft) S.draft.dates.splice(Number(i), 1);
+    S.newDates = Math.max(1, S.newDates - 1); renderMain();
+  },
   tab(id) { S.tab = id; renderMain(); },
   kind(id) { S.formKind = id; S.flash = null; renderMain(); },
   openPost() {
@@ -849,19 +908,27 @@ const forms = {
     render();
   },
   async create(f) {
-    const d = new FormData(f);
-    const row = { artist: String(d.get('artist')).trim(), venue: String(d.get('venue')).trim(), event_date: d.get('date') };
-    if (!row.artist || !row.venue || !row.event_date) return;
-    const { data, error } = await sb.from('events').insert(row).select('id, artist, venue, event_date, status, created_by').single();
-    if (error) {
-      const dup = error.code === '23505';
-      flash('create', dup ? 'dupWarn' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric', dup ? 'warn' : 'err');
+    const d = readDraft(f);
+    const dates = [...new Set(d.dates.filter(Boolean))].sort();
+    if (!d.artist || !d.city || !dates.length) return;
+    const made = []; let dup = 0; let fail = null;
+    for (const event_date of dates) {
+      const row = { artist: d.artist, city: d.city, venue: d.venue || null, currency: d.currency, event_date };
+      const { data, error } = await sb.from('events').insert(row).select('id, artist, city, venue, currency, event_date, status, created_by').single();
+      if (!error) made.push(data);
+      else if (error.code === '23505') dup++;
+      else { fail = error; break; }
+    }
+    if (!made.length) {
+      S.draft = d;
+      flash('create', dup ? 'dupWarn' : fail && /Too many/.test(fail.message) ? 'errRate' : 'errGeneric', dup ? 'warn' : 'err');
       renderMain(); return;
     }
-    S.events.push(data);
+    S.events.push(...made);
     S.events.sort((a, b) => a.event_date.localeCompare(b.event_date));
-    S.creating = false; S.q = ''; S.flash = null;
-    openEvent(data.id);
+    S.creating = false; S.q = ''; S.draft = null; S.newDates = 1;
+    S.flash = dup || fail ? { area: 'share', text: t('someDup'), kind: 'warn' } : null;
+    openEvent(made[0].id);
   },
   async post(f) {
     const d = new FormData(f);

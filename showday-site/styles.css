@@ -134,3 +134,14 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .tabbar button.on{color:var(--accent)}
 .cta-bar{bottom:calc(60px + env(safe-area-inset-bottom))}
 @media (min-width:700px){.tabbar{left:50%;right:auto;transform:translateX(-50%);width:640px;border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0}}
+
+/* Multi-date concerts */
+.dates{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.dates::-webkit-scrollbar{display:none}
+.dates button{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:14px;font-weight:500}
+.dates button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.showday .dates button{background:transparent;border-color:#475467;color:#fff}
+.showday .dates button.on{background:#fff;color:#101828;border-color:#fff}
+fieldset.dates-field{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+fieldset.dates-field legend{font-size:14px;font-weight:500;padding:0;margin-bottom:6px}
+fieldset.dates-field .row{flex-wrap:nowrap}
