@@ -9,7 +9,8 @@ const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { 
 // ---------- Text: [English, 繁體中文, 한국어] ----------
 const T = {
   brand: ['Show Day', 'Show Day', 'Show Day'],
-  hero: ['Today’s tickets from fan to fan', '粉絲互轉今日門票', '팬끼리 양도하는 오늘 티켓'],
+  hero: ['Today’s tickets at face value or below', '原價或以下的今日門票', '정가 이하의 오늘 티켓'],
+  heroSub: ['Face-to-face trades only', '只限當面交收', '직접 만나서만 거래해요'],
   searchPh: ['Search artist or city', '搜尋藝人或城市', '아티스트 또는 도시 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
   loginTitle: ['Log in', '登入', '로그인'],
@@ -404,7 +405,7 @@ function homeView() {
     : `<button type="button" class="text" data-act="openCreate">+ ${t('addMissing')}</button>`;
   const heads = { swap: ['navSwap', 'swapSub'], buddy: ['navBuddies', 'buddySub'], merch: ['navMerch', 'merchSub'] }[S.view];
   return `<section class="hero">
-      <h1>${heads ? t(heads[0]) : t('hero')}</h1>${heads ? `<p class="sub muted">${t(heads[1])}</p>` : ''}
+      <h1>${heads ? t(heads[0]) : t('hero')}</h1><p class="sub muted">${heads ? t(heads[1]) : t('heroSub')}</p>
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
     </section>
     <div id="results" class="list"></div>
