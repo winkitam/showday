@@ -9,8 +9,8 @@ const sb = CONFIGURED ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { 
 // ---------- Text: [English, 繁體中文, 한국어] ----------
 const T = {
   brand: ['Show Day', 'Show Day', 'Show Day'],
-  hero: ['Today’s tickets at face value or below', '原價或以下的今日門票', '원가 이하의 오늘 티켓'],
-  heroSub: ['Face-to-face trades near the venue', '場館附近當面交收', '공연장 근처에서 직거래해요'],
+  hero: ['Today’s tickets at face value or less', '今日門票・原價或以下讓票', '원가 이하의 오늘 티켓'],
+  heroSub: ['Meet in person near the venue', '場館附近面交', '공연장 근처에서 직거래해요'],
   searchPh: ['Search artist or city', '搜尋藝人或城市', '아티스트 또는 도시 검색'],
   login: ['Log in', '登入', '로그인'], logout: ['Log out', '登出', '로그아웃'],
   loginTitle: ['Log in', '登入', '로그인'],
@@ -70,7 +70,7 @@ const T = {
   over: ['Above face value. Lower the price.', '高於原價，請調低價格。', '원가 초과. 가격을 낮춰 주세요.'],
   fMeet: ['Meeting point', '面交地點', '만날 장소'], fHandle: ['Your contact', '你的聯絡方式', '연락처'],
   phHandle: ['@instagram or WhatsApp', '@IG 或 WhatsApp', '@인스타그램 또는 WhatsApp'],
-  confirmSell: ['I bought it myself, the price is at or below face value, and I will transfer it through the official app.', '票是我自己買的，價格不高於原價，並會透過官方 App 轉讓。', '직접 구매했고 원가 이하이며 공식 앱으로 양도합니다.'],
+  confirmSell: ['I bought it myself, the price is face value or less, and I will transfer it through the official app.', '票是我自己買的，價格不高於原價，並會透過官方 App 轉讓。', '직접 구매했고 원가 이하이며 공식 앱으로 양도합니다.'],
   confirmBuy: ['I will not pay above face value, and only after the transfer.', '我不會付高於原價，並在轉讓後才付款。', '원가 이하로, 양도 후에만 결제합니다.'],
   submit: ['Post', '發佈', '올리기'], posted: ['Posted.', '已發佈。', '게시됨.'],
   fillAll: ['Fill in every field and tick the box.', '請填寫所有欄位並勾選。', '모든 항목을 입력하고 체크해 주세요.'],
@@ -113,7 +113,7 @@ const T = {
   fDesc: ['Description (optional)', '描述（選填）', '설명 (선택)'],
   phDescTicket: ['e.g. Paper ticket, can meet before 6pm', '例如：實體票，6 點前可面交', '예: 종이 티켓, 6시 전 만남 가능'],
   phDescSwap: ['e.g. Row 3 near the stage, can meet at the gate', '例如：第 3 排近舞台，可在入口面交', '예: 무대 근처 3열, 입구에서 만남 가능'],
-  fMerchEvent: ['Meet at a concert (optional)', '在演出現場交收（選填）', '공연장에서 거래 (선택)'],
+  fMerchEvent: ['Meet at a concert (optional)', '在演出現場面交（選填）', '공연장에서 거래 (선택)'],
   noConcert: ['Not for a specific concert', '不限演出', '특정 공연 아님'],
   otherItems: ['Other items', '其他物品', '다른 물품'],
   postsN: ['{n} posts', '{n} 則', '{n}개'],
