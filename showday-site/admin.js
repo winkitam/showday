@@ -7,6 +7,8 @@ const S = { user: null, admin: false, tab: 'concerts', pending: [], reported: []
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const CURRENCIES = ['GBP', 'HKD', 'KRW', 'JPY', 'TWD', 'SGD', 'MYR', 'THB', 'USD', 'EUR', 'AUD'];
+const place = (e) => e ? [e.venue, e.city].filter(Boolean).join(', ') : '';
 const money = (n) => '£' + Number(n).toFixed(2).replace(/\.00$/, '');
 const noteHtml = () => S.note ? `<p class="note ${S.note.kind}" role="${S.note.kind === 'err' ? 'alert' : 'status'}">${esc(S.note.text)}</p>` : '';
 const setNote = (text, kind = 'ok') => { S.note = { text, kind }; };
@@ -14,7 +16,7 @@ const setNote = (text, kind = 'ok') => { S.note = { text, kind }; };
 // ---------- Data ----------
 async function load() {
   const [ev, rep] = await Promise.all([
-    sb.from('events').select('id, artist, venue, event_date, created_at').eq('status', 'pending').order('created_at', { ascending: true }),
+    sb.from('events').select('id, artist, city, venue, currency, event_date, created_at').eq('status', 'pending').order('created_at', { ascending: true }),
     sb.from('reports').select('listing_id')
   ]);
   S.pending = ev.data || [];
@@ -25,7 +27,7 @@ async function load() {
   S.reported = [];
   if (ids.length) {
     const { data } = await sb.from('listings')
-      .select('id, kind, section, price, original_price, meet_point, hidden, created_at, events(artist, venue, event_date)')
+      .select('id, kind, section, price, original_price, meet_point, hidden, created_at, events(artist, city, venue, event_date)')
       .in('id', ids);
     S.reported = (data || []).map((l) => ({ ...l, reports: counts[l.id] || 0 }))
       .sort((a, b) => (b.hidden - a.hidden) || (b.reports - a.reports));
@@ -39,7 +41,7 @@ async function load() {
     const TBL = { swap: 'swaps', buddy: 'buddies', merch: 'merch' };
     for (const type of Object.keys(TBL)) {
       const cols = type === 'merch' ? 'id, title, details, price, contact, hidden, created_at' : type === 'swap'
-        ? 'id, have, want, contact, hidden, created_at, events(artist, venue, event_date)' : 'id, note, contact, hidden, created_at, events(artist, venue, event_date)';
+        ? 'id, have, want, contact, hidden, created_at, events(artist, city, venue, event_date)' : 'id, note, contact, hidden, created_at, events(artist, city, venue, event_date)';
       const reportedIds = Object.keys(ic).filter((k) => k.startsWith(type + ':')).map((k) => k.slice(type.length + 1));
       const [a, b] = await Promise.all([
         reportedIds.length ? sb.from(TBL[type]).select(cols).in('id', reportedIds) : Promise.resolve({ data: [] }),
@@ -98,7 +100,9 @@ function concerts() {
     <form data-form="approve" data-id="${e.id}" class="listing">
       <div class="grid3">
         <div class="field"><label for="a-${e.id}">Artist</label><input id="a-${e.id}" name="artist" maxlength="80" required value="${esc(e.artist)}"></div>
-        <div class="field"><label for="v-${e.id}">Venue</label><input id="v-${e.id}" name="venue" maxlength="80" required value="${esc(e.venue)}"></div>
+        <div class="field"><label for="c-${e.id}">City</label><input id="c-${e.id}" name="city" maxlength="60" required value="${esc(e.city || '')}"></div>
+        <div class="field"><label for="v-${e.id}">Venue (optional)</label><input id="v-${e.id}" name="venue" maxlength="80" value="${esc(e.venue || '')}"></div>
+        <div class="field"><label for="cur-${e.id}">Currency</label><select id="cur-${e.id}" name="currency">${CURRENCIES.map((c) => `<option ${c === (e.currency || 'GBP') ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
         <div class="field"><label for="d-${e.id}">Date</label><input id="d-${e.id}" name="date" type="date" required value="${esc(e.event_date)}"></div>
       </div>
       <p class="small muted">${esc(fmtDate(e.event_date))} · submitted ${esc(new Date(e.created_at).toLocaleString('en-GB'))}</p>
@@ -122,7 +126,7 @@ function reports() {
             <span class="chip done">${l.reports} report${l.reports === 1 ? '' : 's'}</span>
           </div>
           <h3>${esc(l.section)}</h3>
-          <p class="small muted">${esc(ev.artist)} · ${esc(ev.venue)} · ${ev.event_date ? esc(fmtDate(ev.event_date)) : ''}</p>
+          <p class="small muted">${esc(ev.artist)} · ${esc(place(ev))} · ${ev.event_date ? esc(fmtDate(ev.event_date)) : ''}</p>
           <p class="small muted">Meet: ${esc(l.meet_point)}${l.original_price ? ` · face value ${money(l.original_price)}` : ''}</p>
         </div>
         <div class="price">${money(l.price)}</div>
@@ -138,7 +142,7 @@ function reports() {
 function itemCard(x) {
   const label = { swap: 'Seat swap', buddy: 'Buddy', merch: 'Merch' }[x.type];
   const text = x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : `${x.title}${x.price != null ? ' · ' + money(x.price) : ''}`;
-  const ev = x.events ? `${x.events.artist} · ${x.events.venue}` : (x.details || '');
+  const ev = x.events ? `${x.events.artist} · ${place(x.events)}` : (x.details || '');
   const key = x.type + ':' + x.id;
   return `<article class="listing">
     <div class="row tight"><span class="chip buy">${label}</span>${x.hidden ? '<span class="chip meeting">Hidden</span>' : ''}<span class="chip done">${x.reports} report${x.reports === 1 ? '' : 's'}</span></div>
@@ -215,8 +219,9 @@ const forms = {
   async approve(f) {
     const id = f.dataset.id;
     const d = new FormData(f);
-    const row = { artist: String(d.get('artist')).trim(), venue: String(d.get('venue')).trim(), event_date: d.get('date'), status: 'approved' };
-    if (!row.artist || !row.venue || !row.event_date) return;
+    const row = { artist: String(d.get('artist')).trim(), city: String(d.get('city')).trim(), venue: String(d.get('venue') || '').trim() || null,
+      currency: d.get('currency') || 'GBP', event_date: d.get('date'), status: 'approved' };
+    if (!row.artist || !row.city || !row.event_date) return;
     const { error } = await sb.from('events').update(row).eq('id', id);
     if (error) {
       setNote(error.code === '23505' ? 'This concert already exists. Delete this one instead.' : 'Could not approve: ' + error.message, 'err');
