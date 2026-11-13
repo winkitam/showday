@@ -1,0 +1,8 @@
+// Cloudflare Workers static site config. The site files live in showday-site/.
+{
+  "name": "showday",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./showday-site"
+  }
+}
