@@ -78,6 +78,11 @@ const T = {
   errRate: ['Too many posts. Try later.', '發佈太頻繁，請稍後再試。', '너무 많아요. 나중에 시도해 주세요.'],
   footRule: ['Face value only. Meet in person. Never pay in advance.', '只限原價。當面交易。切勿預付。', '원가 거래만. 직접 만나서. 선결제 금지.'],
   install: ['Add to Home Screen', '加入主畫面', '홈 화면에 추가'],
+  installTitle: ['Add Show Day to your home screen', '把 Show Day 加入主畫面', '홈 화면에 Show Day 추가하기'],
+  installBody: ['Open it in one tap on show day, just like an app.', '演出當天一按即開，就像 App 一樣。', '공연 당일 앱처럼 한 번에 열 수 있어요.'],
+  installAdd: ['Add', '加入', '추가'], installLater: ['Later', '稍後', '나중에'],
+  iosSteps: ['In Safari, tap Share {share} then “Add to Home Screen”.', '在 Safari 按「分享」{share}，再選「加入主畫面」。', 'Safari에서 공유 {share} → “홈 화면에 추가”를 누르세요.'],
+  androidSteps: ['Tap the ⋮ menu, then “Add to Home screen”.', '按右上角 ⋮，再選「加到主畫面」。', '오른쪽 위 ⋮ 메뉴 → “홈 화면에 추가”를 누르세요.'],
   iosHint: ['In Safari, tap Share, then Add to Home Screen.', '在 Safari 按「分享」，再選「加入主畫面」。', 'Safari에서 공유 → 홈 화면에 추가.'],
   navBoard: ['Board', '票板', '게시판'], navSwap: ['Seat swap', '換位', '좌석 교환'], navBuddies: ['Buddies', '同行', '동행'], navMerch: ['Merch', '周邊', '굿즈'], navMe: ['Me', '我的', '내 정보'],
   showDay: ['SHOW DAY', '今日演出', '오늘 공연'], availableN: ['{n} available', '{n} 張可交易', '거래 가능 {n}'],
@@ -178,6 +183,8 @@ const ago = (ts) => {
   return m < 60 ? f.format(-m, 'minute') : f.format(-Math.floor(m / 60), 'hour');
 };
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
+const isAndroid = /android/i.test(navigator.userAgent);
+const isStandalone = () => !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
 const icon = {
   search: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
   back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
@@ -189,6 +196,7 @@ const icon = {
   merch: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
   me: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   palette: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1-.1-2.2 1.1-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.2" r="1.2"/><circle cx="14.5" cy="7.2" r="1.2"/></svg>',
+  share: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share" role="img" style="vertical-align:-3px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11v9h12v-9"/></svg>',
   chev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
 };
 
@@ -429,7 +437,24 @@ function homeView() {
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
     </section>
     <div id="results" class="list"></div>
-    ${create}`;
+    ${create}
+    ${installCard()}`;
+}
+
+function installCard() {
+  if (isStandalone()) return '';
+  const later = store.get('installLaterAt', 0);
+  if (later && Date.now() - later < 14 * 864e5) return '';
+  let how = '';
+  if (S.installPrompt) how = `<button type="button" class="primary" data-act="install">${t('installAdd')}</button>`;
+  else if (isIOS) how = `<p class="small">${t('iosSteps').replace('{share}', icon.share)}</p>`;
+  else if (isAndroid) how = `<p class="small">${esc(t('androidSteps'))}</p>`;
+  else return '';
+  return `<section class="install-card" aria-label="${t('installTitle')}">
+    <img src="icon-192.png" width="52" height="52" alt="">
+    <div class="install-text"><b>${t('installTitle')}</b><p class="small muted">${t('installBody')}</p>${S.installPrompt ? '' : how}</div>
+    <div class="install-actions">${S.installPrompt ? how : ''}<button type="button" class="text small" data-act="installLater">${t('installLater')}</button></div>
+  </section>`;
 }
 
 function groupShows(list) {
@@ -738,6 +763,7 @@ function meView() {
   if (!S.user) {
     return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('needLoginMe')}</p></section>
       <button type="button" class="primary big" data-act="toggleLogin">${t('login')}</button>
+      ${installCard()}
       ${themePicker()}
       ${feedbackBox()}`;
   }
@@ -761,6 +787,7 @@ function meView() {
         <button type="submit" class="primary">${t('savePw')}</button>
       </form>
     </details>
+    ${installCard()}
     ${themePicker()}
     ${feedbackBox()}
     ${S.blocked.length ? `<div class="row between"><span class="muted">${esc(t('blockedN', { n: S.blocked.length }))}</span><button type="button" class="text" data-act="unblockAll">${t('unblockAll')}</button></div>` : ''}
@@ -769,12 +796,9 @@ function meView() {
 
 function footer() {
   const mail = CONTACT_EMAIL.startsWith('YOUR_') ? '' : `<a href="mailto:${esc(CONTACT_EMAIL)}">${t('contactUs')}</a>`;
-  const standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-  const install = standalone ? '' : S.installPrompt ? `<button type="button" class="text small" data-act="install">${t('install')}</button>`
-    : isIOS ? `<span>${t('iosHint')}</span>` : '';
   return `<footer>
     <p>${t('footRule')}</p>
-    <p class="row tight">${install}<button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="privacy.html">${t('privacy')}</a>${mail}</p>
+    <p class="row tight"><button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="privacy.html">${t('privacy')}</a>${mail}</p>
   </footer>`;
 }
 
@@ -922,6 +946,7 @@ const actions = {
   },
   async logout() { await sb.auth.signOut(); },
   async install() { if (!S.installPrompt) return; S.installPrompt.prompt(); await S.installPrompt.userChoice; S.installPrompt = null; render(); },
+  installLater() { store.set('installLaterAt', Date.now()); renderMain(); },
   pick(id) { S.flash = null; openEvent(id); },
   day(id) {
     if (id === S.selEv) return;
@@ -1156,6 +1181,7 @@ const routeTo = async (push) => {
 };
 window.addEventListener('popstate', () => { routeTo(false); });
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); S.installPrompt = e; render(); });
+window.addEventListener('appinstalled', () => { S.installPrompt = null; render(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 async function start() {

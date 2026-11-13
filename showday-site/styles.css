@@ -356,3 +356,14 @@ html[data-theme="night"] .theme-pick button{background:var(--surface)}
 .swatch.cute{background:linear-gradient(135deg,#FFC2DC,#E6D6FF,#CDEBFF)}
 .swatch.simple{background:linear-gradient(135deg,#fff 50%,#0F766E 50%)}
 .swatch.night{background:linear-gradient(135deg,#14101C 50%,#FF9EC4 50%)}
+
+/* Add to Home Screen card */
+.install-card{display:grid;grid-template-columns:52px 1fr;gap:12px 14px;align-items:center;padding:16px;border-radius:20px;border:2px solid var(--line);background:#fff}
+.install-card img{border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.install-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.install-text b{font-size:16px}
+.install-actions{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.install-actions button.primary{flex:1 1 auto}
+html[data-theme="cute"] .install-card{background:var(--holo);border:2px solid #fff;box-shadow:0 6px 18px rgba(196,140,220,.25)}
+html[data-theme="cute"] .install-card b{font-family:var(--cute-font)}
+html[data-theme="night"] .install-card{background:linear-gradient(135deg,#3A2352 0%,#262A52 100%);border-color:#4E3D66}
