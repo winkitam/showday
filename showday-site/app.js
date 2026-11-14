@@ -229,6 +229,28 @@ const place = (e) => {
   const v = (e.venue || '').trim(), raw = (e.city || '').trim(), c = cityName(raw);
   return v && c && v.toLowerCase() !== raw.toLowerCase() && v.toLowerCase() !== c.toLowerCase() ? `${v}, ${c}` : (c || v);
 };
+// Fan colours: commonly used fandom / lightstick colours. Others get a steady pastel picked from the name.
+const FAN_COLORS = {
+  'bigbang': ['#FFD400', '#1A1A1A'], 'bts': ['#A06CD5', '#5B2A86'], 'blackpink': ['#F7A7C1', '#1A1A1A'],
+  'twice': ['#FBC8A0', '#FF3EA5'], 'stray kids': ['#9DE5D2', '#FFE36E'], 'babymonster': ['#E63946', '#1A1A1A'],
+  'txt': ['#7FB2FF', '#3D5AFE'], 'tomorrow x together': ['#7FB2FF', '#3D5AFE'], 'seventeen': ['#F7CAC9', '#92A8D1'],
+  'exo': ['#F3E9D2', '#C9B37E'], 'iu': ['#E8F55A', '#9C6ADE'], 'newjeans': ['#9CCBF7', '#F7A8C8']
+};
+const PASTELS = [['#FFB3D1', '#C9A7FF'], ['#A7E8D9', '#7FB2FF'], ['#FFE08A', '#FFB38A'], ['#C9A7FF', '#7FB2FF'], ['#FFC2A8', '#FF8FB1'],
+  ['#B8F2C2', '#7CD6C4'], ['#A7D8FF', '#C9A7FF'], ['#FFD6E8', '#FFE08A'], ['#D7C2FF', '#FF9EC4'], ['#9FE3F2', '#B8F2C2']];
+const fanColors = (artist) => {
+  const k = String(artist || '').trim().toLowerCase();
+  if (FAN_COLORS[k]) return FAN_COLORS[k];
+  let h = 0; for (const ch of k) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return PASTELS[h % PASTELS.length];
+};
+const initials = (artist) => {
+  const a = String(artist || '').trim();
+  if (/^[\x00-\x7F]/.test(a)) { const w = a.split(/\s+/); return (w.length > 1 ? w[0][0] + w[1][0] : a.slice(0, 2)).toUpperCase(); }
+  return [...a][0] || '?';
+};
+const coverStyle = (artist) => { const [a, b] = fanColors(artist); return `--c1:${a};--c2:${b}`; };
+const cover = (artist) => `<span class="cover" style="${coverStyle(artist)}" aria-hidden="true">${esc(initials(artist))}</span>`;
 const showKey = (e) => [e.artist.trim().toLowerCase(), cityKey(e.city), (e.venue || '').trim().toLowerCase()].join('|');
 const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { day: 'numeric', month: 'short' });
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
@@ -585,7 +607,7 @@ function showRow(g) {
     : `${t('datesN', { n: g.length })} · ${shortDate(e.event_date)} – ${shortDate(g[g.length - 1].event_date)}`;
   const n = S.view === 'board' ? 0 : g.reduce((a, x) => a + countFor(x), 0);
   return `<button type="button" class="item" data-act="pick" data-id="${e.id}">
-      <span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(place(e))} · ${esc(when)}${pending ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
+      ${cover(e.artist)}<span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(place(e))} · ${esc(when)}${pending ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
       ${n ? `<span class="count-pill">${esc(countLabel(n))}</span>` : ''}${icon.chev}
     </button>`;
 }
@@ -607,7 +629,7 @@ function renderResults() {
   const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
       <p class="live">● ${t('showDay')}</p>
       ${tonight.map((e) => `<button type="button" class="sd-item" data-act="pick" data-id="${e.id}">
-        <span class="item-main"><b>${esc(e.artist)}</b><span>${esc(place(e))}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
+        ${cover(e.artist)}<span class="item-main"><b>${esc(e.artist)}</b><span>${esc(place(e))}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
         <span class="sd-count">${esc(countLabel(countFor(e)))}</span>
       </button>`).join('')}
     </section>` : '';
@@ -638,7 +660,7 @@ function eventHead(e, stats) {
       <button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button>
       <button type="button" class="icon-btn" data-act="share" aria-label="${t('copyLink')}" title="${t('copyLink')}">${icon.link}</button>
     </div>
-    <section class="event-head ${tonight ? 'showday' : ''}">
+    <section class="event-head fan ${tonight ? 'showday' : ''}" style="${coverStyle(e.artist)}">
       ${tonight ? `<p class="live">● ${t('showDay')}</p>` : ''}
       <h1>${esc(e.artist)}</h1>
       <p class="sub">${esc(place(e))} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
