@@ -470,3 +470,8 @@ html[data-theme="night"] button.react.on{background:#4A1D35;color:#FFB3D1}
 .notif-ic{font-size:20px;width:28px;text-align:center;flex:none}
 .notif.is-new{background:#FFF7FB}
 html[data-theme="night"] .notif.is-new{background:#3A1C2C}
+/* Sign-in: Google button and human check */
+button.google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.g-logo{font-weight:800;font-family:Arial,sans-serif;color:#4285F4;font-size:18px}
+.or{text-align:center;margin:4px 0}
+.captcha{min-height:65px}
