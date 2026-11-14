@@ -200,12 +200,35 @@ const curSym = (cur = 'GBP') => {
   catch (e) { return cur; }
 };
 const CURRENCIES = ['GBP', 'HKD', 'KRW', 'JPY', 'TWD', 'SGD', 'MYR', 'THB', 'USD', 'EUR', 'AUD'];
+// City names in [English, 繁中, 한국어, ...other spellings people type]. Unknown cities show as typed.
+const CITIES = [
+  ['Hong Kong', '香港', '홍콩', 'hk', 'hongkong'], ['Macau', '澳門', '마카오', 'macao', '澳门'], ['Taipei', '台北', '타이베이', '臺北', '台北市'],
+  ['Kaohsiung', '高雄', '가오슝'], ['Taichung', '台中', '타이중', '臺中'], ['Seoul', '首爾', '서울', '首尔', '漢城'], ['Busan', '釜山', '부산'],
+  ['Incheon', '仁川', '인천'], ['Tokyo', '東京', '도쿄', '东京'], ['Osaka', '大阪', '오사카'], ['Nagoya', '名古屋', '나고야'],
+  ['Fukuoka', '福岡', '후쿠오카'], ['Saitama', '埼玉', '사이타마'], ['Yokohama', '橫濱', '요코하마', '横滨', '横浜'], ['Sapporo', '札幌', '삿포로'],
+  ['Kobe', '神戶', '고베', '神户'], ['Chiba', '千葉', '지바'], ['Kyoto', '京都', '교토'], ['Shanghai', '上海', '상하이'], ['Beijing', '北京', '베이징'],
+  ['Shenzhen', '深圳', '선전'], ['Guangzhou', '廣州', '광저우', '广州'], ['Chengdu', '成都', '청두'], ['Hangzhou', '杭州', '항저우'],
+  ['Singapore', '新加坡', '싱가포르', 'sg'], ['Bangkok', '曼谷', '방콕'], ['Kuala Lumpur', '吉隆坡', '쿠알라룸푸르', 'kl'], ['Manila', '馬尼拉', '마닐라', '马尼拉'],
+  ['Jakarta', '雅加達', '자카르타', '雅加达'], ['Ho Chi Minh City', '胡志明市', '호치민', 'saigon', 'hcmc'], ['Hanoi', '河內', '하노이', '河内'],
+  ['London', '倫敦', '런던', '伦敦'], ['Manchester', '曼徹斯特', '맨체스터', '曼彻斯特'], ['Birmingham', '伯明翰', '버밍엄'], ['Glasgow', '格拉斯哥', '글래스고'],
+  ['Dublin', '都柏林', '더블린'], ['Paris', '巴黎', '파리'], ['Berlin', '柏林', '베를린'], ['Amsterdam', '阿姆斯特丹', '암스테르담'],
+  ['Barcelona', '巴塞隆拿', '바르셀로나', '巴塞罗那'], ['Madrid', '馬德里', '마드리드'], ['Milan', '米蘭', '밀라노'], ['New York', '紐約', '뉴욕', 'nyc', '纽约'],
+  ['Los Angeles', '洛杉磯', '로스앤젤레스', 'la', '洛杉矶'], ['San Francisco', '三藩市', '샌프란시스코', 'sf', '旧金山', '舊金山'], ['Chicago', '芝加哥', '시카고'],
+  ['Toronto', '多倫多', '토론토', '多伦多'], ['Vancouver', '溫哥華', '밴쿠버', '温哥华'], ['Sydney', '悉尼', '시드니', '雪梨'], ['Melbourne', '墨爾本', '멜버른', '墨尔本'],
+  ['Auckland', '奧克蘭', '오클랜드'], ['Dubai', '杜拜', '두바이', '迪拜']
+];
+const CITY_IDX = new Map();
+CITIES.forEach((row) => row.forEach((n) => CITY_IDX.set(n.toLowerCase().replace(/\s+/g, ' ').trim(), row)));
+const cityRow = (c) => CITY_IDX.get(String(c || '').toLowerCase().replace(/\s+/g, ' ').trim());
+const cityName = (c) => { const r = cityRow(c); return r ? r[S.lang] : String(c || '').trim(); };
+const cityKey = (c) => { const r = cityRow(c); return (r ? r[0] : String(c || '')).trim().toLowerCase(); };
+const cityAll = (c) => { const r = cityRow(c); return r ? r.join(' ') : String(c || ''); };
 const place = (e) => {
   if (!e) return '';
-  const v = (e.venue || '').trim(), c = (e.city || '').trim();
-  return v && c && v.toLowerCase() !== c.toLowerCase() ? `${v}, ${c}` : (c || v);
+  const v = (e.venue || '').trim(), raw = (e.city || '').trim(), c = cityName(raw);
+  return v && c && v.toLowerCase() !== raw.toLowerCase() && v.toLowerCase() !== c.toLowerCase() ? `${v}, ${c}` : (c || v);
 };
-const showKey = (e) => [e.artist, e.city || '', e.venue || ''].map((x) => x.trim().toLowerCase()).join('|');
+const showKey = (e) => [e.artist.trim().toLowerCase(), cityKey(e.city), (e.venue || '').trim().toLowerCase()].join('|');
 const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { day: 'numeric', month: 'short' });
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
   : new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { weekday: 'short', day: 'numeric', month: 'short' });
@@ -569,7 +592,7 @@ function renderResults() {
   if (!box) return;
   if (!S.eventsLoaded) { box.innerHTML = `<p class="muted">${t('loading')}</p>`; return; }
   const q = S.q.trim().toLowerCase();
-  const matches = S.events.filter((e) => !q || [e.artist, e.city, e.venue, e.event_date].join(' ').toLowerCase().includes(q));
+  const matches = S.events.filter((e) => !q || [e.artist, cityAll(e.city), e.venue, e.event_date].join(' ').toLowerCase().includes(q));
   if (!matches.length && !(S.view === 'merch' && !q)) {
     box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>`;
     return;
