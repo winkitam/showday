@@ -17,4 +17,4 @@ export const GOOGLE_LOGIN = true;
 // Optional, makes the Google login look like part of Show Day (no supabase.co address shown).
 // Paste the Google OAuth "Client ID" here (it is public; never the Client secret).
 // Also add this site's address under "Authorized JavaScript origins" in Google Cloud. Leave '' to use the redirect login.
-export const GOOGLE_CLIENT_ID = '';
+export const GOOGLE_CLIENT_ID = '227748552340-mvateeli0vqe5jrg8hrtk3ug80bnh7go.apps.googleusercontent.com';
