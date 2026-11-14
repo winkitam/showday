@@ -200,7 +200,12 @@ const T = {
   stars: ['{n} stars', '{n} 粒星', '별 {n}개'],
   stillAvail: ['Interested', '有興趣', '관심 있어요'], asked: ['Interested', '有興趣', '관심 있어요'],
   nAsked: ['{n} interested', '{n} 人有興趣', '{n}명 관심'], oneAsked: ['1 interested', '1 人有興趣', '1명 관심'],
-  likeIt: ['Like', '讚好', '좋아요'], unlikeIt: ['Unlike', '取消讚好', '좋아요 취소']
+  likeIt: ['Like', '讚好', '좋아요'],
+  notifs: ['Notifications', '通知', '알림'], noNotifs: ['Nothing new yet. When someone is interested, likes or rates your post, it shows here.', '暫時未有新通知。有人對你的帖子有興趣、讚好或評分，就會喺度顯示。', '아직 새 알림이 없어요. 누군가 내 글에 관심, 좋아요, 평가를 남기면 여기에 표시돼요.'],
+  nInterest: ['{n} people are interested in your post', '{n} 人對你的帖子有興趣', '{n}명이 내 글에 관심을 보였어요'], oneInterest: ['Someone is interested in your post', '有人對你的帖子有興趣', '누군가 내 글에 관심을 보였어요'],
+  nLikes: ['{n} new likes on your post', '你的帖子有 {n} 個新讚好', '내 글에 새 좋아요 {n}개'], oneLike: ['Someone liked your post', '有人讚好你的帖子', '누군가 내 글을 좋아해요'],
+  nRatings: ['You got {n} new ratings', '你收到 {n} 個新評分', '새 평가 {n}개를 받았어요'], oneRating: ['You got a new rating', '你收到一個新評分', '새 평가를 받았어요'],
+  newBadge: ['New', '新', '새 알림'], unlikeIt: ['Unlike', '取消讚好', '좋아요 취소']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
 const HTML_LANG = ['en', 'zh-Hant', 'ko'];
@@ -351,7 +356,7 @@ const icon = {
 
 // ---------- State ----------
 const S = {
-  artists: [], scores: {}, myRatings: {}, reacts: {}, myReacts: {}, rating: null, ratingPick: 0, profileRatings: null,
+  artists: [], scores: {}, myRatings: {}, reacts: {}, myReacts: {}, notifs: null, unread: 0, v13: true, rating: null, ratingPick: 0, profileRatings: null,
   lang: store.get('lang', guessLang()),
   user: null,
   events: [], eventsLoaded: false,
@@ -481,6 +486,48 @@ async function loadMyReacts() {
   const { data } = await sb.from('post_reactions').select('item_type, item_id, kind').eq('user_id', S.user.id).limit(2000);
   (data || []).forEach((r) => { S.myReacts[r.kind + ':' + r.item_type + ':' + r.item_id] = true; });
 }
+async function loadNotifs() {
+  if (!S.user || !S.v13) { S.notifs = null; S.unread = 0; return; }
+  const { data, error } = await sb.from('notifications').select('id, kind, item_type, item_id, event_id, label, n, read, updated_at')
+    .eq('user_id', S.user.id).order('updated_at', { ascending: false }).limit(50);
+  if (error) { S.v13 = false; S.notifs = null; S.unread = 0; return; }
+  S.notifs = data || [];
+  S.unread = S.notifs.filter((x) => !x.read).length;
+}
+const bellBtn = () => S.user && S.v13
+  ? `<button type="button" id="bell" class="icon-btn bell" data-act="openNotifs" aria-label="${t('notifs')}${S.unread ? ` (${S.unread})` : ''}" title="${t('notifs')}">🔔${S.unread ? `<span class="dot">${S.unread > 9 ? '9+' : S.unread}</span>` : ''}</button>` : '';
+function refreshBell() { const b = document.getElementById('bell'); if (b) b.outerHTML = bellBtn(); }
+async function openNotifs(push = true) {
+  S.view = 'n'; S.selEv = null; S.flash = null;
+  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
+  if (push) history.pushState({ v: 'n' }, '', location.pathname + '?v=n');
+  render(); window.scrollTo(0, 0);
+  await loadNotifs();
+  S.notifSeen = new Set((S.notifs || []).filter((x) => !x.read).map((x) => x.id));
+  renderMain();
+  if (S.notifSeen.size) {
+    await sb.from('notifications').update({ read: true }).eq('user_id', S.user.id).eq('read', false);
+    (S.notifs || []).forEach((x) => { x.read = true; });
+    S.unread = 0; refreshBell();
+  }
+}
+function notifText(x) {
+  const one = x.n === 1;
+  return x.kind === 'interest' ? (one ? t('oneInterest') : t('nInterest', { n: x.n }))
+    : x.kind === 'like' ? (one ? t('oneLike') : t('nLikes', { n: x.n }))
+    : (one ? t('oneRating') : t('nRatings', { n: x.n }));
+}
+function notifView() {
+  const ic = { interest: '🙋', like: '♥', rating: '★' };
+  const seen = S.notifSeen || new Set();
+  const list = S.notifs === null ? `<p class="muted">${t('loading')}</p>`
+    : S.notifs.length ? S.notifs.map((x) => `<button type="button" class="item notif ${seen.has(x.id) ? 'is-new' : ''}" data-act="goPost" data-id="${x.item_type}:${x.event_id || 'general'}">
+        <span class="notif-ic" aria-hidden="true">${ic[x.kind]}</span>
+        <span class="item-main"><b>${esc(notifText(x))}</b><span class="small muted">${t(TYPE_LABEL[x.item_type])}${x.label ? ' · ' + esc(x.label) : ''} · ${esc(ago(x.updated_at))}${seen.has(x.id) ? ` · <span class="chip match">${t('newBadge')}</span>` : ''}</span></span>${icon.chev}</button>`).join('')
+      : `<p class="muted">${t('noNotifs')}</p>`;
+  return `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
+    <h1>${t('notifs')}</h1><div class="list">${list}</div>`;
+}
 async function loadMyRatings() {
   S.myRatings = {};
   if (!S.v11 || !S.user) return;
@@ -579,6 +626,7 @@ function topBar() {
     <button type="button" class="brand" data-act="home">${t('brand')}</button>
     <div class="row">
       <button type="button" class="icon-btn" data-act="cycleTheme" aria-label="${t('theme')}: ${t(THEMES[S.theme].key)}" title="${t('theme')}: ${t(THEMES[S.theme].key)}">${icon.palette}</button>
+      ${bellBtn()}
       <select id="lang" class="lang" aria-label="Language">${opts}</select>
       <button type="button" class="text" data-act="${S.user ? 'logout' : 'toggleLogin'}">${S.user ? t('logout') : t('login')}</button>
     </div>
@@ -1335,6 +1383,7 @@ function renderMain() {
   if (!main) return;
   if (S.view === 'me') { main.innerHTML = meView(); return; }
   if (S.view === 'u') { main.innerHTML = profileView(); return; }
+  if (S.view === 'n') { main.innerHTML = notifView(); return; }
   const e = S.selEv === 'general' && S.view === 'merch' ? 'general' : S.events.find((x) => x.id === S.selEv);
   if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   if (S.view !== 'board') {
@@ -1407,6 +1456,7 @@ const actions = {
       renderMain();
     }
   },
+  openNotifs() { openNotifs(); },
   rate(key) {
     if (!S.user) { S.showLogin = true; render(); return; }
     S.rating = S.rating === key ? null : key; S.ratingPick = 0; S.flash = null; renderMain();
@@ -1490,7 +1540,7 @@ const actions = {
   setTheme(id) { if (!THEMES[id]) return; S.theme = id; store.set('theme', id); applyTheme(); render(); },
   cycleTheme() { const k = Object.keys(THEMES); actions.setTheme(k[(k.indexOf(S.theme) + 1) % k.length]); },
   unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
-  back() { if (history.state && (history.state.ev || history.state.v === 'u')) history.back(); else tabHome(); },
+  back() { if (history.state && (history.state.ev || history.state.v === 'u' || history.state.v === 'n')) history.back(); else tabHome(); },
   authMode(id) {
     const email = document.getElementById('login-email')?.value || '';
     S.authMode = id; S.flash = null; render(); keepEmail(email);
@@ -1832,6 +1882,7 @@ const routeTo = async (push) => {
   const p = new URLSearchParams(location.search);
   const id = p.get('e'); const v = p.get('v');
   if (v === 'u' && UUID.test(p.get('id') || '')) { await openProfile(p.get('id'), push); return; }
+  if (v === 'n' && S.user) { await openNotifs(push); return; }
   const view = v === 'free' ? 'merch' : VIEWS.includes(v) ? v : 'board';
   const okId = id && ((id === 'general' && view === 'merch') || (UUID.test(id) && S.events.some((x) => x.id === id)));
   if (okId && view !== 'me') await openEvent(id, push, view);
@@ -1854,7 +1905,7 @@ async function start() {
     S.user = session ? session.user : null;
     if ((S.user && S.user.id) !== before) {
       S.showLogin = false; S.contacts = {};
-      await loadMyRatings(); await loadMyReacts();
+      await loadMyRatings(); await loadMyReacts(); await loadNotifs();
       await checkAdmin(); await loadEvents(); await loadCounts(); await loadListings();
       if (S.view === 'me') await loadMine(); else if (S.view !== 'board') { await loadItems(S.view); if (S.view === 'merch' && S.v7) await loadItems('free'); }
       render();
@@ -1864,6 +1915,7 @@ async function start() {
   await detectV5();
   await loadMyRatings();
   await loadMyReacts();
+  await loadNotifs();
   await loadEvents();
   await loadCounts();
   const params = new URLSearchParams(location.search);
@@ -1875,3 +1927,11 @@ async function start() {
   }
 }
 start();
+
+// Check for new notifications every minute while the page is open
+setInterval(async () => {
+  if (!S.user || !S.v13 || document.hidden || S.view === 'n') return;
+  const before = S.unread;
+  await loadNotifs();
+  if (S.unread !== before) refreshBell();
+}, 60000);
