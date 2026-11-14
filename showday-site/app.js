@@ -716,7 +716,7 @@ function filterBar(type) {
   }
   if (type === 'merch') {
     const seg = (k, label) => `<button type="button" class="${S.mf.kind === k ? 'on' : ''}" aria-pressed="${S.mf.kind === k}" data-act="mfKind" data-id="${k}">${label}</button>`;
-    let html = `<div class="seg wrap" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}${S.v7 && S.selEv !== 'general' ? seg('free', '🎁 ' + t('navFree')) : ''}</div>`;
+    let html = `<div class="seg seg-scroll" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}${S.v7 && S.selEv !== 'general' ? seg('free', '🎁 ' + t('navFree')) : ''}</div>`;
     if (S.v7) {
       const cats = CATS.filter((k) => all.some((x) => x.category === k));
       const members = [...new Map(all.filter((x) => x.member).map((x) => [x.member.trim().toLowerCase(), x.member.trim()])).values()].slice(0, 20);
@@ -938,7 +938,7 @@ function composer(type) {
   // Merch and freebies share one tab: "Freebie" is a fourth kind next to WTS / WTB / WTT
   const canFree = type === 'merch' && S.v7 && !!ev;
   const k = S.merchKind === 'free' && !canFree ? 'sale' : S.merchKind;
-  const kindSeg = type !== 'merch' ? '' : `<div class="seg wrap" role="group">${(S.v7 ? ['sale', 'buy', 'swap', ...(canFree ? ['free'] : [])] : ['swap', 'sale']).map((x) =>
+  const kindSeg = type !== 'merch' ? '' : `<div class="seg seg-scroll" role="group">${(S.v7 ? ['sale', 'buy', 'swap', ...(canFree ? ['free'] : [])] : ['swap', 'sale']).map((x) =>
       `<button type="button" class="${k === x ? 'on' : ''}" aria-pressed="${k === x}" data-act="merchKind" data-id="${x}">${x === 'free' ? '🎁 ' + t('navFree') : S.v7 ? t(MERCH_KINDS[x]) : x === 'sale' ? t('forSale') : t('forSwap')}</button>`).join('')}</div>`;
   if (type === 'merch' && k === 'free') type = 'free';
   const pickEv = ev ? `<div class="field"><span style="font-size:14px;font-weight:500">${t('postTo')}</span><div class="note info">${esc(evName(ev))}</div>
