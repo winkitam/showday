@@ -109,6 +109,7 @@ const T = {
   fPrice: ['Price ({c})', '價格（{c}）', '가격 ({c})'], confirmMerch: ['This is not a ticket.', '這不是門票。', '티켓이 아니에요.'],
   undoStep: ['↩ Undo', '↩ 撤回', '↩ 되돌리기'], errUndoRated: ['Someone already rated this trade, so it can\'t be undone.', '已經有人評分，唔可以撤回。', '이미 평가가 있어 되돌릴 수 없어요.'],
   rateNeedAsk: ['Tap Interested on a post before the trade, then you can rate it.', '交易前喺帖文㩒「有興趣」，之後先可以評分。', '거래 전에 게시글에서 관심 있어요를 눌러야 평가할 수 있어요.'],
+  reload: ['Refresh', '重新整理', '새로고침'],
   markDone: ['Mark as done', '標記為完成', '완료로 표시'], doneLabel: ['Done', '已完成', '완료'],
   fEvent: ['Concert', '演出', '공연'], noUpcoming: ['Add the concert on the Board tab first.', '請先在「票板」新增演出。', '먼저 게시판에서 공연을 추가하세요.'],
   noPosts: ['Nothing yet.', '暫時沒有內容。', '아직 없어요.'],
@@ -664,6 +665,7 @@ function topBar() {
     <div class="row">
       <button type="button" class="icon-btn" data-act="cycleTheme" aria-label="${t('theme')}: ${t(THEMES[S.theme].key)}" title="${t('theme')}: ${t(THEMES[S.theme].key)}">${icon.palette}</button>
       ${bellBtn()}
+      <button type="button" class="icon-btn" data-act="reloadPage" aria-label="${t('reload')}" title="${t('reload')}">↻</button>
       <select id="lang" class="lang" aria-label="Language">${opts}</select>
       <button type="button" class="text" data-act="${S.user ? 'logout' : 'toggleLogin'}">${S.user ? t('logout') : t('login')}</button>
     </div>
@@ -1544,6 +1546,7 @@ const actions = {
       renderMain();
     }
   },
+  reloadPage() { location.reload(); },
   openNotifs() { openNotifs(); },
   emailOpen() { S.emailOpen = true; render(); const el = document.getElementById('login-email'); if (el) el.focus(); },
   openArtist(k) { S.openArtist = S.openArtist === k ? null : k; renderResults(); },
