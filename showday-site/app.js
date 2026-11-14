@@ -1533,6 +1533,7 @@ const actions = {
       : await sb.from('post_reactions').insert({ item_type, item_id, kind });
     if (error && error.code !== '23505') {
       if (on) { S.myReacts[id] = true; c[f] += 1; } else { delete S.myReacts[id]; c[f] = Math.max(0, c[f] - 1); }
+      S.flash = { area: 'list', text: error.message || t('errGeneric'), kind: 'err' };
       renderMain();
     }
   },
