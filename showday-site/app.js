@@ -142,6 +142,13 @@ const T = {
   photoTicketHint: ['Cover the QR code or barcode before you upload.', '上載前請遮住 QR code 或條碼。', '업로드 전에 QR코드나 바코드를 가려 주세요.'],
   pastShows: ['Past shows', '過去演出', '지난 공연'],
   pastNote: ['This show has ended. Posts are read only.', '此演出已完結，只可瀏覽。', '종료된 공연이에요. 보기만 가능해요.'],
+  fanN: ['Fan {n}', '粉絲 {n}', '팬 {n}'], memberSince: ['Member since {d}', '{d} 加入', '{d} 가입'],
+  doneTrades: ['{n} completed', '完成 {n} 次交易', '거래 완료 {n}회'], activePosts: ['Active posts', '進行中嘅貼文', '진행 중인 게시글'],
+  editProfile: ['Edit my profile', '編輯個人資料', '프로필 수정'], myProfile: ['My profile', '我的個人資料', '내 프로필'],
+  nickname: ['Nickname', '暱稱', '닉네임'], nickHint: ['Shown on your posts. Do not use your real name or email.', '會顯示喺你嘅貼文上，請勿用真名或電郵。', '게시글에 표시돼요. 실명이나 이메일은 쓰지 마세요.'],
+  pickAvatar: ['Avatar', '頭像', '아바타'], pickColor: ['Background', '背景色', '배경색'], saveProfile: ['Save profile', '儲存', '저장'],
+  viewProfile: ['View my profile', '睇我嘅個人頁面', '내 프로필 보기'], profileSaved: ['Profile saved.', '已儲存。', '저장됐어요.'],
+  nickTaken: ['That nickname is taken.', '呢個暱稱已經有人用。', '이미 사용 중인 닉네임이에요.'],
   justNow: ['just now', '剛剛', '방금'],
   maybeSold: ['May be gone', '可能已售出', '이미 거래됐을 수도'],
   maybeSwapped: ['May be swapped', '可能已換出', '이미 교환됐을 수도'],
@@ -344,6 +351,13 @@ const S = {
   v5: false,
   v7: false,
   v8: false,
+  v9: false,
+  profiles: {},
+  profileId: null,
+  profilePosts: null,
+  profileDone: 0,
+  pickAv: null,
+  pickBg: null,
   pastOpen: false,
   pastLoaded: false,
   sort: 'new',
@@ -397,6 +411,7 @@ async function loadListings() {
     .order('created_at', { ascending: false })
     .limit(200);
   if (!error) S.listings = data.filter((l) => !l.hidden || (S.user && l.user_id === S.user.id));
+  if (!error) await loadProfiles(S.listings.map((l) => l.user_id));
   S.listingsLoaded = true;
 }
 const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' };
@@ -408,7 +423,8 @@ const ITEM_COLS = {
   get free() { return `id, event_id, user_id, what, details, give_time, place, photo_url, status, hidden, created_at, ${EV_EMBED}`; }
 };
 async function detectV5() {
-  const [a, b, c] = await Promise.all([sb.from('listings').select('note').limit(1), sb.from('buddies').select('tags').limit(1), sb.from('listings').select('photo_url').limit(1)]);
+  const [a, b, c, d] = await Promise.all([sb.from('listings').select('note').limit(1), sb.from('buddies').select('tags').limit(1), sb.from('listings').select('photo_url').limit(1), sb.from('profiles').select('id').limit(1)]);
+  S.v9 = !d.error;
   S.v5 = !a.error;
   S.v7 = !b.error;
   S.v8 = !c.error;
@@ -427,6 +443,7 @@ async function loadItems(type) {
   S.items[type] = data.filter((x) => (!x.hidden || (S.user && x.user_id === S.user.id))
     && (type === 'merch' || x.events));
   if (type !== 'merch') S.items[type].sort((a, b) => a.events.event_date.localeCompare(b.events.event_date));
+  await loadProfiles(S.items[type].map((x) => x.user_id));
 }
 async function loadMine() {
   if (!S.user) { S.mine = null; return; }
@@ -457,7 +474,7 @@ async function setView(v, push = true) {
   if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   if (push) history.pushState({ v }, '', location.pathname + '?v=' + v);
   render(); window.scrollTo(0, 0);
-  if (v === 'me') await loadMine(); else await loadItems(v);
+  if (v === 'me') { await loadMine(); if (S.user) await loadProfiles([S.user.id]); } else await loadItems(v);
   if (v === 'merch' && S.v7) await loadItems('free');
   renderMain();
 }
@@ -488,7 +505,7 @@ async function openEvent(id, push = true, view) {
   if (!Array.isArray(S.items[S.view])) { await loadItems(S.view); renderMain(); }
   if (S.view === 'merch' && S.v7 && !Array.isArray(S.items.free)) { await loadItems('free'); renderMain(); }
 }
-function tabHome(push = true) { if (S.view === 'board' || S.view === 'me') return goHome(push); return setView(S.view, push); }
+function tabHome(push = true) { if (S.view === 'board' || S.view === 'me' || S.view === 'u') return goHome(push); return setView(S.view, push); }
 function goHome(push = true) {
   S.view = 'board';
   S.selEv = null; S.posting = false; S.flash = null;
@@ -843,7 +860,7 @@ function listingCard(l) {
       <div class="stack-r"><div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, ev.currency)}</div>${photo(l.photo_url)}</div>
     </div>
     <div class="row">
-      ${main}
+      ${main}${author(l.user_id)}
       <details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details>
     </div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b><br>${t('payAfter')}</p>` : ''}
@@ -944,7 +961,7 @@ function itemCard(type, it, inEvent) {
   return `<article class="listing ${done ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
     ${mine || done || chips ? `<div class="row tight">${done ? `<span class="chip done">${doneLabel}</span>` : ''}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${chips}</div>` : ''}
     ${body}
-    <div class="row">${main}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
+    <div class="row">${main}${author(it.user_id)}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b>${type === 'merch' ? `<br>${t('footRule')}` : ''}</p>` : ''}
     <p class="small muted time">${esc(postedAt(it.created_at))}</p>
   </article>`;
@@ -1028,6 +1045,101 @@ function feedbackBox() {
   </details>`;
 }
 
+// ---------- Profiles (nickname + animal avatar drawn with emoji, no uploads) ----------
+const ANIMALS = { rabbit: '🐰', bear: '🐻', cat: '🐱', dog: '🐶', fox: '🦊', panda: '🐼', koala: '🐨', tiger: '🐯', lion: '🦁',
+  hamster: '🐹', frog: '🐸', penguin: '🐧', chick: '🐥', pig: '🐷', cow: '🐮', mouse: '🐭', wolf: '🐺', monkey: '🐵',
+  unicorn: '🦄', otter: '🦦', seal: '🦭', sloth: '🦥', hedgehog: '🦔', owl: '🦉', dolphin: '🐬', whale: '🐳', turtle: '🐢',
+  octopus: '🐙', squirrel: '🐿️', duck: '🦆', swan: '🦢', butterfly: '🦋', bee: '🐝', dino: '🦕', dragon: '🐲', deer: '🦌',
+  raccoon: '🦝', bat: '🦇', parrot: '🦜', flamingo: '🦩' };
+const AV_BG = { pink: '#FFC7DC', lilac: '#E4D7FF', blue: '#CFE6FF', mint: '#CDEFE0', butter: '#FFF0A8', peach: '#FFD8C2', gray: '#E6E6EE', black: '#2B2433' };
+const uidHash = (id) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+function profileOf(uid) {
+  const p = S.profiles[uid] || {};
+  const keys = Object.keys(ANIMALS), bgs = Object.keys(AV_BG), h = uidHash(uid);
+  return {
+    nickname: p.nickname || t('fanN', { n: String(uid).slice(0, 4) }),
+    avatar: ANIMALS[p.avatar] ? p.avatar : keys[h % keys.length],
+    bg: AV_BG[p.avatar_bg] ? p.avatar_bg : bgs[h % (bgs.length - 1)],
+    since: p.created_at || null
+  };
+}
+const avatarEl = (av, bg, size = 28) => `<span class="avatar" style="--av:${AV_BG[bg]};--s:${size}px" aria-hidden="true">${ANIMALS[av]}</span>`;
+function author(uid) {
+  if (!S.v9 || !uid) return '';
+  const p = profileOf(uid);
+  return `<button type="button" class="author" data-act="profile" data-id="${uid}">${avatarEl(p.avatar, p.bg, 24)}<span>${esc(p.nickname)}</span></button>`;
+}
+async function loadProfiles(ids) {
+  if (!S.v9) return;
+  const need = [...new Set(ids.filter((id) => id && !(id in S.profiles)))];
+  if (!need.length) return;
+  const { data } = await sb.from('profiles').select('id, nickname, avatar, avatar_bg, created_at').in('id', need);
+  need.forEach((id) => { S.profiles[id] = null; });
+  (data || []).forEach((p) => { S.profiles[p.id] = p; });
+}
+async function openProfile(uid, push = true) {
+  S.view = 'u'; S.profileId = uid; S.selEv = null; S.flash = null; S.profilePosts = null;
+  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
+  if (push) history.pushState({ v: 'u', id: uid }, '', location.pathname + '?v=u&id=' + uid);
+  render(); window.scrollTo(0, 0);
+  await loadProfiles([uid]);
+  const cnt = (tb) => sb.from(tb).select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'done');
+  const [l, sw, bu, me, fr, c1, c2, c3] = await Promise.all([
+    sb.from('listings').select('id, kind, section, price, status, hidden, created_at, event_id, events(artist, city, venue, event_date, currency)').eq('user_id', uid).neq('status', 'done').order('created_at', { ascending: false }).limit(50),
+    sb.from('swaps').select(ITEM_COLS.swap).eq('user_id', uid).eq('status', 'open').limit(50),
+    sb.from('buddies').select(ITEM_COLS.buddy).eq('user_id', uid).limit(50),
+    sb.from('merch').select(ITEM_COLS.merch).eq('user_id', uid).eq('status', 'open').limit(50),
+    S.v7 ? sb.from('freebies').select(ITEM_COLS.free).eq('user_id', uid).eq('status', 'open').limit(50) : Promise.resolve({ data: [] }),
+    cnt('listings'), cnt('swaps'), cnt('merch')
+  ]);
+  const today = todayISO();
+  const live = (x) => !x.hidden && (!x.events || x.events.event_date >= today);
+  S.profilePosts = [
+    ...(l.data || []).map((x) => ({ type: 'listing', ...x })), ...(sw.data || []).map((x) => ({ type: 'swap', ...x })),
+    ...(bu.data || []).map((x) => ({ type: 'buddy', ...x })), ...(me.data || []).map((x) => ({ type: 'merch', ...x })),
+    ...(fr.data || []).map((x) => ({ type: 'free', ...x }))
+  ].filter(live).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  S.profileDone = [c1, c2, c3].reduce((a, r) => a + (r && r.count ? r.count : 0), 0);
+  renderMain();
+}
+const TYPE_LABEL = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch', free: 'typeFree' };
+const describePost = (x) => x.type === 'listing' ? `${x.kind === 'sell' ? t('has') : t('needs')} · ${x.section} · ${fmtMoney(x.price, x.events && x.events.currency)}`
+  : x.type === 'swap' ? `${x.have} → ${x.want}` : x.type === 'buddy' ? x.note : x.type === 'free' ? x.what : x.title;
+function profileView() {
+  const uid = S.profileId;
+  const p = profileOf(uid);
+  const mine = S.user && S.user.id === uid;
+  const since = p.since ? new Date(p.since).toLocaleDateString(LOCALES[S.lang], { year: 'numeric', month: 'short' }) : '';
+  const posts = S.profilePosts === null ? `<p class="muted">${t('loading')}</p>`
+    : S.profilePosts.length ? S.profilePosts.map((x) => `<button type="button" class="item" data-act="goPost" data-id="${x.type}:${x.event_id || 'general'}">
+        <span class="item-main"><span class="small muted">${t(TYPE_LABEL[x.type])}${x.events ? ' · ' + esc(evName(x.events)) : ''}</span><b>${esc(describePost(x))}</b></span>${icon.chev}</button>`).join('')
+      : `<p class="muted">${t('noPosts')}</p>`;
+  return `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
+    <section class="profile-head">${avatarEl(p.avatar, p.bg, 72)}
+      <div><h1>${esc(p.nickname)}</h1>
+      <p class="small muted">${since ? esc(t('memberSince', { d: since })) + ' · ' : ''}${S.profilePosts === null ? '' : esc(t('doneTrades', { n: S.profileDone || 0 }))}</p></div></section>
+    ${mine ? `<button type="button" class="outline" data-act="nav" data-id="me">${t('editProfile')}</button>` : ''}
+    <h2 class="list-title">${t('activePosts')}</h2>
+    <div class="list">${posts}</div>`;
+}
+function profileEditor() {
+  if (!S.v9 || !S.user) return '';
+  const p = profileOf(S.user.id);
+  const av = S.pickAv || p.avatar, bg = S.pickBg || p.bg;
+  return `<form data-form="profile" class="panel stack" style="gap:12px" aria-label="${t('myProfile')}">
+    <div class="row">${avatarEl(av, bg, 56)}<div class="field" style="flex:1"><label for="pf-nick">${t('nickname')}</label>
+      <input id="pf-nick" name="nickname" maxlength="24" value="${esc(S.draftNick != null ? S.draftNick : (S.profiles[S.user.id] && S.profiles[S.user.id].nickname) || '')}" placeholder="${esc(p.nickname)}"></div></div>
+    <p class="small muted">${t('nickHint')}</p>
+    <div class="av-grid" role="group" aria-label="${t('pickAvatar')}">${Object.entries(ANIMALS).map(([k, e]) =>
+      `<button type="button" class="av-pick ${k === av ? 'on' : ''}" aria-pressed="${k === av}" aria-label="${k}" data-act="pickAv" data-id="${k}">${e}</button>`).join('')}</div>
+    <div class="row tight" role="group" aria-label="${t('pickColor')}">${Object.entries(AV_BG).map(([k, c]) =>
+      `<button type="button" class="bg-pick ${k === bg ? 'on' : ''}" aria-pressed="${k === bg}" aria-label="${k}" style="--av:${c}" data-act="pickBg" data-id="${k}"></button>`).join('')}</div>
+    ${flashFor('profile')}
+    <div class="row"><button type="submit" class="primary">${t('saveProfile')}</button>
+      <button type="button" class="text" data-act="profile" data-id="${S.user.id}">${t('viewProfile')}</button></div>
+  </form>`;
+}
+
 function meView() {
   if (!S.user) {
     return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('needLoginMe')}</p></section>
@@ -1048,6 +1160,7 @@ function meView() {
   return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('loggedInAs')} ${esc(S.user.email)}</p></section>
     ${flashFor('me')}
     ${S.isAdmin ? `<a class="outline-link" href="admin.html">${t('adminPage')}</a>` : ''}
+    ${profileEditor()}
     <h2 class="list-title">${t('myPosts')}</h2>
     <div class="list">${posts}</div>
     <details class="panel collapse"><summary>${t('changePw')}</summary>
@@ -1097,6 +1210,7 @@ function renderMain() {
   const main = document.getElementById('main');
   if (!main) return;
   if (S.view === 'me') { main.innerHTML = meView(); return; }
+  if (S.view === 'u') { main.innerHTML = profileView(); return; }
   const e = S.selEv === 'general' && S.view === 'merch' ? 'general' : S.events.find((x) => x.id === S.selEv);
   if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   if (S.view !== 'board') {
@@ -1224,7 +1338,7 @@ const actions = {
   setTheme(id) { if (!THEMES[id]) return; S.theme = id; store.set('theme', id); applyTheme(); render(); },
   cycleTheme() { const k = Object.keys(THEMES); actions.setTheme(k[(k.indexOf(S.theme) + 1) % k.length]); },
   unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
-  back() { if (history.state && history.state.ev) history.back(); else tabHome(); },
+  back() { if (history.state && (history.state.ev || history.state.v === 'u')) history.back(); else tabHome(); },
   authMode(id) {
     const email = document.getElementById('login-email')?.value || '';
     S.authMode = id; S.flash = null; render(); keepEmail(email);
@@ -1266,6 +1380,15 @@ const actions = {
     S.newDates = Math.max(1, S.newDates - 1); renderMain();
   },
   tab(id) { S.tab = id; renderMain(); },
+  profile(uid) { closeMenus(); openProfile(uid); },
+  goPost(key) {
+    const [type, ev] = parseKey(key);
+    const view = type === 'listing' ? 'board' : type === 'free' ? 'merch' : type;
+    if (ev !== 'general' && !S.events.some((x) => x.id === ev)) return;
+    openEvent(ev, true, view);
+  },
+  pickAv(id) { if (ANIMALS[id]) { keepNick(); S.pickAv = id; renderMain(); } },
+  pickBg(id) { if (AV_BG[id]) { keepNick(); S.pickBg = id; renderMain(); } },
   async togglePast() {
     S.pastOpen = !S.pastOpen; renderResults();
     if (!S.pastOpen || S.pastLoaded) return;
@@ -1337,7 +1460,18 @@ async function uploadPhoto(file) {
   return sb.storage.from('photos').getPublicUrl(path).data.publicUrl;
 }
 
+const keepNick = () => { const el = document.getElementById('pf-nick'); if (el) S.draftNick = el.value; };
 const forms = {
+  async profile(f) {
+    const nickname = String(new FormData(f).get('nickname') || '').trim().slice(0, 24) || null;
+    const p = profileOf(S.user.id);
+    const row = { id: S.user.id, nickname, avatar: S.pickAv || p.avatar, avatar_bg: S.pickBg || p.bg };
+    const { error } = await sb.from('profiles').upsert(row);
+    if (error) { flash('profile', error.code === '23505' ? 'nickTaken' : 'errGeneric'); renderMain(); return; }
+    S.profiles[S.user.id] = { ...(S.profiles[S.user.id] || {}), ...row };
+    S.pickAv = null; S.pickBg = null; S.draftNick = null;
+    flash('profile', 'profileSaved', 'ok'); renderMain();
+  },
   async feedback(f) {
     const d = new FormData(f);
     const message = String(d.get('message') || '').trim();
@@ -1524,6 +1658,7 @@ const VIEWS = ['swap', 'buddy', 'merch', 'me'];
 const routeTo = async (push) => {
   const p = new URLSearchParams(location.search);
   const id = p.get('e'); const v = p.get('v');
+  if (v === 'u' && UUID.test(p.get('id') || '')) { await openProfile(p.get('id'), push); return; }
   const view = v === 'free' ? 'merch' : VIEWS.includes(v) ? v : 'board';
   const okId = id && ((id === 'general' && view === 'merch') || (UUID.test(id) && S.events.some((x) => x.id === id)));
   if (okId && view !== 'me') await openEvent(id, push, view);

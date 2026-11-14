@@ -426,3 +426,18 @@ html[data-theme="night"] .event-head.fan:not(.showday){background:linear-gradien
 .past{margin-top:4px}
 .past-toggle{min-height:32px;padding:0 4px;font-size:12px;color:var(--muted);font-weight:500}
 .past-list .item{min-height:52px;padding:8px 4px;opacity:.75}
+
+/* Profiles: animal avatars drawn with emoji (no image downloads) */
+.avatar{flex:none;display:inline-grid;place-items:center;width:var(--s);height:var(--s);border-radius:50%;background:var(--av);font-size:calc(var(--s) * .6);line-height:1}
+.author{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px 0 4px;margin-left:auto;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);max-width:50%}
+.author span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.author:hover{background:var(--soft)}
+.profile-head{display:flex;align-items:center;gap:16px}
+.profile-head h1{font-size:26px}
+.av-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+.av-pick{min-height:44px;padding:0;font-size:24px;border-radius:12px;border:2px solid transparent;background:var(--soft)}
+.av-pick.on{border-color:var(--accent);background:var(--bg)}
+.bg-pick{width:32px;height:32px;min-height:32px;padding:0;border-radius:50%;background:var(--av);border:2px solid var(--line)}
+.bg-pick.on{outline:3px solid var(--accent);outline-offset:2px}
+html[data-theme="cute"] .av-pick.on{border-color:var(--pink-deep);background:#fff}
+html[data-theme="cute"] .bg-pick.on{outline-color:var(--pink-deep)}
