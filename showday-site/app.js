@@ -561,9 +561,9 @@ function notifView() {
   const ic = { interest: '🙋', like: '♥', rating: '★' };
   const seen = S.notifSeen || new Set();
   const list = S.notifs === null ? `<p class="muted">${t('loading')}</p>`
-    : S.notifs.length ? S.notifs.map((x) => `<button type="button" class="item notif ${seen.has(x.id) ? 'is-new' : ''}" data-act="goPost" data-id="${x.item_type}:${x.event_id || 'general'}">
+    : S.notifs.length ? S.notifs.map((x) => `<div class="notif-wrap"><button type="button" class="item notif ${seen.has(x.id) ? 'is-new' : ''}" data-act="goPost" data-id="${x.item_type}:${x.event_id || 'general'}">
         <span class="notif-ic" aria-hidden="true">${ic[x.kind]}</span>
-        <span class="item-main"><b>${esc(notifText(x))}</b><span class="small muted">${t(TYPE_LABEL[x.item_type])}${x.label ? ' · ' + esc(x.label) : ''} · ${esc(ago(x.updated_at))}${seen.has(x.id) ? ` · <span class="chip match">${t('newBadge')}</span>` : ''}</span>${whoLine(x)}</span>${icon.chev}</button>`).join('')
+        <span class="item-main"><b>${esc(notifText(x))}</b><span class="small muted">${t(TYPE_LABEL[x.item_type])}${x.label ? ' · ' + esc(x.label) : ''} · ${esc(ago(x.updated_at))}${seen.has(x.id) ? ` · <span class="chip match">${t('newBadge')}</span>` : ''}</span></span>${icon.chev}</button>${whoLine(x)}</div>`).join('')
       : `<p class="muted">${t('noNotifs')}</p>`;
   return `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
     <h1>${t('notifs')}</h1><div class="list">${list}</div>`;
@@ -576,7 +576,7 @@ async function loadWho() {
   if (error) return;
   (data || []).forEach((r) => {
     const k = (r.kind === 'ask' ? 'interest' : 'like') + ':' + r.item_type + ':' + r.item_id;
-    (S.who[k] || (S.who[k] = [])).push({ name: r.nickname || '', at: r.created_at });
+    (S.who[k] || (S.who[k] = [])).push({ name: r.nickname || '', uid: r.user_id, at: r.created_at });
   });
 }
 function whoLine(x) {
@@ -585,9 +585,9 @@ function whoLine(x) {
   const since = new Date(x.created_at).getTime() - 2000;
   const names = list.filter((w) => new Date(w.at).getTime() >= since);
   if (!names.length) return '';
-  const shown = names.slice(0, 5).map((w) => esc(w.name || t('whoAnon'))).join(', ');
+  const shown = names.slice(0, 5).map((w) => `<button type="button" class="text who-name" data-act="profile" data-id="${esc(w.uid)}">${esc(w.name || t('whoAnon'))}</button>`).join(' ');
   const more = names.length > 5 ? ' ' + esc(t('whoMore', { n: names.length - 5 })) : '';
-  return `<span class="small who">${t(x.kind === 'interest' ? 'whoInterest' : 'whoLike')}: ${shown}${more}</span>`;
+  return `<div class="small who"><span class="muted">${t(x.kind === 'interest' ? 'whoInterest' : 'whoLike')}:</span> ${shown}${more}</div>`;
 }
 // Posts I tapped Interested or ♡ on (for my profile)
 async function loadInterests() {
