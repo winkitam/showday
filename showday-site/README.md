@@ -1,5 +1,7 @@
 # Show Day Board: launch tutorial
 
+> **Note:** this is the original step-by-step launch guide. The site now runs on Cloudflare Workers instead of Netlify; see the main [README](../README.md) for the current setup.
+
 A real, public, same-day face-value ticket board.
 Total cost to start: £0 (plus a domain later, about £10 a year).
 Time: about 1 to 2 hours the first time.
