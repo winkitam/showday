@@ -197,7 +197,10 @@ const T = {
   rateErrState: ['You can rate once the trade is marked done.', '交易標記為完成後先可以評分。', '거래 완료로 표시된 후 평가할 수 있어요.'],
   ratingsN: ['{n} ratings', '{n} 個評分', '평가 {n}개'], rating1: ['1 rating', '1 個評分', '평가 1개'],
   reviews: ['Ratings', '評分', '평가'], noRatings: ['No ratings yet.', '暫時未有評分。', '아직 평가가 없어요.'],
-  stars: ['{n} stars', '{n} 粒星', '별 {n}개']
+  stars: ['{n} stars', '{n} 粒星', '별 {n}개'],
+  stillAvail: ['Interested', '有興趣', '관심 있어요'], asked: ['Interested', '有興趣', '관심 있어요'],
+  nAsked: ['{n} interested', '{n} 人有興趣', '{n}명 관심'], oneAsked: ['1 interested', '1 人有興趣', '1명 관심'],
+  likeIt: ['Like', '讚好', '좋아요'], unlikeIt: ['Unlike', '取消讚好', '좋아요 취소']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
 const HTML_LANG = ['en', 'zh-Hant', 'ko'];
@@ -348,7 +351,7 @@ const icon = {
 
 // ---------- State ----------
 const S = {
-  artists: [], scores: {}, myRatings: {}, rating: null, ratingPick: 0, profileRatings: null,
+  artists: [], scores: {}, myRatings: {}, reacts: {}, myReacts: {}, rating: null, ratingPick: 0, profileRatings: null,
   lang: store.get('lang', guessLang()),
   user: null,
   events: [], eventsLoaded: false,
@@ -441,7 +444,7 @@ async function loadListings() {
     .order('created_at', { ascending: false })
     .limit(200);
   if (!error) S.listings = data.filter((l) => !l.hidden || (S.user && l.user_id === S.user.id));
-  if (!error) await loadProfiles(S.listings.map((l) => l.user_id));
+  if (!error) await Promise.all([loadProfiles(S.listings.map((l) => l.user_id)), loadReactions(S.listings.map((l) => 'listing:' + l.id))]);
   S.listingsLoaded = true;
 }
 const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' };
@@ -460,7 +463,23 @@ async function detectV5() {
   S.v8 = !c.error;
   const ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2').limit(2000);
   S.v11 = !ar.error;
+  const rc = await sb.from('reaction_counts').select('item_id').limit(1);
+  S.v12 = !rc.error;
   if (!ar.error) S.artists = ar.data || [];
+}
+async function loadReactions(keys) {
+  if (!S.v12 || !keys.length) return;
+  const ids = [...new Set(keys.map((k) => k.slice(k.indexOf(':') + 1)))];
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data } = await sb.from('reaction_counts').select('item_type, item_id, asks, likes').in('item_id', ids.slice(i, i + 150));
+    (data || []).forEach((r) => { S.reacts[r.item_type + ':' + r.item_id] = { asks: r.asks, likes: r.likes }; });
+  }
+}
+async function loadMyReacts() {
+  S.myReacts = {};
+  if (!S.v12 || !S.user) return;
+  const { data } = await sb.from('post_reactions').select('item_type, item_id, kind').eq('user_id', S.user.id).limit(2000);
+  (data || []).forEach((r) => { S.myReacts[r.kind + ':' + r.item_type + ':' + r.item_id] = true; });
 }
 async function loadMyRatings() {
   S.myRatings = {};
@@ -482,7 +501,7 @@ async function loadItems(type) {
   S.items[type] = data.filter((x) => (!x.hidden || (S.user && x.user_id === S.user.id))
     && (type === 'merch' || x.events));
   if (type !== 'merch') S.items[type].sort((a, b) => a.events.event_date.localeCompare(b.events.event_date));
-  await loadProfiles(S.items[type].map((x) => x.user_id));
+  await Promise.all([loadProfiles(S.items[type].map((x) => x.user_id)), loadReactions(S.items[type].map((x) => type + ':' + x.id))]);
 }
 async function loadMine() {
   if (!S.user) { S.mine = null; return; }
@@ -890,10 +909,11 @@ function listingCard(l) {
       + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${l.user_id}">${t('block')}</button>` : '');
   }
   const rb = rateBlock('listing:' + l.id, l.user_id, l.status, sell);
+  const rx = reactBits('listing:' + l.id, l.user_id, l.status);
   return `<article class="listing ${l.status === 'done' ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
     <div class="listing-top">
       <div class="listing-info">
-        <div class="row tight"><span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>${status}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${extra}</div>
+        <div class="row tight"><span class="chip ${sell ? 'sell' : 'buy'}">${sell ? t('has') : t('needs')}</span>${status}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${extra}${rx.chip}</div>
         <h3>${esc(l.section)}</h3>${l.note ? `<p class="desc">${esc(l.note)}</p>` : ''}
         <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)}</p>
         <p class="muted small time">${esc(postedAt(l.created_at))}</p>
@@ -901,7 +921,7 @@ function listingCard(l) {
       <div class="stack-r"><div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, ev.currency)}</div>${photo(l.photo_url)}</div>
     </div>
     <div class="row">
-      ${main}${author(l.user_id)}${rb.btn}
+      ${main}${author(l.user_id)}${rb.btn}${rx.btns}
       <details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details>
     </div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b><br>${t('payAfter')}</p>` : ''}
@@ -1001,10 +1021,12 @@ function itemCard(type, it, inEvent) {
   }
   const doneLabel = type === 'free' ? t('allGone') : t('doneLabel');
   const rb = rateBlock(type + ':' + it.id, it.user_id, it.status, type === 'swap' || (type === 'merch' && it.kind !== 'buy'));
+  const rx = reactBits(type + ':' + it.id, it.user_id, it.status);
+  chips += rx.chip;
   return `<article class="listing ${done ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
     ${mine || done || chips ? `<div class="row tight">${done ? `<span class="chip done">${doneLabel}</span>` : ''}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${chips}</div>` : ''}
     ${body}
-    <div class="row">${main}${author(it.user_id)}${rb.btn}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
+    <div class="row">${main}${author(it.user_id)}${rb.btn}${rx.btns}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b>${type === 'merch' ? `<br>${t('footRule')}` : ''}</p>` : ''}
     ${rb.form}
     <p class="small muted time">${esc(postedAt(it.created_at))}</p>
@@ -1113,6 +1135,23 @@ function author(uid) {
   const p = profileOf(uid);
   const sc = S.scores[uid];
   return `<button type="button" class="author" data-act="profile" data-id="${uid}">${avatarEl(p.avatar, p.bg, 24)}<span>${esc(p.nickname)}</span>${sc && sc.n ? `<span class="score" title="${esc(sc.n === 1 ? t('rating1') : t('ratingsN', { n: sc.n }))}">★${sc.avg.toFixed(1)}</span>` : ''}</button>`;
+}
+// "Interested" and ♡ like (key = "listing:<id>", "swap:<id>", ...)
+function reactBits(key, ownerId, status) {
+  if (!S.v12) return { btns: '', chip: '' };
+  const c = S.reacts[key] || { asks: 0, likes: 0 };
+  const mine = S.user && S.user.id === ownerId;
+  const type = key.slice(0, key.indexOf(':'));
+  const open = !status || status === 'open';
+  const chip = c.asks && open && type !== 'buddy' ? `<span class="chip asked">🙋 ${esc(c.asks === 1 ? t('oneAsked') : t('nAsked', { n: c.asks }))}</span>` : '';
+  const liked = !!S.myReacts['like:' + key];
+  const like = mine
+    ? (c.likes ? `<span class="react-n" title="${t('likeIt')}">♡ ${c.likes}</span>` : '')
+    : `<button type="button" class="react ${liked ? 'on' : ''}" data-act="react" data-id="like:${key}" aria-pressed="${liked}" title="${liked ? t('unlikeIt') : t('likeIt')}" aria-label="${liked ? t('unlikeIt') : t('likeIt')}">${liked ? '♥' : '♡'}${c.likes ? ` ${c.likes}` : ''}</button>`;
+  const asked = !!S.myReacts['ask:' + key];
+  const ask = !mine && open && type !== 'buddy'
+    ? `<button type="button" class="react ${asked ? 'on' : ''}" data-act="react" data-id="ask:${key}" aria-pressed="${asked}">${asked ? '✓ ' + t('asked') : '🙋 ' + t('stillAvail')}</button>` : '';
+  return { btns: ask + like, chip };
 }
 const starLine = (n) => `<span class="stars" aria-label="${esc(t('stars', { n }))}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
 // Rate button and inline form for a finished trade (key = "listing:<id>", "merch:<id>" or "swap:<id>")
@@ -1350,6 +1389,24 @@ const readDraft = (f) => {
 };
 const parseKey = (k) => { const i = k.indexOf(':'); return [k.slice(0, i), k.slice(i + 1)]; };
 const actions = {
+  async react(id) {
+    if (!S.user) { S.showLogin = true; render(); return; }
+    const i = id.indexOf(':'), kind = id.slice(0, i), key = id.slice(i + 1);
+    const [item_type, item_id] = parseKey(key);
+    const on = !!S.myReacts[id];
+    const c = S.reacts[key] || (S.reacts[key] = { asks: 0, likes: 0 });
+    const f = kind === 'ask' ? 'asks' : 'likes';
+    // Update straight away, undo if the server says no
+    if (on) { delete S.myReacts[id]; c[f] = Math.max(0, c[f] - 1); } else { S.myReacts[id] = true; c[f] += 1; }
+    renderMain();
+    const { error } = on
+      ? await sb.from('post_reactions').delete().eq('user_id', S.user.id).eq('item_type', item_type).eq('item_id', item_id).eq('kind', kind)
+      : await sb.from('post_reactions').insert({ item_type, item_id, kind });
+    if (error && error.code !== '23505') {
+      if (on) { S.myReacts[id] = true; c[f] += 1; } else { delete S.myReacts[id]; c[f] = Math.max(0, c[f] - 1); }
+      renderMain();
+    }
+  },
   rate(key) {
     if (!S.user) { S.showLogin = true; render(); return; }
     S.rating = S.rating === key ? null : key; S.ratingPick = 0; S.flash = null; renderMain();
@@ -1797,7 +1854,7 @@ async function start() {
     S.user = session ? session.user : null;
     if ((S.user && S.user.id) !== before) {
       S.showLogin = false; S.contacts = {};
-      await loadMyRatings();
+      await loadMyRatings(); await loadMyReacts();
       await checkAdmin(); await loadEvents(); await loadCounts(); await loadListings();
       if (S.view === 'me') await loadMine(); else if (S.view !== 'board') { await loadItems(S.view); if (S.view === 'merch' && S.v7) await loadItems('free'); }
       render();
@@ -1806,6 +1863,7 @@ async function start() {
   await checkAdmin();
   await detectV5();
   await loadMyRatings();
+  await loadMyReacts();
   await loadEvents();
   await loadCounts();
   const params = new URLSearchParams(location.search);
