@@ -481,3 +481,5 @@ button.google{display:flex;align-items:center;justify-content:center;gap:10px;wi
 .artist-group.open .chev-rot{transform:rotate(90deg)}
 .sub-list{margin:6px 0 10px 14px;padding-left:10px;border-left:3px solid var(--line)}
 button.google .g-logo{background:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center}
+
+.g-box{display:flex;justify-content:center;min-height:44px}

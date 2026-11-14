@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, CONTACT_EMAIL, GOOGLE_LOGIN } from './config.js';
+import { googleIdOn, mountGoogle } from './google.js';
 import { captchaOn, mountCaptcha, captchaToken, resetCaptcha } from './turnstile.js';
 import { isBlockedEmail } from './blocked-domains.js';
 
@@ -686,7 +687,7 @@ function loginPanel() {
     ? `<button type="button" class="text" data-act="authMode" data-id="signup">${t('toSignup')}</button><button type="button" class="text" data-act="authMode" data-id="reset">${t('forgot')}</button>`
     : `<button type="button" class="text" data-act="authMode" data-id="login">${t('toLogin')}</button>`;
   const google = GOOGLE_LOGIN && m !== 'reset'
-    ? `<button type="button" class="primary big google" data-act="google"><span class="g-logo" aria-hidden="true">G</span>${t('google')}</button>` : '';
+    ? googleIdOn() ? `<div id="g-btn" class="g-box"></div>` : `<button type="button" class="primary big google" data-act="google"><span class="g-logo" aria-hidden="true">G</span>${t('google')}</button>` : '';
   if (google && !S.emailOpen) {
     return `<section class="panel stack" aria-label="${title}"><h2>${title}</h2>${google}
       <p class="small muted">${m === 'signup' ? t('agreeTerms') : ''}</p>
@@ -1449,6 +1450,7 @@ function render() {
   app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer() + tabBar();
   renderMain();
   mountCaptcha('ts-box', HTML_LANG[S.lang] === 'zh-Hant' ? 'zh-tw' : HTML_LANG[S.lang]);
+  mountGoogle('g-btn', sb, HTML_LANG[S.lang] === 'zh-Hant' ? 'zh_TW' : HTML_LANG[S.lang], () => { flash('login', 'errGeneric'); render(); });
 }
 
 // A chosen photo can't be set again by code, so move the old file input into the new form
