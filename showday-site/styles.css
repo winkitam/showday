@@ -463,3 +463,10 @@ button.react.on{border-color:#F5A3C7;background:#FFF0F6;color:#C11574}
 .chip.asked{background:#FFF6CC;color:#6E4A00}
 html[data-theme="night"] button.react{background:transparent;color:inherit}
 html[data-theme="night"] button.react.on{background:#4A1D35;color:#FFB3D1}
+/* Notification bell */
+.icon-btn.bell{position:relative;font-size:18px;line-height:1}
+.bell .dot{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E11D48;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+.notif{gap:12px}
+.notif-ic{font-size:20px;width:28px;text-align:center;flex:none}
+.notif.is-new{background:#FFF7FB}
+html[data-theme="night"] .notif.is-new{background:#3A1C2C}
