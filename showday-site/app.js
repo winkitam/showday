@@ -207,6 +207,8 @@ const T = {
   errCaptcha: ['Please finish the "verify you are human" check, then try again.', '請先完成「驗證你是真人」，再試一次。', '"사람인지 확인"을 완료한 후 다시 시도해 주세요.'],
   errDisposable: ['Please use your usual email. Throwaway email addresses cannot sign up.', '請用你平時用的電郵。一次性電郵不能註冊。', '평소 쓰는 이메일을 사용해 주세요. 일회용 이메일로는 가입할 수 없어요.'],
   notifs: ['Notifications', '通知', '알림'],
+  andUnits: ['& units', '及小分隊', '& 유닛'], useEmail: ['Use email instead', '改用電郵', '이메일로 하기'],
+  citiesDates: ['{c} cities · {d} dates', '{c} 個城市 · {d} 場', '{c}개 도시 · {d}회'], nextOn: ['next {d}', '最近 {d}', '다음 {d}'],
   prev: ['Previous', '上一頁', '이전'], next: ['Next', '下一頁', '다음'], pageOf: ['Page {p} of {n}', '第 {p} / {n} 頁', '{n}쪽 중 {p}쪽'], pages: ['Pages', '頁數', '페이지'],
   errRules: ['This post breaks the board rules (no links, no selling above face value, no risky payment requests). Please edit it and try again.', '帖子違反版規（不准放連結、不准高於原價、不准要求高風險付款）。請修改後再試。', '게시판 규칙 위반이에요 (링크 금지, 정가 초과 판매 금지, 위험한 결제 요구 금지). 수정 후 다시 시도해 주세요.'],
   errBanned: ['This account has been suspended. Contact us if you think this is a mistake.', '此帳號已被停用。如認為有誤，請聯絡我們。', '이 계정은 정지되었어요. 착오라고 생각되면 문의해 주세요.'], noNotifs: ['Nothing new yet. When someone is interested, likes or rates your post, it shows here.', '暫時未有新通知。有人對你的帖子有興趣、讚好或評分，就會喺度顯示。', '아직 새 알림이 없어요. 누군가 내 글에 관심, 좋아요, 평가를 남기면 여기에 표시돼요.'],
@@ -307,11 +309,16 @@ const artistLabel = (name) => {
   if (!a) return String(name || '').trim();
   return (S.lang === 1 ? a.name_zh : S.lang === 2 ? a.name_ko : null) || a.name_en;
 };
-const artistAll = (name) => { const a = artistRow(name); return a ? [name, a.name_en, a.name_zh, a.name_ko, ...(a.aliases || [])].filter(Boolean).join(' ') : String(name || ''); };
+const parentOf = (a) => (a && a.parent_id ? S.artists.find((x) => x.id === a.parent_id) : null);
+const namesOf = (a) => (a ? [a.name_en, a.name_zh, a.name_ko, ...(a.aliases || [])].filter(Boolean) : []);
+const artistAll = (name) => { const a = artistRow(name); return a ? [name, ...namesOf(a), ...namesOf(parentOf(a))].join(' ') : String(name || ''); };
 const fanColors = (artist) => {
   const k = String(artist || '').trim().toLowerCase();
   const row = artistRow(artist);
   if (row && row.color1 && row.color2) return [row.color1, row.color2];
+  const par = parentOf(row);
+  if (par && par.color1 && par.color2) return [par.color1, par.color2];
+  if (par && FAN_COLORS[par.name_en.toLowerCase()]) return FAN_COLORS[par.name_en.toLowerCase()];
   if (FAN_COLORS[k]) return FAN_COLORS[k];
   let h = 0; for (const ch of k) h = (h * 31 + ch.codePointAt(0)) >>> 0;
   return PASTELS[h % PASTELS.length];
@@ -492,7 +499,8 @@ async function detectV5() {
   S.v5 = !a.error;
   S.v7 = !b.error;
   S.v8 = !c.error;
-  const ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2').limit(2000);
+  let ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2, parent_id').limit(2000);
+  if (ar.error) ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2').limit(2000);
   S.v11 = !ar.error;
   const rc = await sb.from('reaction_counts').select('item_id').limit(1);
   S.v12 = !rc.error;
@@ -678,7 +686,12 @@ function loginPanel() {
     ? `<button type="button" class="text" data-act="authMode" data-id="signup">${t('toSignup')}</button><button type="button" class="text" data-act="authMode" data-id="reset">${t('forgot')}</button>`
     : `<button type="button" class="text" data-act="authMode" data-id="login">${t('toLogin')}</button>`;
   const google = GOOGLE_LOGIN && m !== 'reset'
-    ? `<button type="button" class="outline big google" data-act="google"><span class="g-logo" aria-hidden="true">G</span>${t('google')}</button><p class="or small muted">${t('orEmail')}</p>` : '';
+    ? `<button type="button" class="primary big google" data-act="google"><span class="g-logo" aria-hidden="true">G</span>${t('google')}</button>` : '';
+  if (google && !S.emailOpen) {
+    return `<section class="panel stack" aria-label="${title}"><h2>${title}</h2>${google}
+      <p class="small muted">${m === 'signup' ? t('agreeTerms') : ''}</p>
+      <div class="row tight"><button type="button" class="text" data-act="emailOpen">${t('useEmail')}</button><button type="button" class="text" data-act="toggleLogin">${t('cancel')}</button></div></section>`;
+  }
   return `<form data-form="login" class="panel" aria-label="${title}">
     <h2>${title}</h2>
     ${google}
@@ -765,6 +778,30 @@ function showRow(g) {
     </button>`;
 }
 
+// One row per artist; tap to see their cities and dates
+function artistGroups(list) {
+  const map = new Map();
+  list.forEach((e) => { const a0 = artistRow(e.artist); const a = parentOf(a0) || a0; const k = a ? 'a:' + a.id : 'n:' + e.artist.trim().toLowerCase(); if (!map.has(k)) map.set(k, []); map.get(k).push(e); });
+  return [...map.entries()].map(([k, evs]) => ({ key: k, shows: groupShows(evs).sort((x, y) => x[0].event_date.localeCompare(y[0].event_date)) }))
+    .sort((x, y) => x.shows[0][0].event_date.localeCompare(y.shows[0][0].event_date));
+}
+function artistBlock(a) {
+  if (a.shows.length === 1) return showRow(a.shows[0]);
+  const first = a.shows[0][0];
+  const dates = a.shows.reduce((n, g) => n + g.length, 0);
+  const root = a.key.startsWith('a:') ? S.artists.find((x) => 'a:' + x.id === a.key) : null;
+  const names = new Set(a.shows.map((g) => g[0].artist.trim().toLowerCase()));
+  const title = root ? (names.size > 1 || !names.has(root.name_en.toLowerCase()) ? `${fanName(root.name_en)} <span class="small muted">${t('andUnits')}</span>` : fanName(root.name_en)) : fanName(first.artist);
+  const cities = new Set(a.shows.map((g) => cityKey(g[0].city))).size;
+  const open = S.openArtist === a.key;
+  return `<div class="artist-group ${open ? 'open' : ''}">
+    <button type="button" class="item" data-act="openArtist" data-id="${esc(a.key)}" aria-expanded="${open}">
+      <span class="item-main"><b>${title}</b><span class="muted">${esc(t('citiesDates', { c: cities, d: dates }))} · ${esc(t('nextOn', { d: shortDate(first.event_date) }))}</span></span>
+      <span class="chev-rot" aria-hidden="true">${icon.chev}</span>
+    </button>
+    ${open ? `<div class="list sub-list">${a.shows.map(showRow).join('')}</div>` : ''}
+  </div>`;
+}
 const PAGE_SIZE = 10;
 function renderResults() {
   const box = document.getElementById('results');
@@ -789,9 +826,9 @@ function renderResults() {
         <button type="button" class="outline" data-act="page" data-id="${p - 1}" ${p === 0 ? 'disabled' : ''}>‹ ${t('prev')}</button>
         <span class="small muted">${esc(t('pageOf', { p: p + 1, n: pages }))}</span>
         <button type="button" class="outline" data-act="page" data-id="${p + 1}" ${p >= pages - 1 ? 'disabled' : ''}>${t('next')} ›</button></nav>` : '';
-    return rows.slice(p * PAGE_SIZE, (p + 1) * PAGE_SIZE).map(showRow).join('') + nav;
+    return rows.slice(p * PAGE_SIZE, (p + 1) * PAGE_SIZE).map(artistBlock).join('') + nav;
   };
-  if (q) { box.innerHTML = pager(groupShows(matches)) + past; return; }
+  if (q) { box.innerHTML = pager(artistGroups(matches)) + past; return; }
   const tonight = matches.filter((e) => e.event_date === today);
   const later = matches.filter((e) => e.event_date !== today);
   const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
@@ -804,7 +841,7 @@ function renderResults() {
   const general = S.view === 'merch' ? `<h2 class="list-title">${t('generalMerch')}</h2>
     <button type="button" class="item" data-act="pick" data-id="general"><span class="item-main"><b>${t('generalMerch')}</b></span>
       ${itemsFor('merch', 'general').length ? `<span class="count-pill">${esc(t('postsN', { n: itemsFor('merch', 'general').length }))}</span>` : ''}${icon.chev}</button>` : '';
-  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + pager(groupShows(later)) : '') + general + past;
+  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + pager(artistGroups(later)) : '') + general + past;
 }
 
 function visibleListings() {
@@ -1500,6 +1537,8 @@ const actions = {
     }
   },
   openNotifs() { openNotifs(); },
+  emailOpen() { S.emailOpen = true; render(); const el = document.getElementById('login-email'); if (el) el.focus(); },
+  openArtist(k) { S.openArtist = S.openArtist === k ? null : k; renderResults(); },
   page(n) { S.page = Math.max(0, Number(n) || 0); renderResults(); const r = document.getElementById('results'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'start' }); },
   async google() {
     const back = location.origin + location.pathname + (S.selEv ? '?e=' + S.selEv : '');
