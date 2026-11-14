@@ -140,6 +140,8 @@ const T = {
   feedbackSent: ['Thank you. Your feedback was sent.', '謝謝，你的意見已送出。', '감사해요. 의견이 전송되었어요.'],
   feedbackShort: ['Please write a little more.', '請多寫一點。', '조금 더 적어 주세요.'],
   photoTicketHint: ['Cover the QR code or barcode before you upload.', '上載前請遮住 QR code 或條碼。', '업로드 전에 QR코드나 바코드를 가려 주세요.'],
+  pastShows: ['Past shows', '過去演出', '지난 공연'],
+  pastNote: ['This show has ended. Posts are read only.', '此演出已完結，只可瀏覽。', '종료된 공연이에요. 보기만 가능해요.'],
   justNow: ['just now', '剛剛', '방금'],
   maybeSold: ['May be gone', '可能已售出', '이미 거래됐을 수도'],
   maybeSwapped: ['May be swapped', '可能已換出', '이미 교환됐을 수도'],
@@ -342,6 +344,8 @@ const S = {
   v5: false,
   v7: false,
   v8: false,
+  pastOpen: false,
+  pastLoaded: false,
   sort: 'new',
   swapFilter: 'all',
   buddyTag: null,
@@ -421,7 +425,7 @@ async function loadItems(type) {
   if (error) { S.items[type] = { error: true }; return; }
   const today = todayISO();
   S.items[type] = data.filter((x) => (!x.hidden || (S.user && x.user_id === S.user.id))
-    && (type === 'merch' || (x.events && x.events.event_date >= today)));
+    && (type === 'merch' || x.events));
   if (type !== 'merch') S.items[type].sort((a, b) => a.events.event_date.localeCompare(b.events.event_date));
 }
 async function loadMine() {
@@ -612,13 +616,17 @@ function renderResults() {
   if (!box) return;
   if (!S.eventsLoaded) { box.innerHTML = `<p class="muted">${t('loading')}</p>`; return; }
   const q = S.q.trim().toLowerCase();
-  const matches = S.events.filter((e) => !q || [e.artist, cityAll(e.city), e.venue, e.event_date].join(' ').toLowerCase().includes(q));
+  const today = todayISO();
+  const hit = (e) => !q || [e.artist, cityAll(e.city), e.venue, e.event_date].join(' ').toLowerCase().includes(q);
+  const matches = S.events.filter((e) => e.event_date >= today && hit(e));
+  const pastList = S.events.filter((e) => e.event_date < today && hit(e)).sort((a, b) => b.event_date.localeCompare(a.event_date));
+  const past = `<div class="past"><button type="button" class="text small past-toggle" data-act="togglePast" aria-expanded="${S.pastOpen}">${t('pastShows')} ${S.pastOpen ? '▴' : '▾'}</button>
+    ${S.pastOpen ? (!S.pastLoaded ? `<p class="small muted">${t('loading')}</p>` : pastList.length ? `<div class="list past-list">${groupShows(pastList).slice(0, 30).map(showRow).join('')}</div>` : `<p class="small muted">${t('noEvents')}</p>`) : ''}</div>`;
   if (!matches.length && !(S.view === 'merch' && !q)) {
-    box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>`;
+    box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>` + past;
     return;
   }
-  if (q) { box.innerHTML = groupShows(matches).slice(0, 30).map(showRow).join(''); return; }
-  const today = todayISO();
+  if (q) { box.innerHTML = groupShows(matches).slice(0, 30).map(showRow).join('') + past; return; }
   const tonight = matches.filter((e) => e.event_date === today);
   const later = matches.filter((e) => e.event_date !== today);
   const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
@@ -631,7 +639,7 @@ function renderResults() {
   const general = S.view === 'merch' ? `<h2 class="list-title">${t('generalMerch')}</h2>
     <button type="button" class="item" data-act="pick" data-id="general"><span class="item-main"><b>${t('generalMerch')}</b></span>
       ${itemsFor('merch', 'general').length ? `<span class="count-pill">${esc(t('postsN', { n: itemsFor('merch', 'general').length }))}</span>` : ''}${icon.chev}</button>` : '';
-  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + groupShows(later).slice(0, 30).map(showRow).join('') : '') + general;
+  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + groupShows(later).slice(0, 30).map(showRow).join('') : '') + general + past;
 }
 
 function visibleListings() {
@@ -786,7 +794,7 @@ function itemsEventView(type, e) {
     ${filterBar(type)}
     ${flashFor('list')}
     <div class="list" id="evlist">${itemList(type)}</div>
-    ${S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(CTA[type])}</button></div>`}`;
+    ${e !== 'general' && e.event_date < todayISO() ? `<p class="small muted">${t('pastNote')}</p>` : S.composing ? composer(type) : `<div class="cta-bar">${flashFor('posted')}<button type="button" class="primary big" data-act="openCompose">${t(CTA[type])}</button></div>`}`;
 }
 
 function eventView(e) {
@@ -798,7 +806,7 @@ function eventView(e) {
     <div class="row between filters"><div class="seg" role="group">${seg('all', t('all'))}${seg('sell', t('has'))}${seg('buy', t('needs'))}</div>${sortSelect(true)}</div>
     ${flashFor('list')}
     <div class="list" id="evlist">${boardList()}</div>
-    ${postArea(e)}`;
+    ${e.event_date < todayISO() ? `<p class="small muted">${t('pastNote')}</p>` : postArea(e)}`;
 }
 
 function listingCard(l) {
@@ -1258,6 +1266,15 @@ const actions = {
     S.newDates = Math.max(1, S.newDates - 1); renderMain();
   },
   tab(id) { S.tab = id; renderMain(); },
+  async togglePast() {
+    S.pastOpen = !S.pastOpen; renderResults();
+    if (!S.pastOpen || S.pastLoaded) return;
+    const since = new Date(Date.now() - 180 * 864e5).toLocaleDateString('en-CA');
+    const { data } = await sb.from('events').select('id, artist, city, venue, currency, event_date, status, created_by')
+      .lt('event_date', todayISO()).gte('event_date', since).eq('status', 'approved').order('event_date', { ascending: false }).limit(60);
+    (data || []).forEach((e) => { if (!S.events.some((x) => x.id === e.id)) S.events.push(e); });
+    S.pastLoaded = true; renderResults();
+  },
   kind(id) { S.formKind = id; S.flash = null; renderMain(); },
   openPost() {
     S.flash = null;
