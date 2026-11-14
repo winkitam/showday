@@ -456,3 +456,10 @@ input[type="color"]{width:44px;height:36px;padding:2px;border-radius:8px}
 .rate-pick input:focus-visible + span{outline:2px solid currentColor;outline-offset:2px}
 .review{border-top:1px solid var(--line, #EAECF0);padding:10px 0}
 .review:first-child{border-top:0}
+/* Still available? and likes */
+button.react{min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--ink);white-space:nowrap}
+button.react.on{border-color:#F5A3C7;background:#FFF0F6;color:#C11574}
+.react-n{font-size:14px;color:var(--muted);white-space:nowrap}
+.chip.asked{background:#FFF6CC;color:#6E4A00}
+html[data-theme="night"] button.react{background:transparent;color:inherit}
+html[data-theme="night"] button.react.on{background:#4A1D35;color:#FFB3D1}
