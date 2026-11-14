@@ -183,7 +183,21 @@ const T = {
   typeFree: ['Freebie', '派發', '나눔'],
   privacy: ['Privacy', '私隱政策', '개인정보'], terms: ['Terms', '使用條款', '이용약관'],
   agreeTerms: ['By creating an account you agree to the <a href="terms.html">Terms of Use</a> and <a href="privacy.html">Privacy Policy</a>, and confirm you are 16 or older.', '建立帳號即表示你同意<a href="terms.html">使用條款</a>及<a href="privacy.html">私隱政策</a>，並確認你已年滿 16 歲。', '계정을 만들면 <a href="terms.html">이용약관</a> 및 <a href="privacy.html">개인정보 처리방침</a>에 동의하고 만 16세 이상임을 확인하는 것으로 간주돼요.'],
-  contactUs:['Contact us', '聯絡我們', '문의']
+  contactUs:['Contact us', '聯絡我們', '문의'],
+  rateSeller: ['Rate seller', '評分賣家', '판매자 평가'], rateTrader: ['Rate this trade', '評分交易', '거래 평가'],
+  rated: ['Rated', '已評分', '평가 완료'], rateTitle: ['How was the trade?', '交易順利嗎？', '거래는 어땠나요?'],
+  rateHint: ['Only rate someone you actually traded with.', '只為真的同你交易過的人評分。', '실제로 거래한 사람만 평가해 주세요.'],
+  rateComment: ['Comment (optional)', '留言（選填）', '코멘트 (선택)'], phRateComment: ['On time, ticket worked, friendly', '準時、門票正常、好友善', '시간 약속 잘 지킴, 티켓 문제없음'],
+  rateSubmit: ['Send rating', '送出評分', '평가 보내기'], rateThanks: ['Thanks! Your rating is posted.', '多謝！評分已送出。', '감사합니다! 평가가 등록됐어요.'],
+  ratePick: ['Pick 1 to 5 stars.', '請揀 1 至 5 粒星。', '별 1~5개를 골라 주세요.'],
+  rateErrSelf: ['You cannot rate yourself.', '你不能為自己評分。', '자기 자신은 평가할 수 없어요.'],
+  rateErrNew: ['New accounts can rate after 1 day.', '新帳號要等 1 日後先可以評分。', '새 계정은 1일 후부터 평가할 수 있어요.'],
+  rateErrMany: ['You have rated a lot today. Try again tomorrow.', '你今日評分太多次，聽日再試。', '오늘 평가를 너무 많이 했어요. 내일 다시 시도해 주세요.'],
+  rateErrDup: ['You already rated this post.', '你已經評過這個帖子。', '이미 이 글을 평가했어요.'],
+  rateErrState: ['You can rate once the trade is marked done.', '交易標記為完成後先可以評分。', '거래 완료로 표시된 후 평가할 수 있어요.'],
+  ratingsN: ['{n} ratings', '{n} 個評分', '평가 {n}개'], rating1: ['1 rating', '1 個評分', '평가 1개'],
+  reviews: ['Ratings', '評分', '평가'], noRatings: ['No ratings yet.', '暫時未有評分。', '아직 평가가 없어요.'],
+  stars: ['{n} stars', '{n} 粒星', '별 {n}개']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
 const HTML_LANG = ['en', 'zh-Hant', 'ko'];
@@ -249,14 +263,27 @@ const FAN_COLORS = {
 };
 const PASTELS = [['#FFB3D1', '#C9A7FF'], ['#A7E8D9', '#7FB2FF'], ['#FFE08A', '#FFB38A'], ['#C9A7FF', '#7FB2FF'], ['#FFC2A8', '#FF8FB1'],
   ['#B8F2C2', '#7CD6C4'], ['#A7D8FF', '#C9A7FF'], ['#FFD6E8', '#FFE08A'], ['#D7C2FF', '#FF9EC4'], ['#9FE3F2', '#B8F2C2']];
+// Artist names per language and fandom colours, edited on the admin page (supabase/011)
+const artistRow = (name) => {
+  const k = String(name || '').trim().toLowerCase();
+  return k ? S.artists.find((a) => [a.name_en, a.name_zh, a.name_ko, ...(a.aliases || [])].some((n) => n && n.trim().toLowerCase() === k)) : null;
+};
+const artistLabel = (name) => {
+  const a = artistRow(name);
+  if (!a) return String(name || '').trim();
+  return (S.lang === 1 ? a.name_zh : S.lang === 2 ? a.name_ko : null) || a.name_en;
+};
+const artistAll = (name) => { const a = artistRow(name); return a ? [name, a.name_en, a.name_zh, a.name_ko, ...(a.aliases || [])].filter(Boolean).join(' ') : String(name || ''); };
 const fanColors = (artist) => {
   const k = String(artist || '').trim().toLowerCase();
+  const row = artistRow(artist);
+  if (row && row.color1 && row.color2) return [row.color1, row.color2];
   if (FAN_COLORS[k]) return FAN_COLORS[k];
   let h = 0; for (const ch of k) h = (h * 31 + ch.codePointAt(0)) >>> 0;
   return PASTELS[h % PASTELS.length];
 };
 const coverStyle = (artist) => { const [a, b] = fanColors(artist); return `--c1:${a};--c2:${b}`; };
-const fanName = (artist) => `<span class="fan-name" style="${coverStyle(artist)}">${esc(artist)}</span>`;
+const fanName = (artist) => `<span class="fan-name" style="${coverStyle(artist)}">${esc(artistLabel(artist))}</span>`;
 const showKey = (e) => [e.artist.trim().toLowerCase(), cityKey(e.city), (e.venue || '').trim().toLowerCase()].join('|');
 const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { day: 'numeric', month: 'short' });
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
@@ -321,6 +348,7 @@ const icon = {
 
 // ---------- State ----------
 const S = {
+  artists: [], scores: {}, myRatings: {}, rating: null, ratingPick: 0, profileRatings: null,
   lang: store.get('lang', guessLang()),
   user: null,
   events: [], eventsLoaded: false,
@@ -430,6 +458,15 @@ async function detectV5() {
   S.v5 = !a.error;
   S.v7 = !b.error;
   S.v8 = !c.error;
+  const ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2').limit(2000);
+  S.v11 = !ar.error;
+  if (!ar.error) S.artists = ar.data || [];
+}
+async function loadMyRatings() {
+  S.myRatings = {};
+  if (!S.v11 || !S.user) return;
+  const { data } = await sb.from('ratings').select('item_type, item_id').eq('rater', S.user.id).limit(1000);
+  (data || []).forEach((r) => { S.myRatings[r.item_type + ':' + r.item_id] = true; });
 }
 async function loadCounts() {
   const ids = S.events.filter((e) => e.event_date === todayISO()).map((e) => e.id);
@@ -637,7 +674,7 @@ function renderResults() {
   if (!S.eventsLoaded) { box.innerHTML = `<p class="muted">${t('loading')}</p>`; return; }
   const q = S.q.trim().toLowerCase();
   const today = todayISO();
-  const hit = (e) => !q || [e.artist, cityAll(e.city), e.venue, e.event_date].join(' ').toLowerCase().includes(q);
+  const hit = (e) => !q || [artistAll(e.artist), cityAll(e.city), e.venue, e.event_date].join(' ').toLowerCase().includes(q);
   const matches = S.events.filter((e) => e.event_date >= today && hit(e));
   const pastList = S.events.filter((e) => e.event_date < today && hit(e)).sort((a, b) => b.event_date.localeCompare(a.event_date));
   const past = `<div class="past"><button type="button" class="text small past-toggle" data-act="togglePast" aria-expanded="${S.pastOpen}">${t('pastShows')} ${S.pastOpen ? '▴' : '▾'}</button>
@@ -852,6 +889,7 @@ function listingCard(l) {
     menu = `<button type="button" class="menu-item" data-act="report" data-id="${l.id}" ${S.reported[l.id] ? 'disabled' : ''}>${S.reported[l.id] ? t('reported') : t('report')}</button>`
       + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${l.user_id}">${t('block')}</button>` : '');
   }
+  const rb = rateBlock('listing:' + l.id, l.user_id, l.status, sell);
   return `<article class="listing ${l.status === 'done' ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
     <div class="listing-top">
       <div class="listing-info">
@@ -863,10 +901,11 @@ function listingCard(l) {
       <div class="stack-r"><div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, ev.currency)}</div>${photo(l.photo_url)}</div>
     </div>
     <div class="row">
-      ${main}${author(l.user_id)}
+      ${main}${author(l.user_id)}${rb.btn}
       <details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details>
     </div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b><br>${t('payAfter')}</p>` : ''}
+    ${rb.form}
   </article>`;
 }
 
@@ -909,7 +948,7 @@ function tabBar() {
     `<button type="button" data-act="nav" data-id="${v}" ${S.view === v ? 'aria-current="page" class="on"' : ''}>${ic[v]}<span>${t(k)}</span></button>`).join('')}</nav>`;
 }
 
-function evName(ev) { return ev ? `${ev.artist} · ${place(ev)} · ${fmtDate(ev.event_date)}` : ''; }
+function evName(ev) { return ev ? `${artistLabel(ev.artist)} · ${place(ev)} · ${fmtDate(ev.event_date)}` : ''; }
 
 function photo(url) {
   return url && /^https:\/\//.test(url) ? `<a class="photo" href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="" loading="lazy"></a>` : '';
@@ -961,11 +1000,13 @@ function itemCard(type, it, inEvent) {
       + (S.user ? `<button type="button" class="menu-item danger" data-act="block" data-id="${it.user_id}">${t('block')}</button>` : '');
   }
   const doneLabel = type === 'free' ? t('allGone') : t('doneLabel');
+  const rb = rateBlock(type + ':' + it.id, it.user_id, it.status, type === 'swap' || (type === 'merch' && it.kind !== 'buy'));
   return `<article class="listing ${done ? 'is-done' : ''}${stale ? ' is-stale' : ''}">
     ${mine || done || chips ? `<div class="row tight">${done ? `<span class="chip done">${doneLabel}</span>` : ''}${mine ? `<span class="chip mine">${t('yours')}</span>` : ''}${chips}</div>` : ''}
     ${body}
-    <div class="row">${main}${author(it.user_id)}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
+    <div class="row">${main}${author(it.user_id)}${rb.btn}<details class="menu"><summary aria-label="${t('more')}" title="${t('more')}">${icon.dots}</summary><div class="menu-pop">${menu}</div></details></div>
     ${contact ? `<p class="note info"><b>${esc(contact)}</b>${type === 'merch' ? `<br>${t('footRule')}` : ''}</p>` : ''}
+    ${rb.form}
     <p class="small muted time">${esc(postedAt(it.created_at))}</p>
   </article>`;
 }
@@ -973,7 +1014,7 @@ function itemCard(type, it, inEvent) {
 function eventOptions(noPreselect) {
   const today = todayISO();
   const list = S.events.filter((e) => e.event_date >= today);
-  return list.map((e) => `<option value="${e.id}" ${!noPreselect && e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
+  return list.map((e) => `<option value="${e.id}" ${!noPreselect && e.id === S.selEvForm ? 'selected' : ''}>${esc(artistLabel(e.artist))} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
 }
 
 const photoField = (on = S.v7, hint = '') => on ? `<div class="field"><label for="c-photo">${t('fPhoto')}</label><input id="c-photo" name="photo" type="file" accept="image/*">${hint ? `<p class="small muted">${hint}</p>` : ''}</div>` : '';
@@ -1070,18 +1111,43 @@ const avatarEl = (av, bg, size = 28) => `<span class="avatar" style="--av:${AV_B
 function author(uid) {
   if (!S.v9 || !uid) return '';
   const p = profileOf(uid);
-  return `<button type="button" class="author" data-act="profile" data-id="${uid}">${avatarEl(p.avatar, p.bg, 24)}<span>${esc(p.nickname)}</span></button>`;
+  const sc = S.scores[uid];
+  return `<button type="button" class="author" data-act="profile" data-id="${uid}">${avatarEl(p.avatar, p.bg, 24)}<span>${esc(p.nickname)}</span>${sc && sc.n ? `<span class="score" title="${esc(sc.n === 1 ? t('rating1') : t('ratingsN', { n: sc.n }))}">★${sc.avg.toFixed(1)}</span>` : ''}</button>`;
+}
+const starLine = (n) => `<span class="stars" aria-label="${esc(t('stars', { n }))}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
+// Rate button and inline form for a finished trade (key = "listing:<id>", "merch:<id>" or "swap:<id>")
+function rateBlock(key, ownerId, status, canRate) {
+  if (!S.v11 || !canRate || !S.user || S.user.id === ownerId) return { btn: '', form: '' };
+  if (!['meeting', 'done'].includes(status)) return { btn: '', form: '' };
+  if (S.myRatings[key]) return { btn: `<span class="chip done">★ ${t('rated')}</span>`, form: '' };
+  const btn = `<button type="button" class="text" data-act="rate" data-id="${key}" aria-expanded="${S.rating === key}">★ ${key.startsWith('listing') || key.startsWith('merch') ? t('rateSeller') : t('rateTrader')}</button>`;
+  if (S.rating !== key) return { btn, form: '' };
+  const pick = S.ratingPick;
+  const form = `<form data-form="rate" data-id="${key}" class="panel stack" style="gap:10px" aria-label="${t('rateTitle')}">
+      <b>${t('rateTitle')}</b>
+      <div class="rate-pick" role="radiogroup" aria-label="${t('rateTitle')}">${[1, 2, 3, 4, 5].map((n) =>
+        `<label class="${n <= pick ? 'on' : ''}" data-act="ratePick" data-id="${n}"><input type="radio" name="score" value="${n}" ${n === pick ? 'checked' : ''}><span aria-hidden="true">★</span><span class="sr-only">${esc(t('stars', { n }))}</span></label>`).join('')}</div>
+      <div class="field"><label for="r-c">${t('rateComment')}</label><input id="r-c" name="comment" maxlength="200" placeholder="${t('phRateComment')}"></div>
+      <p class="small muted">${t('rateHint')}</p>
+      ${flashFor('rate')}
+      <div class="row"><button type="submit" class="primary">${t('rateSubmit')}</button><button type="button" class="text" data-act="rate" data-id="${key}">${t('cancel')}</button></div>
+    </form>`;
+  return { btn, form };
 }
 async function loadProfiles(ids) {
   if (!S.v9) return;
   const need = [...new Set(ids.filter((id) => id && !(id in S.profiles)))];
   if (!need.length) return;
-  const { data } = await sb.from('profiles').select('id, nickname, avatar, avatar_bg, created_at').in('id', need);
+  const [{ data }, sc] = await Promise.all([
+    sb.from('profiles').select('id, nickname, avatar, avatar_bg, created_at').in('id', need),
+    S.v11 ? sb.from('seller_scores').select('user_id, n, avg').in('user_id', need) : Promise.resolve({ data: [] })
+  ]);
   need.forEach((id) => { S.profiles[id] = null; });
   (data || []).forEach((p) => { S.profiles[p.id] = p; });
+  ((sc && sc.data) || []).forEach((r) => { S.scores[r.user_id] = { n: r.n, avg: Number(r.avg) }; });
 }
 async function openProfile(uid, push = true) {
-  S.view = 'u'; S.profileId = uid; S.selEv = null; S.flash = null; S.profilePosts = null;
+  S.view = 'u'; S.profileId = uid; S.selEv = null; S.flash = null; S.profilePosts = null; S.profileRatings = null;
   if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   if (push) history.pushState({ v: 'u', id: uid }, '', location.pathname + '?v=u&id=' + uid);
   render(); window.scrollTo(0, 0);
@@ -1103,6 +1169,11 @@ async function openProfile(uid, push = true) {
     ...(fr.data || []).map((x) => ({ type: 'free', ...x }))
   ].filter(live).sort((a, b) => b.created_at.localeCompare(a.created_at));
   S.profileDone = [c1, c2, c3].reduce((a, r) => a + (r && r.count ? r.count : 0), 0);
+  if (S.v11) {
+    const { data: rs } = await sb.from('ratings').select('id, rater, score, comment, created_at').eq('ratee', uid).order('created_at', { ascending: false }).limit(30);
+    S.profileRatings = rs || [];
+    await loadProfiles(S.profileRatings.map((r) => r.rater));
+  }
   renderMain();
 }
 const TYPE_LABEL = { listing: 'typeListing', swap: 'typeSwap', buddy: 'typeBuddy', merch: 'typeMerch', free: 'typeFree' };
@@ -1122,8 +1193,19 @@ function profileView() {
       <div><h1>${esc(p.nickname)}</h1>
       <p class="small muted">${since ? esc(t('memberSince', { d: since })) + ' · ' : ''}${S.profilePosts === null ? '' : esc(t('doneTrades', { n: S.profileDone || 0 }))}</p></div></section>
     ${mine ? `<button type="button" class="outline" data-act="nav" data-id="me">${t('editProfile')}</button>` : ''}
+    ${ratingsSection(uid)}
     <h2 class="list-title">${t('activePosts')}</h2>
     <div class="list">${posts}</div>`;
+}
+function ratingsSection(uid) {
+  if (!S.v11 || S.profileRatings === null) return '';
+  const sc = S.scores[uid];
+  const head = sc && sc.n ? `<p class="row tight">${starLine(Math.round(sc.avg))}<b>${sc.avg.toFixed(1)}</b><span class="small muted">${esc(sc.n === 1 ? t('rating1') : t('ratingsN', { n: sc.n }))}</span></p>` : '';
+  const list = S.profileRatings.length ? S.profileRatings.map((r) => `<div class="review">
+      <div class="row between">${author(r.rater)}${starLine(r.score)}</div>
+      ${r.comment ? `<p>${esc(r.comment)}</p>` : ''}<p class="small muted">${esc(ago(r.created_at))}</p></div>`).join('')
+    : `<p class="muted">${t('noRatings')}</p>`;
+  return `<h2 class="list-title">${t('reviews')}</h2>${head}<div class="panel" style="padding:4px 16px">${list}</div>`;
 }
 function profileEditor() {
   if (!S.v9 || !S.user) return '';
@@ -1197,7 +1279,7 @@ function render() {
     return;
   }
   const e = S.events.find((x) => x.id === S.selEv);
-  document.title = e ? `${e.artist} · ${t('brand')}` : `${t('brand')} · ${t('hero')}`;
+  document.title = e ? `${artistLabel(e.artist)} · ${t('brand')}` : `${t('brand')} · ${t('hero')}`;
   document.body.dataset.view = S.view;
   app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer() + tabBar();
   renderMain();
@@ -1268,6 +1350,16 @@ const readDraft = (f) => {
 };
 const parseKey = (k) => { const i = k.indexOf(':'); return [k.slice(0, i), k.slice(i + 1)]; };
 const actions = {
+  rate(key) {
+    if (!S.user) { S.showLogin = true; render(); return; }
+    S.rating = S.rating === key ? null : key; S.ratingPick = 0; S.flash = null; renderMain();
+  },
+  ratePick(n) {
+    const f = document.querySelector('form[data-form="rate"]');
+    const c = f && f.elements.comment ? f.elements.comment.value : '';
+    S.ratingPick = Number(n) || 0; renderMain();
+    const el = document.getElementById('r-c'); if (el) el.value = c;
+  },
   home() { setView('board'); },
   nav(v) { if (v === S.view && !S.selEv && v !== 'board') return; setView(v); },
   async deleteEvent() {
@@ -1465,6 +1557,27 @@ async function uploadPhoto(file) {
 
 const keepNick = () => { const el = document.getElementById('pf-nick'); if (el) S.draftNick = el.value; };
 const forms = {
+  async rate(f) {
+    const key = f.dataset.id;
+    const [item_type, item_id] = key.split(':');
+    const score = S.ratingPick || Number(new FormData(f).get('score')) || 0;
+    const comment = String(new FormData(f).get('comment') || '').trim().slice(0, 200) || null;
+    if (score < 1 || score > 5) { flash('rate', 'ratePick'); renderMain(); return; }
+    const { error } = await sb.from('ratings').insert({ item_type, item_id, score, comment });
+    if (error) {
+      const m = error.message || '';
+      const k = error.code === '23505' ? 'rateErrDup' : /yourself/i.test(m) ? 'rateErrSelf' : /new accounts/i.test(m) ? 'rateErrNew'
+        : /too many/i.test(m) ? 'rateErrMany' : /marked done|cannot be rated|too old/i.test(m) ? 'rateErrState' : null;
+      if (k === 'rateErrDup') S.myRatings[key] = true;
+      if (k) flash('rate', k); else S.flash = { area: 'rate', text: m, kind: 'err' };
+      renderMain(); return;
+    }
+    S.myRatings[key] = true; S.rating = null; S.ratingPick = 0;
+    const owner = (S.listings.find((l) => 'listing:' + l.id === key) || Object.values(S.items).flat().find((x) => x && x.id === item_id) || {}).user_id;
+    if (owner) { delete S.profiles[owner]; await loadProfiles([owner]); }
+    flash('top', 'rateThanks', 'ok');
+    render();
+  },
   async profile(f) {
     const nickname = String(new FormData(f).get('nickname') || '').trim().slice(0, 24) || null;
     const p = profileOf(S.user.id);
@@ -1684,6 +1797,7 @@ async function start() {
     S.user = session ? session.user : null;
     if ((S.user && S.user.id) !== before) {
       S.showLogin = false; S.contacts = {};
+      await loadMyRatings();
       await checkAdmin(); await loadEvents(); await loadCounts(); await loadListings();
       if (S.view === 'me') await loadMine(); else if (S.view !== 'board') { await loadItems(S.view); if (S.view === 'merch' && S.v7) await loadItems('free'); }
       render();
@@ -1691,6 +1805,7 @@ async function start() {
   });
   await checkAdmin();
   await detectV5();
+  await loadMyRatings();
   await loadEvents();
   await loadCounts();
   const params = new URLSearchParams(location.search);
