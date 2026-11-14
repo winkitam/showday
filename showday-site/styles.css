@@ -475,3 +475,5 @@ button.google{display:flex;align-items:center;justify-content:center;gap:10px;wi
 .g-logo{font-weight:800;font-family:Arial,sans-serif;color:#4285F4;font-size:18px}
 .or{text-align:center;margin:4px 0}
 .captcha{min-height:65px}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+.pager button[disabled]{opacity:.4}

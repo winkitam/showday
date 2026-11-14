@@ -12,4 +12,4 @@ export const CONTACT_EMAIL = 'showday.cs@gmail.com';
 export const TURNSTILE_SITE_KEY = '';
 
 // Show "Continue with Google" once Google is switched on in Supabase > Authentication > Providers.
-export const GOOGLE_LOGIN = false;
+export const GOOGLE_LOGIN = true;

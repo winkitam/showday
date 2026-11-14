@@ -6,7 +6,8 @@ const TBL = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } });
 
 const S = { user: null, admin: false, tab: 'concerts', pending: [], reported: [], loaded: false, armed: null, note: null,
-  shows: [], showQ: '', editShow: null, mergeFrom: null, artists: null, editArtist: null, ratings: null };
+  shows: [], showQ: '', editShow: null, mergeFrom: null, artists: null, editArtist: null, ratings: null,
+  users: null, userQ: '', banned: new Set(), words: null, stats: null };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -82,6 +83,21 @@ async function loadExtra() {
   S.artists = ar.error ? null : ar.data;
   const ra = await sb.from('ratings').select('id, rater, ratee, item_type, score, comment, hidden, created_at').order('created_at', { ascending: false }).limit(100);
   S.ratings = ra.error ? null : ra.data;
+  const [us, bn, wd] = await Promise.all([
+    sb.from('profiles').select('id, nickname, avatar, created_at').order('created_at', { ascending: false }).limit(1000),
+    sb.from('banned_users').select('user_id, reason, created_at'),
+    sb.from('blocked_words').select('word').order('word')
+  ]);
+  S.users = us.error ? null : us.data;
+  S.banned = new Set(bn.error ? [] : bn.data.map((b) => b.user_id));
+  S.words = wd.error ? null : wd.data.map((w) => w.word);
+  const week = new Date(Date.now() - 7 * 864e5).toISOString();
+  const cnt = (tb, f) => { let q = sb.from(tb).select('id', { count: 'exact', head: true }); if (f) q = f(q); return q.then((r) => (r && typeof r.count === 'number' ? r.count : null)); };
+  const [users, newUsers, posts, swaps, merch] = await Promise.all([
+    cnt('profiles'), cnt('profiles', (q) => q.gte('created_at', week)),
+    cnt('listings', (q) => q.gte('created_at', week)), cnt('swaps', (q) => q.gte('created_at', week)), cnt('merch', (q) => q.gte('created_at', week))
+  ]);
+  S.stats = { users, newUsers, posts: [posts, swaps, merch].reduce((a, b) => a + (b || 0), 0) };
 }
 
 // ---------- Views ----------
@@ -115,9 +131,10 @@ function render() {
           <button type="button" class="text" data-act="logout">Log out</button>
         </div>
       </div>
-      <div class="seg seg-scroll" role="group">${seg('concerts', 'New concerts', nC)}${seg('shows', 'All shows')}${seg('artists', 'Artists')}${seg('reports', 'Reported posts', nR)}${seg('ratings', 'Ratings')}${seg('feedback', 'Feedback', (S.feedback || []).filter((x) => !x.is_read).length)}</div>
+      ${S.stats ? `<p class="small muted">👥 ${S.stats.users ?? '?'} users (${S.stats.newUsers ?? '?'} new this week) · 📝 ${S.stats.posts} posts this week · 🚩 ${nR} reported · 📅 ${S.shows.filter((e) => e.event_date >= todayISO()).length} upcoming shows</p>` : ''}
+      <div class="seg seg-scroll" role="group">${seg('concerts', 'New concerts', nC)}${seg('shows', 'All shows')}${seg('artists', 'Artists')}${seg('reports', 'Reported posts', nR)}${seg('users', 'Users')}${seg('rules', 'Rules')}${seg('ratings', 'Ratings')}${seg('feedback', 'Feedback', (S.feedback || []).filter((x) => !x.is_read).length)}</div>
       ${noteHtml()}
-      <div class="list">${!S.loaded ? '<p class="muted">Loading…</p>' : S.tab === 'concerts' ? concerts() : S.tab === 'shows' ? allShows() : S.tab === 'artists' ? artistsView() : S.tab === 'ratings' ? ratingsView() : S.tab === 'feedback' ? feedbackList() : reports()}</div>`;
+      <div class="list">${!S.loaded ? '<p class="muted">Loading…</p>' : S.tab === 'concerts' ? concerts() : S.tab === 'shows' ? allShows() : S.tab === 'artists' ? artistsView() : S.tab === 'ratings' ? ratingsView() : S.tab === 'users' ? usersView() : S.tab === 'rules' ? rulesView() : S.tab === 'feedback' ? feedbackList() : reports()}</div>`;
   }
   app.innerHTML = `<header class="topbar"><a class="brand" href="./" style="text-decoration:none;color:inherit">Show Day</a></header>${body}`;
   mountCaptcha('ts-box', 'en');
@@ -229,6 +246,40 @@ function artistsView() {
     ${missing.length ? `<p class="small muted">On the board without names or colours: ${missing.map((n) => `<button type="button" class="chip" data-act="newArtist" data-id="${esc(n)}">+ ${esc(n)}</button>`).join(' ')}</p>` : ''}
     <p class="small muted">The site shows the name in the visitor's language and falls back to English. Search finds every name.</p>
     ${rows || '<p class="muted empty">No artists yet.</p>'}`;
+}
+
+function usersView() {
+  if (S.users === null) return '<p class="muted empty">Run supabase/009_profiles.sql first.</p>';
+  const q = norm(S.userQ);
+  const list = S.users.filter((u) => !q || norm(u.nickname).includes(q) || u.id.startsWith(q));
+  const rows = list.slice(0, 100).map((u) => {
+    const banned = S.banned.has(u.id);
+    return `<article class="listing ${banned ? 'is-done' : ''}">
+      <div class="row between"><div><b>${esc(u.nickname || 'No nickname')}</b>${banned ? ' <span class="chip meeting">Suspended</span>' : ''}
+        <p class="small muted">Joined ${esc(new Date(u.created_at).toLocaleDateString('en-GB'))} · ${esc(u.id.slice(0, 8))}</p></div>
+        <a class="text small" href="./?v=u&id=${u.id}" target="_blank" rel="noopener">Profile</a></div>
+      <div class="row">
+        <button type="button" class="outline" data-act="${banned ? 'unban' : 'ban'}" data-id="${u.id}">${banned ? 'Unsuspend' : S.armed === 'ban:' + u.id ? 'Tap again to suspend' : 'Suspend'}</button>
+        <button type="button" class="text danger" data-act="wipeUser" data-id="${u.id}">${S.armed === 'wipe:' + u.id ? 'Tap again: delete ALL their posts' : 'Delete all posts'}</button>
+      </div></article>`;
+  }).join('');
+  return `<input id="user-q" class="search" type="search" placeholder="Search nickname" value="${esc(S.userQ)}" aria-label="Search users">
+    <p class="small muted">Suspended accounts can still log in but cannot post, add shows, rate or react. ${list.length > 100 ? 'Showing the newest 100; search to find others.' : ''}</p>
+    ${rows || '<p class="muted empty">No users match.</p>'}`;
+}
+
+function rulesView() {
+  if (S.words === null) return '<p class="muted empty">Run supabase/015_rules_bans.sql first.</p>';
+  return `<div class="panel stack" style="gap:8px">
+      <p><b>Posts are refused automatically when they:</b></p>
+      <p class="small">• contain a link (http, www, something.com)<br>• contain a blocked word below<br>• come from a suspended account<br>• sell above face value (always checked)<br>• get several reports (hidden until you review them)</p>
+    </div>
+    <form data-form="addWord" class="row">
+      <input name="word" maxlength="40" required placeholder="Add a word or phrase, e.g. 加價" aria-label="Blocked word" style="flex:1">
+      <button type="submit" class="primary">Add</button>
+    </form>
+    <p class="small muted">${S.words.length} blocked. Matching ignores upper/lower case and finds the word inside longer text, so keep words specific.</p>
+    <div class="row tight" style="flex-wrap:wrap">${S.words.map((w) => `<button type="button" class="chip" data-act="delWord" data-id="${esc(w)}" title="Remove">${esc(w)} ✕</button>`).join('')}</div>`;
 }
 
 function ratingsView() {
@@ -361,6 +412,31 @@ const actions = {
     if (error) setNote('Could not delete: ' + error.message, 'err'); else { S.feedback = S.feedback.filter((f) => f.id !== id); setNote('Feedback deleted.'); }
     render();
   },
+  async ban(id) {
+    if (S.armed !== 'ban:' + id) { S.armed = 'ban:' + id; render(); return; }
+    S.armed = null;
+    const { error } = await sb.from('banned_users').insert({ user_id: id, reason: 'Suspended from admin page' });
+    if (error && error.code !== '23505') setNote('Could not suspend: ' + error.message, 'err'); else { S.banned.add(id); setNote('Account suspended.'); }
+    render();
+  },
+  async unban(id) {
+    const { error } = await sb.from('banned_users').delete().eq('user_id', id);
+    if (error) setNote('Could not update: ' + error.message, 'err'); else { S.banned.delete(id); setNote('Account restored.'); }
+    render();
+  },
+  async wipeUser(id) {
+    if (S.armed !== 'wipe:' + id) { S.armed = 'wipe:' + id; render(); return; }
+    S.armed = null;
+    const { data, error } = await sb.rpc('admin_delete_user_posts', { p_user: id });
+    if (error) setNote(/function/i.test(error.message) ? 'Run supabase/015_rules_bans.sql first.' : 'Could not delete: ' + error.message, 'err');
+    else setNote(`Deleted ${data || 0} post(s).`);
+    render();
+  },
+  async delWord(w) {
+    const { error } = await sb.from('blocked_words').delete().eq('word', w);
+    if (error) setNote('Could not remove: ' + error.message, 'err'); else { S.words = S.words.filter((x) => x !== w); setNote(`Removed "${w}".`); }
+    render();
+  },
   editShow(id) { S.editShow = id || null; S.armed = null; S.note = null; render(); },
   async delShow(id) {
     if (S.armed !== 'del:' + id) { S.armed = 'del:' + id; render(); return; }
@@ -446,6 +522,14 @@ const forms = {
     render();
     const el = document.getElementById('email'); if (el) el.value = email;
   },
+  async addWord(f) {
+    const word = String(new FormData(f).get('word') || '').trim().toLowerCase();
+    if (word.length < 2) return;
+    const { error } = await sb.from('blocked_words').insert({ word });
+    if (error && error.code !== '23505') setNote('Could not add: ' + error.message, 'err');
+    else { if (!S.words.includes(word)) S.words = [...S.words, word].sort(); setNote(`Blocked "${word}".`); }
+    render();
+  },
   async saveShow(f) {
     const id = f.dataset.id;
     const d = new FormData(f);
@@ -500,11 +584,12 @@ document.addEventListener('click', (e) => {
   if (fn) fn(b.dataset.id);
 });
 document.addEventListener('input', (e) => {
-  if (e.target.id !== 'show-q') return;
-  S.showQ = e.target.value;
+  const id = e.target.id;
+  if (id !== 'show-q' && id !== 'user-q') return;
+  if (id === 'show-q') S.showQ = e.target.value; else S.userQ = e.target.value;
   const pos = e.target.selectionStart;
   render();
-  const el = document.getElementById('show-q'); if (el) { el.focus(); el.setSelectionRange(pos, pos); }
+  const el = document.getElementById(id); if (el) { el.focus(); el.setSelectionRange(pos, pos); }
 });
 document.addEventListener('submit', (e) => {
   const f = e.target.closest('form[data-form]');

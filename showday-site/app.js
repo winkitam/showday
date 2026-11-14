@@ -206,7 +206,10 @@ const T = {
   google: ['Continue with Google', '用 Google 繼續', 'Google로 계속하기'], orEmail: ['or use email', '或者用電郵', '또는 이메일로'],
   errCaptcha: ['Please finish the "verify you are human" check, then try again.', '請先完成「驗證你是真人」，再試一次。', '"사람인지 확인"을 완료한 후 다시 시도해 주세요.'],
   errDisposable: ['Please use your usual email. Throwaway email addresses cannot sign up.', '請用你平時用的電郵。一次性電郵不能註冊。', '평소 쓰는 이메일을 사용해 주세요. 일회용 이메일로는 가입할 수 없어요.'],
-  notifs: ['Notifications', '通知', '알림'], noNotifs: ['Nothing new yet. When someone is interested, likes or rates your post, it shows here.', '暫時未有新通知。有人對你的帖子有興趣、讚好或評分，就會喺度顯示。', '아직 새 알림이 없어요. 누군가 내 글에 관심, 좋아요, 평가를 남기면 여기에 표시돼요.'],
+  notifs: ['Notifications', '通知', '알림'],
+  prev: ['Previous', '上一頁', '이전'], next: ['Next', '下一頁', '다음'], pageOf: ['Page {p} of {n}', '第 {p} / {n} 頁', '{n}쪽 중 {p}쪽'], pages: ['Pages', '頁數', '페이지'],
+  errRules: ['This post breaks the board rules (no links, no selling above face value, no risky payment requests). Please edit it and try again.', '帖子違反版規（不准放連結、不准高於原價、不准要求高風險付款）。請修改後再試。', '게시판 규칙 위반이에요 (링크 금지, 정가 초과 판매 금지, 위험한 결제 요구 금지). 수정 후 다시 시도해 주세요.'],
+  errBanned: ['This account has been suspended. Contact us if you think this is a mistake.', '此帳號已被停用。如認為有誤，請聯絡我們。', '이 계정은 정지되었어요. 착오라고 생각되면 문의해 주세요.'], noNotifs: ['Nothing new yet. When someone is interested, likes or rates your post, it shows here.', '暫時未有新通知。有人對你的帖子有興趣、讚好或評分，就會喺度顯示。', '아직 새 알림이 없어요. 누군가 내 글에 관심, 좋아요, 평가를 남기면 여기에 표시돼요.'],
   nInterest: ['{n} people are interested in your post', '{n} 人對你的帖子有興趣', '{n}명이 내 글에 관심을 보였어요'], oneInterest: ['Someone is interested in your post', '有人對你的帖子有興趣', '누군가 내 글에 관심을 보였어요'],
   nLikes: ['{n} new likes on your post', '你的帖子有 {n} 個新讚好', '내 글에 새 좋아요 {n}개'], oneLike: ['Someone liked your post', '有人讚好你的帖子', '누군가 내 글을 좋아해요'],
   nRatings: ['You got {n} new ratings', '你收到 {n} 個新評分', '새 평가 {n}개를 받았어요'], oneRating: ['You got a new rating', '你收到一個新評分', '새 평가를 받았어요'],
@@ -256,12 +259,30 @@ const CITIES = [
   ['Toronto', '多倫多', '토론토', '多伦多'], ['Vancouver', '溫哥華', '밴쿠버', '温哥华'], ['Sydney', '悉尼', '시드니', '雪梨'], ['Melbourne', '墨爾本', '멜버른', '墨尔本'],
   ['Auckland', '奧克蘭', '오클랜드'], ['Dubai', '杜拜', '두바이', '迪拜']
 ];
+// Country of each city, so "Japan", "日本" or "일본" finds Tokyo, Osaka...
+const COUNTRIES = {
+  hk: ['Hong Kong', '香港', '홍콩'], mo: ['Macau', '澳門', '마카오'], tw: ['Taiwan', '台灣', '대만', '臺灣', '台湾'],
+  kr: ['South Korea', '韓國', '한국', 'korea', '南韓', '韩国'], jp: ['Japan', '日本', '일본'], cn: ['China', '中國', '중국', '中国', '內地'],
+  sg: ['Singapore', '新加坡', '싱가포르'], th: ['Thailand', '泰國', '태국', '泰国'], my: ['Malaysia', '馬來西亞', '말레이시아', '马来西亚'],
+  ph: ['Philippines', '菲律賓', '필리핀', '菲律宾'], id: ['Indonesia', '印尼', '인도네시아'], vn: ['Vietnam', '越南', '베트남'],
+  uk: ['United Kingdom', '英國', '영국', 'uk', 'britain', 'england', 'scotland', '英国'], ie: ['Ireland', '愛爾蘭', '아일랜드'],
+  fr: ['France', '法國', '프랑스'], de: ['Germany', '德國', '독일'], nl: ['Netherlands', '荷蘭', '네덜란드', 'holland'],
+  es: ['Spain', '西班牙', '스페인'], it: ['Italy', '意大利', '이탈리아'], us: ['United States', '美國', '미국', 'usa', 'us', 'america'],
+  ca: ['Canada', '加拿大', '캐나다'], au: ['Australia', '澳洲', '호주', '澳大利亚'], nz: ['New Zealand', '紐西蘭', '뉴질랜드', '新西兰'],
+  ae: ['UAE', '阿聯酋', '아랍에미리트', 'united arab emirates']
+};
+const CITY_COUNTRY = { 'Hong Kong': 'hk', Macau: 'mo', Taipei: 'tw', Kaohsiung: 'tw', Taichung: 'tw', Seoul: 'kr', Busan: 'kr', Incheon: 'kr',
+  Tokyo: 'jp', Osaka: 'jp', Nagoya: 'jp', Fukuoka: 'jp', Saitama: 'jp', Yokohama: 'jp', Sapporo: 'jp', Kobe: 'jp', Chiba: 'jp', Kyoto: 'jp',
+  Shanghai: 'cn', Beijing: 'cn', Shenzhen: 'cn', Guangzhou: 'cn', Chengdu: 'cn', Hangzhou: 'cn', Singapore: 'sg', Bangkok: 'th',
+  'Kuala Lumpur': 'my', Manila: 'ph', Jakarta: 'id', 'Ho Chi Minh City': 'vn', Hanoi: 'vn', London: 'uk', Manchester: 'uk', Birmingham: 'uk',
+  Glasgow: 'uk', Dublin: 'ie', Paris: 'fr', Berlin: 'de', Amsterdam: 'nl', Barcelona: 'es', Madrid: 'es', Milan: 'it', 'New York': 'us',
+  'Los Angeles': 'us', 'San Francisco': 'us', Chicago: 'us', Toronto: 'ca', Vancouver: 'ca', Sydney: 'au', Melbourne: 'au', Auckland: 'nz', Dubai: 'ae' };
 const CITY_IDX = new Map();
 CITIES.forEach((row) => row.forEach((n) => CITY_IDX.set(n.toLowerCase().replace(/\s+/g, ' ').trim(), row)));
 const cityRow = (c) => CITY_IDX.get(String(c || '').toLowerCase().replace(/\s+/g, ' ').trim());
 const cityName = (c) => { const r = cityRow(c); return r ? r[S.lang] : String(c || '').trim(); };
 const cityKey = (c) => { const r = cityRow(c); return (r ? r[0] : String(c || '')).trim().toLowerCase(); };
-const cityAll = (c) => { const r = cityRow(c); return r ? r.join(' ') : String(c || ''); };
+const cityAll = (c) => { const r = cityRow(c); return r ? [...r, ...(COUNTRIES[CITY_COUNTRY[r[0]]] || [])].join(' ') : String(c || ''); };
 const place = (e) => {
   if (!e) return '';
   const v = (e.venue || '').trim(), raw = (e.city || '').trim(), c = cityName(raw);
@@ -744,6 +765,7 @@ function showRow(g) {
     </button>`;
 }
 
+const PAGE_SIZE = 10;
 function renderResults() {
   const box = document.getElementById('results');
   if (!box) return;
@@ -759,7 +781,17 @@ function renderResults() {
     box.innerHTML = `<p class="muted">${q ? esc(t('noResults', { q: S.q.trim() })) : t('noEvents')}</p>` + past;
     return;
   }
-  if (q) { box.innerHTML = groupShows(matches).slice(0, 30).map(showRow).join('') + past; return; }
+  if (S.pageQ !== q) { S.pageQ = q; S.page = 0; }
+  const pager = (rows) => {
+    const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    const p = Math.min(S.page || 0, pages - 1);
+    const nav = pages > 1 ? `<nav class="pager" aria-label="${t('pages')}">
+        <button type="button" class="outline" data-act="page" data-id="${p - 1}" ${p === 0 ? 'disabled' : ''}>‹ ${t('prev')}</button>
+        <span class="small muted">${esc(t('pageOf', { p: p + 1, n: pages }))}</span>
+        <button type="button" class="outline" data-act="page" data-id="${p + 1}" ${p >= pages - 1 ? 'disabled' : ''}>${t('next')} ›</button></nav>` : '';
+    return rows.slice(p * PAGE_SIZE, (p + 1) * PAGE_SIZE).map(showRow).join('') + nav;
+  };
+  if (q) { box.innerHTML = pager(groupShows(matches)) + past; return; }
   const tonight = matches.filter((e) => e.event_date === today);
   const later = matches.filter((e) => e.event_date !== today);
   const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
@@ -772,7 +804,7 @@ function renderResults() {
   const general = S.view === 'merch' ? `<h2 class="list-title">${t('generalMerch')}</h2>
     <button type="button" class="item" data-act="pick" data-id="general"><span class="item-main"><b>${t('generalMerch')}</b></span>
       ${itemsFor('merch', 'general').length ? `<span class="count-pill">${esc(t('postsN', { n: itemsFor('merch', 'general').length }))}</span>` : ''}${icon.chev}</button>` : '';
-  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + groupShows(later).slice(0, 30).map(showRow).join('') : '') + general + past;
+  box.innerHTML = sd + (later.length ? `<h2 class="list-title">${t('upcoming')}</h2>` + pager(groupShows(later)) : '') + general + past;
 }
 
 function visibleListings() {
@@ -1438,6 +1470,7 @@ function checkOver() {
 }
 
 // ---------- Actions ----------
+const ruleErr = (e) => (e && /board rules/i.test(e.message || '') ? 'errRules' : e && /suspended/i.test(e.message || '') ? 'errBanned' : null);
 const isRateLimit = (e) => e && (e.status === 429 || /rate limit|security purposes|seconds/i.test(e.message || ''));
 const keepEmail = (email) => { const el = document.getElementById('login-email'); if (el && email) el.value = email; };
 const closeMenus = () => document.querySelectorAll('details.menu[open]').forEach((d) => d.removeAttribute('open'));
@@ -1467,6 +1500,7 @@ const actions = {
     }
   },
   openNotifs() { openNotifs(); },
+  page(n) { S.page = Math.max(0, Number(n) || 0); renderResults(); const r = document.getElementById('results'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'start' }); },
   async google() {
     const back = location.origin + location.pathname + (S.selEv ? '?e=' + S.selEv : '');
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: back } });
@@ -1691,7 +1725,8 @@ const forms = {
       const k = error.code === '23505' ? 'rateErrDup' : /yourself/i.test(m) ? 'rateErrSelf' : /new accounts/i.test(m) ? 'rateErrNew'
         : /too many/i.test(m) ? 'rateErrMany' : /marked done|cannot be rated|too old/i.test(m) ? 'rateErrState' : null;
       if (k === 'rateErrDup') S.myRatings[key] = true;
-      if (k) flash('rate', k); else S.flash = { area: 'rate', text: m, kind: 'err' };
+      const rk = k || ruleErr(error);
+      if (rk) flash('rate', rk); else S.flash = { area: 'rate', text: m, kind: 'err' };
       renderMain(); return;
     }
     S.myRatings[key] = true; S.rating = null; S.ratingPick = 0;
@@ -1757,7 +1792,7 @@ const forms = {
     }
     if (row.event_id) S.selEvForm = row.event_id;
     const { error } = await sb.from(TABLE[type]).insert(row);
-    if (error) { flash('compose', /Too many/.test(error.message) ? 'errRate' : 'errGeneric'); renderMain(); return; }
+    if (error) { flash('compose', ruleErr(error) || (/Too many/.test(error.message) ? 'errRate' : 'errGeneric')); renderMain(); return; }
     S.composing = false;
     flash('posted', 'posted', 'ok');
     await loadItems(type);
@@ -1822,7 +1857,7 @@ const forms = {
     }
     if (!made.length) {
       S.draft = d;
-      flash('create', dup ? 'dupWarn' : fail && /Too many/.test(fail.message) ? 'errRate' : 'errGeneric', dup ? 'warn' : 'err');
+      flash('create', dup ? 'dupWarn' : ruleErr(fail) || (fail && /Too many/.test(fail.message) ? 'errRate' : 'errGeneric'), dup ? 'warn' : 'err');
       renderMain(); return;
     }
     S.events.push(...made);
@@ -1854,7 +1889,7 @@ const forms = {
       ...(S.v8 ? { p_photo: photoUrl } : {})
     });
     if (error) {
-      flash('post', error.code === '23514' ? 'over' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric');
+      flash('post', error.code === '23514' ? 'over' : ruleErr(error) || (/Too many/.test(error.message) ? 'errRate' : 'errGeneric'));
       renderMain(); return;
     }
     S.posting = false;
