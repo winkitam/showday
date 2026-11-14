@@ -409,10 +409,17 @@ html[data-theme="night"] .chip.stale{background:#4A1A22;color:#FFB4B4}
 html[data-theme="night"] .chip.tag{background:var(--soft);color:var(--muted)}
 html[data-theme="night"] .sort select{background:var(--surface)}
 
-/* Fan colour covers (no images: a gradient from the fandom colours) */
-.cover{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;font-weight:800;font-size:15px;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
-.item .item-main,.sd-item .item-main{flex:1;min-width:0}
+/* Fan colours: artist name in a frame of the fandom colours (no images) */
+.fan-name{--fan-bg:var(--bg);display:inline-block;max-width:100%;padding:1px 10px;border-radius:999px;border:2px solid transparent;
+  background:linear-gradient(var(--fan-bg),var(--fan-bg)) padding-box,linear-gradient(135deg,var(--c1),var(--c2)) border-box;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-main b{max-width:100%}
+.sd-item .fan-name{--fan-bg:#fff;color:#101828}
+.event-head h1 .fan-name{padding:2px 16px;border-width:3px}
 .event-head.fan:not(.showday){padding:16px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 28%,var(--bg)),color-mix(in srgb,var(--c2) 22%,var(--bg)));border:1px solid color-mix(in srgb,var(--c1) 45%,var(--line))}
-.event-head.fan.showday{box-shadow:inset 0 4px 0 var(--c1)}
-html[data-theme="cute"] .cover{border-radius:14px;border:2px solid #fff;box-shadow:0 2px 0 var(--pink);transform:rotate(-3deg)}
+.event-head.fan:not(.showday) h1 .fan-name{--fan-bg:color-mix(in srgb,var(--c1) 12%,var(--bg))}
+.event-head.showday h1 .fan-name{--fan-bg:#101828;color:#fff}
+html[data-theme="cute"] .fan-name{--fan-bg:#fff}
+html[data-theme="cute"] .event-head.showday h1 .fan-name{--fan-bg:#fff;color:var(--ink)}
+html[data-theme="night"] .fan-name{--fan-bg:var(--surface)}
+html[data-theme="night"] .sd-item .fan-name{--fan-bg:#2A2238;color:var(--ink)}
 html[data-theme="night"] .event-head.fan:not(.showday){background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 22%,var(--surface)),color-mix(in srgb,var(--c2) 18%,var(--surface)))}

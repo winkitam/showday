@@ -244,13 +244,8 @@ const fanColors = (artist) => {
   let h = 0; for (const ch of k) h = (h * 31 + ch.codePointAt(0)) >>> 0;
   return PASTELS[h % PASTELS.length];
 };
-const initials = (artist) => {
-  const a = String(artist || '').trim();
-  if (/^[\x00-\x7F]/.test(a)) { const w = a.split(/\s+/); return (w.length > 1 ? w[0][0] + w[1][0] : a.slice(0, 2)).toUpperCase(); }
-  return [...a][0] || '?';
-};
 const coverStyle = (artist) => { const [a, b] = fanColors(artist); return `--c1:${a};--c2:${b}`; };
-const cover = (artist) => `<span class="cover" style="${coverStyle(artist)}" aria-hidden="true">${esc(initials(artist))}</span>`;
+const fanName = (artist) => `<span class="fan-name" style="${coverStyle(artist)}">${esc(artist)}</span>`;
 const showKey = (e) => [e.artist.trim().toLowerCase(), cityKey(e.city), (e.venue || '').trim().toLowerCase()].join('|');
 const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(LOCALES[S.lang], { day: 'numeric', month: 'short' });
 const fmtDate = (iso) => iso === todayISO() ? t('tonight')
@@ -607,7 +602,7 @@ function showRow(g) {
     : `${t('datesN', { n: g.length })} · ${shortDate(e.event_date)} – ${shortDate(g[g.length - 1].event_date)}`;
   const n = S.view === 'board' ? 0 : g.reduce((a, x) => a + countFor(x), 0);
   return `<button type="button" class="item" data-act="pick" data-id="${e.id}">
-      ${cover(e.artist)}<span class="item-main"><b>${esc(e.artist)}</b><span class="muted">${esc(place(e))} · ${esc(when)}${pending ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
+      <span class="item-main"><b>${fanName(e.artist)}</b><span class="muted">${esc(place(e))} · ${esc(when)}${pending ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</span></span>
       ${n ? `<span class="count-pill">${esc(countLabel(n))}</span>` : ''}${icon.chev}
     </button>`;
 }
@@ -629,7 +624,7 @@ function renderResults() {
   const sd = tonight.length ? `<section class="showday" aria-label="${t('showDay')}">
       <p class="live">● ${t('showDay')}</p>
       ${tonight.map((e) => `<button type="button" class="sd-item" data-act="pick" data-id="${e.id}">
-        ${cover(e.artist)}<span class="item-main"><b>${esc(e.artist)}</b><span>${esc(place(e))}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
+        <span class="item-main"><b>${fanName(e.artist)}</b><span>${esc(place(e))}${e.status === 'pending' ? ` · ${t('pendingReview')}` : ''}</span></span>
         <span class="sd-count">${esc(countLabel(countFor(e)))}</span>
       </button>`).join('')}
     </section>` : '';
@@ -662,7 +657,7 @@ function eventHead(e, stats) {
     </div>
     <section class="event-head fan ${tonight ? 'showday' : ''}" style="${coverStyle(e.artist)}">
       ${tonight ? `<p class="live">● ${t('showDay')}</p>` : ''}
-      <h1>${esc(e.artist)}</h1>
+      <h1>${fanName(e.artist)}</h1>
       <p class="sub">${esc(place(e))} · ${esc(fmtDate(e.event_date))}${e.status === 'pending' ? ` · <span class="warn-text">${t('pendingReview')}</span>` : ''}</p>
       ${dateChips(e)}
       <p class="small sub">${esc(stats)}</p>
