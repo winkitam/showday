@@ -1,4 +1,4 @@
--- 012: "Still available?" and likes on posts. No text, so nothing to moderate.
+-- 012: "Interested" and likes on posts. No text, so nothing to moderate.
 -- Run once in Supabase > SQL Editor (after 011). Safe to run again.
 
 create table if not exists public.post_reactions (
@@ -11,7 +11,7 @@ create table if not exists public.post_reactions (
 );
 create index if not exists post_reactions_item_idx on public.post_reactions (item_type, item_id);
 
--- Not on your own post; "Still available?" only on open posts (not buddies); 300 a day.
+-- Not on your own post; "Interested" only on open posts (not buddies); 300 a day.
 create or replace function public.check_reaction() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare owner uuid; st text;

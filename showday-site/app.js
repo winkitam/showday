@@ -198,8 +198,8 @@ const T = {
   ratingsN: ['{n} ratings', '{n} 個評分', '평가 {n}개'], rating1: ['1 rating', '1 個評分', '평가 1개'],
   reviews: ['Ratings', '評分', '평가'], noRatings: ['No ratings yet.', '暫時未有評分。', '아직 평가가 없어요.'],
   stars: ['{n} stars', '{n} 粒星', '별 {n}개'],
-  stillAvail: ['Still available?', '仲有冇？', '아직 있나요?'], asked: ['Asked', '已問', '물어봤어요'],
-  nAsked: ['{n} people asked', '{n} 人問過', '{n}명이 물어봤어요'], oneAsked: ['1 person asked', '1 人問過', '1명이 물어봤어요'],
+  stillAvail: ['Interested', '有興趣', '관심 있어요'], asked: ['Interested', '有興趣', '관심 있어요'],
+  nAsked: ['{n} interested', '{n} 人有興趣', '{n}명 관심'], oneAsked: ['1 interested', '1 人有興趣', '1명 관심'],
   likeIt: ['Like', '讚好', '좋아요'], unlikeIt: ['Unlike', '取消讚好', '좋아요 취소']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
@@ -1136,21 +1136,21 @@ function author(uid) {
   const sc = S.scores[uid];
   return `<button type="button" class="author" data-act="profile" data-id="${uid}">${avatarEl(p.avatar, p.bg, 24)}<span>${esc(p.nickname)}</span>${sc && sc.n ? `<span class="score" title="${esc(sc.n === 1 ? t('rating1') : t('ratingsN', { n: sc.n }))}">★${sc.avg.toFixed(1)}</span>` : ''}</button>`;
 }
-// "Still available?" and ♡ like (key = "listing:<id>", "swap:<id>", ...)
+// "Interested" and ♡ like (key = "listing:<id>", "swap:<id>", ...)
 function reactBits(key, ownerId, status) {
   if (!S.v12) return { btns: '', chip: '' };
   const c = S.reacts[key] || { asks: 0, likes: 0 };
   const mine = S.user && S.user.id === ownerId;
   const type = key.slice(0, key.indexOf(':'));
   const open = !status || status === 'open';
-  const chip = c.asks && open && type !== 'buddy' ? `<span class="chip asked">👋 ${esc(c.asks === 1 ? t('oneAsked') : t('nAsked', { n: c.asks }))}</span>` : '';
+  const chip = c.asks && open && type !== 'buddy' ? `<span class="chip asked">🙋 ${esc(c.asks === 1 ? t('oneAsked') : t('nAsked', { n: c.asks }))}</span>` : '';
   const liked = !!S.myReacts['like:' + key];
   const like = mine
     ? (c.likes ? `<span class="react-n" title="${t('likeIt')}">♡ ${c.likes}</span>` : '')
     : `<button type="button" class="react ${liked ? 'on' : ''}" data-act="react" data-id="like:${key}" aria-pressed="${liked}" title="${liked ? t('unlikeIt') : t('likeIt')}" aria-label="${liked ? t('unlikeIt') : t('likeIt')}">${liked ? '♥' : '♡'}${c.likes ? ` ${c.likes}` : ''}</button>`;
   const asked = !!S.myReacts['ask:' + key];
   const ask = !mine && open && type !== 'buddy'
-    ? `<button type="button" class="react ${asked ? 'on' : ''}" data-act="react" data-id="ask:${key}" aria-pressed="${asked}">${asked ? '✓ ' + t('asked') : '👋 ' + t('stillAvail')}</button>` : '';
+    ? `<button type="button" class="react ${asked ? 'on' : ''}" data-act="react" data-id="ask:${key}" aria-pressed="${asked}">${asked ? '✓ ' + t('asked') : '🙋 ' + t('stillAvail')}</button>` : '';
   return { btns: ask + like, chip };
 }
 const starLine = (n) => `<span class="stars" aria-label="${esc(t('stars', { n }))}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
