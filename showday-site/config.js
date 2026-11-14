@@ -13,3 +13,8 @@ export const TURNSTILE_SITE_KEY = '';
 
 // Show "Continue with Google" once Google is switched on in Supabase > Authentication > Providers.
 export const GOOGLE_LOGIN = true;
+
+// Optional, makes the Google login look like part of Show Day (no supabase.co address shown).
+// Paste the Google OAuth "Client ID" here (it is public; never the Client secret).
+// Also add this site's address under "Authorized JavaScript origins" in Google Cloud. Leave '' to use the redirect login.
+export const GOOGLE_CLIENT_ID = '';
