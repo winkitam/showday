@@ -484,3 +484,5 @@ button.google .g-logo{background:#fff;border-radius:50%;width:24px;height:24px;d
 
 .g-box{display:flex;justify-content:center;min-height:44px}
 .icon-btn[data-act="reloadPage"]{font-size:20px;line-height:1}
+
+.notif .who{display:block;margin-top:2px;color:var(--ink,inherit)}

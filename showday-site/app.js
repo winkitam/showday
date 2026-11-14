@@ -110,6 +110,8 @@ const T = {
   undoStep: ['↩ Undo', '↩ 撤回', '↩ 되돌리기'], errUndoRated: ['Someone already rated this trade, so it can\'t be undone.', '已經有人評分，唔可以撤回。', '이미 평가가 있어 되돌릴 수 없어요.'],
   rateNeedAsk: ['Tap Interested on a post before the trade, then you can rate it.', '交易前喺帖文㩒「有興趣」，之後先可以評分。', '거래 전에 게시글에서 관심 있어요를 눌러야 평가할 수 있어요.'],
   reload: ['Refresh', '重新整理', '새로고침'],
+  myInterests: ['Posts I\'m interested in', '我有興趣嘅帖文', '내가 관심 있는 글'], noInterests: ['Tap Interested or ♡ on a post and it shows up here.', '喺帖文㩒「有興趣」或 ♡，就會喺呢度出現。', '글에서 관심 있어요나 ♡를 누르면 여기에 보여요.'],
+  whoInterest: ['Interested', '有興趣', '관심'], whoLike: ['Liked', '讚好', '좋아요'], whoMore: ['+{n} more', '+{n} 人', '+{n}명'], whoAnon: ['Someone', '有人', '누군가'],
   markDone: ['Mark as done', '標記為完成', '완료로 표시'], doneLabel: ['Done', '已完成', '완료'],
   fEvent: ['Concert', '演出', '공연'], noUpcoming: ['Add the concert on the Board tab first.', '請先在「票板」新增演出。', '먼저 게시판에서 공연을 추가하세요.'],
   noPosts: ['Nothing yet.', '暫時沒有內容。', '아직 없어요.'],
@@ -526,7 +528,7 @@ async function loadMyReacts() {
 }
 async function loadNotifs() {
   if (!S.user || !S.v13) { S.notifs = null; S.unread = 0; return; }
-  const { data, error } = await sb.from('notifications').select('id, kind, item_type, item_id, event_id, label, n, read, updated_at')
+  const { data, error } = await sb.from('notifications').select('id, kind, item_type, item_id, event_id, label, n, read, created_at, updated_at')
     .eq('user_id', S.user.id).order('updated_at', { ascending: false }).limit(50);
   if (error) { S.v13 = false; S.notifs = null; S.unread = 0; return; }
   S.notifs = data || [];
@@ -540,7 +542,7 @@ async function openNotifs(push = true) {
   if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
   if (push) history.pushState({ v: 'n' }, '', location.pathname + '?v=n');
   render(); window.scrollTo(0, 0);
-  await loadNotifs();
+  await Promise.all([loadNotifs(), loadWho()]);
   S.notifSeen = new Set((S.notifs || []).filter((x) => !x.read).map((x) => x.id));
   renderMain();
   if (S.notifSeen.size) {
@@ -561,10 +563,51 @@ function notifView() {
   const list = S.notifs === null ? `<p class="muted">${t('loading')}</p>`
     : S.notifs.length ? S.notifs.map((x) => `<button type="button" class="item notif ${seen.has(x.id) ? 'is-new' : ''}" data-act="goPost" data-id="${x.item_type}:${x.event_id || 'general'}">
         <span class="notif-ic" aria-hidden="true">${ic[x.kind]}</span>
-        <span class="item-main"><b>${esc(notifText(x))}</b><span class="small muted">${t(TYPE_LABEL[x.item_type])}${x.label ? ' · ' + esc(x.label) : ''} · ${esc(ago(x.updated_at))}${seen.has(x.id) ? ` · <span class="chip match">${t('newBadge')}</span>` : ''}</span></span>${icon.chev}</button>`).join('')
+        <span class="item-main"><b>${esc(notifText(x))}</b><span class="small muted">${t(TYPE_LABEL[x.item_type])}${x.label ? ' · ' + esc(x.label) : ''} · ${esc(ago(x.updated_at))}${seen.has(x.id) ? ` · <span class="chip match">${t('newBadge')}</span>` : ''}</span>${whoLine(x)}</span>${icon.chev}</button>`).join('')
       : `<p class="muted">${t('noNotifs')}</p>`;
   return `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
     <h1>${t('notifs')}</h1><div class="list">${list}</div>`;
+}
+// People who tapped Interested / liked my posts (nickname only), shown in the bell
+async function loadWho() {
+  S.who = {};
+  if (!S.v13 || !S.user) return;
+  const { data, error } = await sb.rpc('my_post_reactors');
+  if (error) return;
+  (data || []).forEach((r) => {
+    const k = (r.kind === 'ask' ? 'interest' : 'like') + ':' + r.item_type + ':' + r.item_id;
+    (S.who[k] || (S.who[k] = [])).push({ name: r.nickname || '', at: r.created_at });
+  });
+}
+function whoLine(x) {
+  if (x.kind === 'rating') return '';
+  const list = (S.who && S.who[x.kind + ':' + x.item_type + ':' + x.item_id]) || [];
+  const since = new Date(x.created_at).getTime() - 2000;
+  const names = list.filter((w) => new Date(w.at).getTime() >= since);
+  if (!names.length) return '';
+  const shown = names.slice(0, 5).map((w) => esc(w.name || t('whoAnon'))).join(', ');
+  const more = names.length > 5 ? ' ' + esc(t('whoMore', { n: names.length - 5 })) : '';
+  return `<span class="small who">${t(x.kind === 'interest' ? 'whoInterest' : 'whoLike')}: ${shown}${more}</span>`;
+}
+// Posts I tapped Interested or ♡ on (for my profile)
+async function loadInterests() {
+  if (!S.user || !S.v12) { S.interests = []; return; }
+  const by = {};
+  Object.keys(S.myReacts).forEach((k) => {
+    const [kind, rest] = [k.slice(0, k.indexOf(':')), k.slice(k.indexOf(':') + 1)];
+    const [type, id] = parseKey(rest);
+    (by[type] || (by[type] = {}))[id] = by[type][id] || {};
+    by[type][id][kind] = true;
+  });
+  const out = [];
+  await Promise.all(Object.keys(by).map(async (type) => {
+    const ids = Object.keys(by[type]); if (!ids.length || !TABLE[type] && type !== 'listing') return;
+    const table = type === 'listing' ? 'listings' : TABLE[type];
+    const cols = type === 'listing' ? `id, kind, section, price, status, user_id, event_id, created_at, ${EV_EMBED}` : ITEM_COLS[type];
+    const { data } = await sb.from(table).select(cols).in('id', ids.slice(0, 100));
+    (data || []).filter((x) => by[type][x.id]).forEach((x) => out.push({ type, ...x, mine: by[type][x.id] }));
+  }));
+  S.interests = out.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 async function loadMyRatings() {
   S.myRatings = {};
@@ -605,6 +648,7 @@ async function loadMine() {
     ...(me.data || []).map((x) => ({ type: 'merch', ...x })),
     ...(fr.data || []).map((x) => ({ type: 'free', ...x }))
   ].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  await loadInterests();
 }
 async function checkAdmin() {
   if (!S.user) { S.isAdmin = false; return; }
@@ -1415,12 +1459,19 @@ function meView() {
           ${x.hidden ? `<span class="small warn-text">${t('reported')}</span>` : ''}</div>
         <button type="button" class="text danger" data-act="mineDel" data-id="${x.type}:${x.id}">${t('del')}</button>
       </div>`).join('') : `<p class="muted">${t('noPosts')}</p>`;
+  const interests = !S.interests ? `<p class="muted">${t('loading')}</p>`
+    : S.interests.length ? S.interests.map((x) => `<button type="button" class="item" data-act="goPost" data-id="${x.type}:${x.event_id || 'general'}">
+        <span class="item-main"><span class="small muted">${t(typeLabel[x.type])}${x.events ? ' · ' + esc(evName(x.events)) : ''}</span><b>${esc(describe(x))}</b>
+          <span class="small">${x.mine.ask ? '🙋 ' + t('whoInterest') : ''}${x.mine.ask && x.mine.like ? ' · ' : ''}${x.mine.like ? '♥' : ''}${x.status && x.status !== 'open' ? ' · ' + t(x.status === 'done' ? 'stDone' : 'stMeeting') : ''}</span></span>${icon.chev}</button>`).join('')
+      : `<p class="muted">${t('noInterests')}</p>`;
   return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('loggedInAs')} ${esc(S.user.email)}</p></section>
     ${flashFor('me')}
     ${S.isAdmin ? `<a class="outline-link" href="admin.html">${t('adminPage')}</a>` : ''}
     ${profileEditor()}
     <h2 class="list-title">${t('myPosts')}</h2>
     <div class="list">${posts}</div>
+    <h2 class="list-title">${t('myInterests')}</h2>
+    <div class="list">${interests}</div>
     <details class="panel collapse"><summary>${t('changePw')}</summary>
       <form data-form="changepw" class="stack" style="gap:12px;margin-top:12px">
         <input name="password" type="password" autocomplete="new-password" minlength="8" placeholder="${t('pwHint')}" aria-label="${t('password')}" required>
