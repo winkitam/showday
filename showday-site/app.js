@@ -139,6 +139,7 @@ const T = {
   sendFeedback: ['Send', '發送', '보내기'],
   feedbackSent: ['Thank you. Your feedback was sent.', '謝謝，你的意見已送出。', '감사해요. 의견이 전송되었어요.'],
   feedbackShort: ['Please write a little more.', '請多寫一點。', '조금 더 적어 주세요.'],
+  photoTicketHint: ['Cover the QR code or barcode before you upload.', '上載前請遮住 QR code 或條碼。', '업로드 전에 QR코드나 바코드를 가려 주세요.'],
   justNow: ['just now', '剛剛', '방금'],
   maybeSold: ['May be gone', '可能已售出', '이미 거래됐을 수도'],
   maybeSwapped: ['May be swapped', '可能已換出', '이미 교환됐을 수도'],
@@ -323,6 +324,7 @@ const S = {
   feedbackOpen: false,
   v5: false,
   v7: false,
+  v8: false,
   sort: 'new',
   swapFilter: 'all',
   buddyTag: null,
@@ -369,7 +371,7 @@ async function loadEvents() {
 async function loadListings() {
   if (!S.selEv) return;
   const { data, error } = await sb.from('listings')
-    .select('id, event_id, user_id, kind, section, qty, original_price, price, meet_point, status, hidden, created_at' + (S.v5 ? ', note' : ''))
+    .select('id, event_id, user_id, kind, section, qty, original_price, price, meet_point, status, hidden, created_at' + (S.v5 ? ', note' : '') + (S.v8 ? ', photo_url' : ''))
     .eq('event_id', S.selEv)
     .order('created_at', { ascending: false })
     .limit(200);
@@ -379,15 +381,16 @@ async function loadListings() {
 const TABLE = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' };
 const EV_EMBED = 'events(artist, city, venue, event_date, currency)';
 const ITEM_COLS = {
-  get swap() { return `id, event_id, user_id, have, want, status, hidden, created_at, ${S.v5 ? 'note, ' : ''}${EV_EMBED}`; },
-  get buddy() { return `id, event_id, user_id, note, hidden, created_at, ${S.v7 ? 'tags, meet_time, meet_place, ' : ''}${EV_EMBED}`; },
+  get swap() { return `id, event_id, user_id, have, want, status, hidden, created_at, ${S.v5 ? 'note, ' : ''}${S.v8 ? 'photo_url, ' : ''}${EV_EMBED}`; },
+  get buddy() { return `id, event_id, user_id, note, hidden, created_at, ${S.v7 ? 'tags, meet_time, meet_place, ' : ''}${S.v8 ? 'photo_url, ' : ''}${EV_EMBED}`; },
   get merch() { return `id, user_id, kind, title, details, price, status, hidden, created_at${S.v7 ? ', category, member, photo_url' : ''}${S.v5 ? ', event_id, ' + EV_EMBED : ''}`; },
   get free() { return `id, event_id, user_id, what, details, give_time, place, photo_url, status, hidden, created_at, ${EV_EMBED}`; }
 };
 async function detectV5() {
-  const [a, b] = await Promise.all([sb.from('listings').select('note').limit(1), sb.from('buddies').select('tags').limit(1)]);
+  const [a, b, c] = await Promise.all([sb.from('listings').select('note').limit(1), sb.from('buddies').select('tags').limit(1), sb.from('listings').select('photo_url').limit(1)]);
   S.v5 = !a.error;
   S.v7 = !b.error;
+  S.v8 = !c.error;
 }
 async function loadCounts() {
   const ids = S.events.filter((e) => e.event_date === todayISO()).map((e) => e.id);
@@ -812,7 +815,7 @@ function listingCard(l) {
         <p class="muted small">${esc(t(n === '1' ? 'qty1' : 'qtyN', { n }))} · ${esc(l.meet_point)}</p>
         <p class="muted small time">${esc(postedAt(l.created_at))}</p>
       </div>
-      <div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, ev.currency)}</div>
+      <div class="stack-r"><div class="price">${sell ? '' : `<span class="small muted">${t('upTo')} </span>`}${fmtMoney(l.price, ev.currency)}</div>${photo(l.photo_url)}</div>
     </div>
     <div class="row">
       ${main}
@@ -847,6 +850,7 @@ function postArea(e) {
       <div class="field"><label for="p-contact">${t('fHandle')}</label><input id="p-contact" name="contact" maxlength="60" placeholder="${t('phHandle')}" required></div>
     </div>
     ${S.v5 ? `<div class="field"><label for="p-note">${t('fDesc')}</label><textarea id="p-note" name="note" rows="2" maxlength="200" placeholder="${t('phDescTicket')}"></textarea></div>` : ''}
+    ${S.v8 ? `<div class="field"><label for="p-photo">${t('fPhoto')}</label><input id="p-photo" name="photo" type="file" accept="image/*"><p class="small muted">${t('photoTicketHint')}</p></div>` : ''}
     <div class="check"><input id="p-confirm" name="confirm" type="checkbox" required><label for="p-confirm">${sell ? t('confirmSell') : t('confirmBuy')}</label></div>
     ${flashFor('post')}
     <button type="submit" class="primary big">${t('submit')}</button>
@@ -882,12 +886,12 @@ function itemCard(type, it, inEvent) {
       + (stale ? `<span class="chip stale">${t('maybeSwapped')}</span>` : '');
     body = `${evLine}
       <div class="swap-row"><div><span class="small muted">${t('hasLabel')}</span><b>${esc(it.have)}</b></div>${icon.swap}<div><span class="small muted">${t('wantsLabel')}</span><b>${esc(it.want)}</b></div></div>
-      ${it.note ? `<p class="desc">${esc(it.note)}</p>` : ''}`;
+      ${it.note ? `<p class="desc">${esc(it.note)}</p>` : ''}${photo(it.photo_url)}`;
   } else if (type === 'buddy') {
     const tags = (it.tags || []).filter((k) => BUDDY_TAGS.includes(k));
     body = `${evLine}<p>${esc(it.note)}</p>
       ${tags.length ? `<div class="row tight">${tags.map((k) => `<span class="chip tag">${esc(tagLabel(k))}</span>`).join('')}</div>` : ''}
-      ${whenWhere(it.meet_time, it.meet_place)}`;
+      ${whenWhere(it.meet_time, it.meet_place)}${photo(it.photo_url)}`;
   } else if (type === 'free') {
     body = `${evLine}<div class="listing-top"><div class="listing-info"><h3>🎁 ${esc(it.what)}</h3>
         ${it.details ? `<p class="desc">${esc(it.details)}</p>` : ''}${whenWhere(it.give_time, it.place)}</div>${photo(it.photo_url)}</div>`;
@@ -927,7 +931,7 @@ function eventOptions(noPreselect) {
   return list.map((e) => `<option value="${e.id}" ${!noPreselect && e.id === S.selEvForm ? 'selected' : ''}>${esc(e.artist)} · ${esc(place(e))} · ${esc(fmtDate(e.event_date))}</option>`).join('');
 }
 
-const photoField = () => S.v7 ? `<div class="field"><label for="c-photo">${t('fPhoto')}</label><input id="c-photo" name="photo" type="file" accept="image/*"></div>` : '';
+const photoField = (on = S.v7, hint = '') => on ? `<div class="field"><label for="c-photo">${t('fPhoto')}</label><input id="c-photo" name="photo" type="file" accept="image/*">${hint ? `<p class="small muted">${hint}</p>` : ''}</div>` : '';
 
 function composer(type) {
   const ev = S.events.find((x) => x.id === S.selEv);
@@ -944,7 +948,8 @@ function composer(type) {
     fields = `<div class="grid2">
       <div class="field"><label for="c-have">${t('fHave')}</label><input id="c-have" name="have" maxlength="80" placeholder="${t('phHave')}" required></div>
       <div class="field"><label for="c-want">${t('fWant')}</label><input id="c-want" name="want" maxlength="80" placeholder="${t('phWant')}" required></div></div>
-      ${S.v5 ? `<div class="field"><label for="c-desc">${t('fDesc')}</label><textarea id="c-desc" name="desc" rows="2" maxlength="200" placeholder="${t('phDescSwap')}"></textarea></div>` : ''}`;
+      ${S.v5 ? `<div class="field"><label for="c-desc">${t('fDesc')}</label><textarea id="c-desc" name="desc" rows="2" maxlength="200" placeholder="${t('phDescSwap')}"></textarea></div>` : ''}
+      ${photoField(S.v8, t('photoTicketHint'))}`;
     confirm = t('confirmSwap');
   } else if (type === 'buddy') {
     fields = `<div class="field"><label for="c-note">${t('fNote')}</label><input id="c-note" name="note" maxlength="140" placeholder="${t('phNote')}" required></div>
@@ -952,7 +957,8 @@ function composer(type) {
         `<label class="fchip-check"><input type="checkbox" name="tags" value="${k}"><span>${esc(tagLabel(k))}</span></label>`).join('')}</div></fieldset>
       <div class="grid2">
         <div class="field"><label for="c-mtime">${t('fMeetTime')}</label><input id="c-mtime" name="meet_time" maxlength="40" placeholder="${t('phMeetTime')}"></div>
-        <div class="field"><label for="c-mplace">${t('fMeetPlace')}</label><input id="c-mplace" name="meet_place" maxlength="80" placeholder="${t('phMeetPlace')}"></div></div>` : ''}`;
+        <div class="field"><label for="c-mplace">${t('fMeetPlace')}</label><input id="c-mplace" name="meet_place" maxlength="80" placeholder="${t('phMeetPlace')}"></div></div>` : ''}
+      ${photoField(S.v8)}`;
   } else if (type === 'free') {
     fields = `${kindSeg}<div class="field"><label for="c-what">${t('fWhat')}</label><input id="c-what" name="what" maxlength="80" placeholder="${t('phWhat')}" required></div>
       <div class="grid2">
@@ -1056,6 +1062,12 @@ function render() {
   renderMain();
 }
 
+// A chosen photo can't be set again by code, so move the old file input into the new form
+function keepFile(old, id) {
+  const now = document.getElementById(id);
+  if (old && now && old !== now && old.files && old.files.length) now.replaceWith(old);
+}
+
 function renderMain() {
   const main = document.getElementById('main');
   if (!main) return;
@@ -1065,6 +1077,7 @@ function renderMain() {
   if (S.view !== 'board') {
     const cf = main.querySelector('form[data-form="item"]');
     const keep = cf ? [...new FormData(cf).entries()].filter(([, v]) => typeof v === 'string') : null;
+    const oldPhoto = document.getElementById('c-photo');
     main.innerHTML = itemsEventView(S.view, e);
     const nf = main.querySelector('form[data-form="item"]');
     if (keep && nf) [...nf.elements].forEach((el) => {
@@ -1072,19 +1085,22 @@ function renderMain() {
       if (el.type === 'checkbox') el.checked = keep.some(([k, v]) => k === el.name && v === el.value);
       else { const hit = keep.filter(([k]) => k === el.name).pop(); if (hit) el.value = hit[1]; }
     });
+    keepFile(oldPhoto, 'c-photo');
     return;
   }
   // Keep what the user is typing in the post form across live refreshes.
   const form = main.querySelector('form[data-form="post"]');
   const saved = form ? Object.fromEntries(new FormData(form)) : null;
+  const oldPhoto = document.getElementById('p-photo');
   main.innerHTML = eventView(e);
   if (saved) {
     const f = main.querySelector('form[data-form="post"]');
     if (f) for (const [k, v] of Object.entries(saved)) {
       const el = f.elements[k];
-      if (!el) continue;
+      if (!el || el.type === 'file') continue;
       if (el.type === 'checkbox') el.checked = v === 'on'; else el.value = v;
     }
+    keepFile(oldPhoto, 'p-photo');
   }
   checkOver();
 }
@@ -1327,7 +1343,7 @@ const forms = {
       flash('compose', 'fillAll'); renderMain(); return;
     }
     const file = f.elements.photo && f.elements.photo.files ? f.elements.photo.files[0] : null;
-    if (S.v7 && (type === 'merch' || type === 'free') && file && file.size) {
+    if (((S.v7 && (type === 'merch' || type === 'free')) || (S.v8 && (type === 'swap' || type === 'buddy'))) && file && file.size) {
       S.flash = { area: 'compose', text: t('uploading'), kind: 'info' }; renderMain();
       const url = await uploadPhoto(file);
       if (!url) { flash('compose', 'photoErr'); renderMain(); return; }
@@ -1413,10 +1429,17 @@ const forms = {
     const contact = String(d.get('contact') || '').trim();
     if (!section || !meet || !contact || !(price > 0) || (sell && !(original > 0)) || d.get('confirm') !== 'on') { flash('post', 'fillAll'); renderMain(); return; }
     if (sell && price > original) { checkOver(); return; }
+    let photoUrl = null;
+    const file = S.v8 && f.elements.photo && f.elements.photo.files ? f.elements.photo.files[0] : null;
+    if (file && file.size) {
+      photoUrl = await uploadPhoto(file);
+      if (!photoUrl) { flash('post', 'photoErr'); renderMain(); return; }
+    }
     const { error } = await sb.rpc('create_listing', {
       p_event: S.selEv, p_kind: S.formKind, p_section: section, p_qty: Number(d.get('qty')),
       p_original: original, p_price: price, p_meet: meet, p_contact: contact,
-      ...(S.v5 ? { p_note: String(d.get('note') || '').trim() || null } : {})
+      ...(S.v5 ? { p_note: String(d.get('note') || '').trim() || null } : {}),
+      ...(S.v8 ? { p_photo: photoUrl } : {})
     });
     if (error) {
       flash('post', error.code === '23514' ? 'over' : /Too many/.test(error.message) ? 'errRate' : 'errGeneric');
