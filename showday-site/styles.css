@@ -441,3 +441,18 @@ html[data-theme="night"] .event-head.fan:not(.showday){background:linear-gradien
 .bg-pick.on{outline:3px solid var(--accent);outline-offset:2px}
 html[data-theme="cute"] .av-pick.on{border-color:var(--pink-deep);background:#fff}
 html[data-theme="cute"] .bg-pick.on{outline-color:var(--pink-deep)}
+/* Admin: all shows, artists, ratings */
+input.search{margin:8px 0}
+.listing.merge-from{outline:2px dashed var(--accent, #F05A9B);outline-offset:2px}
+.listing summary{cursor:pointer;padding:4px 0}
+input[type="color"]{width:44px;height:36px;padding:2px;border-radius:8px}
+/* Seller ratings */
+.stars{color:#F5A524;letter-spacing:1px;white-space:nowrap}
+.score{display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;color:#B54708;white-space:nowrap}
+.rate-pick{display:flex;gap:4px}
+.rate-pick label{cursor:pointer;font-size:26px;line-height:1;color:#D0D5DD}
+.rate-pick input{position:absolute;opacity:0;pointer-events:none}
+.rate-pick label.on{color:#F5A524}
+.rate-pick input:focus-visible + span{outline:2px solid currentColor;outline-offset:2px}
+.review{border-top:1px solid var(--line, #EAECF0);padding:10px 0}
+.review:first-child{border-top:0}
