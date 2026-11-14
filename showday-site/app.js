@@ -181,7 +181,9 @@ const T = {
   freeDetails: ['How to get one (optional)', '領取方法（選填）', '받는 방법 (선택)'], phFreeDetails: ['Show your lightstick or say the fan chant', '出示燈牌或講應援口號', '응원봉 보여주거나 응원법 말하기'],
   allGone: ['All gone', '已派完', '나눔 완료'], markAllGone: ['Mark as all gone', '標記為已派完', '나눔 완료로 표시'],
   typeFree: ['Freebie', '派發', '나눔'],
-  privacy: ['Privacy', '私隱政策', '개인정보'], contactUs:['Contact us', '聯絡我們', '문의']
+  privacy: ['Privacy', '私隱政策', '개인정보'], terms: ['Terms', '使用條款', '이용약관'],
+  agreeTerms: ['By creating an account you agree to the <a href="terms.html">Terms of Use</a> and <a href="privacy.html">Privacy Policy</a>, and confirm you are 16 or older.', '建立帳號即表示你同意<a href="terms.html">使用條款</a>及<a href="privacy.html">私隱政策</a>，並確認你已年滿 16 歲。', '계정을 만들면 <a href="terms.html">이용약관</a> 및 <a href="privacy.html">개인정보 처리방침</a>에 동의하고 만 16세 이상임을 확인하는 것으로 간주돼요.'],
+  contactUs:['Contact us', '聯絡我們', '문의']
 };
 const LOCALES = ['en-GB', 'zh-HK', 'ko-KR'];
 const HTML_LANG = ['en', 'zh-Hant', 'ko'];
@@ -551,6 +553,7 @@ function loginPanel() {
     <input id="login-email" name="email" type="email" autocomplete="email" placeholder="${t('email')}" required>
     ${pw}
     ${flashFor('login')}
+    ${m === 'signup' ? `<p class="muted small">${t('agreeTerms')}</p>` : ''}
     <button type="submit" class="primary">${submit}</button>
     <div class="row tight">${links}<button type="button" class="text" data-act="toggleLogin">${t('cancel')}</button></div>
   </form>`;
@@ -1181,7 +1184,7 @@ function footer() {
   const canInstall = !isStandalone() && (S.installPrompt || isIOS || isAndroid);
   return `<footer>
     <p>${t('footRule')}</p>
-    <p class="row tight">${canInstall ? `<button type="button" class="text small" data-act="showInstall">${t('install')}</button>` : ''}<button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="privacy.html">${t('privacy')}</a>${mail}</p>
+    <p class="row tight">${canInstall ? `<button type="button" class="text small" data-act="showInstall">${t('install')}</button>` : ''}<button type="button" class="text small" data-act="openFeedback">${t('feedback')}</button><a href="terms.html">${t('terms')}</a><a href="privacy.html">${t('privacy')}</a>${mail}</p>
   </footer>`;
 }
 
