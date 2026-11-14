@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { captchaOn, mountCaptcha, captchaToken, resetCaptcha } from './turnstile.js';
 const TBL = { swap: 'swaps', buddy: 'buddies', merch: 'merch', free: 'freebies' };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } });
@@ -94,6 +95,7 @@ function render() {
       <input id="email" name="email" type="email" autocomplete="email" required>
       <label for="pw">Password</label>
       <input id="pw" name="password" type="password" autocomplete="current-password" required>
+      ${captchaOn() ? '<div id="ts-box" class="captcha"></div>' : ''}
       ${noteHtml()}
       <button type="submit" class="primary big">Log in</button>
       <a class="small" href="./">No password yet, or forgot it? Use "Forgot password?" on the main site.</a>
@@ -118,6 +120,7 @@ function render() {
       <div class="list">${!S.loaded ? '<p class="muted">Loading…</p>' : S.tab === 'concerts' ? concerts() : S.tab === 'shows' ? allShows() : S.tab === 'artists' ? artistsView() : S.tab === 'ratings' ? ratingsView() : S.tab === 'feedback' ? feedbackList() : reports()}</div>`;
   }
   app.innerHTML = `<header class="topbar"><a class="brand" href="./" style="text-decoration:none;color:inherit">Show Day</a></header>${body}`;
+  mountCaptcha('ts-box', 'en');
 }
 
 function concerts() {
@@ -434,9 +437,12 @@ const forms = {
   async login(f) {
     const d = new FormData(f);
     const email = String(d.get('email') || '').trim();
-    const { error } = await sb.auth.signInWithPassword({ email, password: String(d.get('password') || '') });
+    const captcha = captchaToken();
+    if (captchaOn() && !captcha) { setNote('Please finish the "verify you are human" check first.', 'err'); render(); const e0 = document.getElementById('email'); if (e0) e0.value = email; return; }
+    resetCaptcha();
+    const { error } = await sb.auth.signInWithPassword({ email, password: String(d.get('password') || ''), options: captcha ? { captchaToken: captcha } : {} });
     if (!error) { location.reload(); return; }
-    setNote(/invalid/i.test(error.message) ? 'Wrong email or password.' : error.message, 'err');
+    setNote(/invalid/i.test(error.message) ? 'Wrong email or password.' : /captcha/i.test(error.message) ? 'Please finish the "verify you are human" check, then try again.' : error.message, 'err');
     render();
     const el = document.getElementById('email'); if (el) el.value = email;
   },

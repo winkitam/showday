@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_ANON_KEY, CONTACT_EMAIL } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, CONTACT_EMAIL, GOOGLE_LOGIN } from './config.js';
+import { captchaOn, mountCaptcha, captchaToken, resetCaptcha } from './turnstile.js';
+import { isBlockedEmail } from './blocked-domains.js';
 
 const CONFIGURED = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
 // Captured before the client reads the URL, so a password-reset link is recognised.
@@ -201,6 +203,9 @@ const T = {
   stillAvail: ['Interested', '有興趣', '관심 있어요'], asked: ['Interested', '有興趣', '관심 있어요'],
   nAsked: ['{n} interested', '{n} 人有興趣', '{n}명 관심'], oneAsked: ['1 interested', '1 人有興趣', '1명 관심'],
   likeIt: ['Like', '讚好', '좋아요'],
+  google: ['Continue with Google', '用 Google 繼續', 'Google로 계속하기'], orEmail: ['or use email', '或者用電郵', '또는 이메일로'],
+  errCaptcha: ['Please finish the "verify you are human" check, then try again.', '請先完成「驗證你是真人」，再試一次。', '"사람인지 확인"을 완료한 후 다시 시도해 주세요.'],
+  errDisposable: ['Please use your usual email. Throwaway email addresses cannot sign up.', '請用你平時用的電郵。一次性電郵不能註冊。', '평소 쓰는 이메일을 사용해 주세요. 일회용 이메일로는 가입할 수 없어요.'],
   notifs: ['Notifications', '通知', '알림'], noNotifs: ['Nothing new yet. When someone is interested, likes or rates your post, it shows here.', '暫時未有新通知。有人對你的帖子有興趣、讚好或評分，就會喺度顯示。', '아직 새 알림이 없어요. 누군가 내 글에 관심, 좋아요, 평가를 남기면 여기에 표시돼요.'],
   nInterest: ['{n} people are interested in your post', '{n} 人對你的帖子有興趣', '{n}명이 내 글에 관심을 보였어요'], oneInterest: ['Someone is interested in your post', '有人對你的帖子有興趣', '누군가 내 글에 관심을 보였어요'],
   nLikes: ['{n} new likes on your post', '你的帖子有 {n} 個新讚好', '내 글에 새 좋아요 {n}개'], oneLike: ['Someone liked your post', '有人讚好你的帖子', '누군가 내 글을 좋아해요'],
@@ -651,12 +656,16 @@ function loginPanel() {
   const links = m === 'login'
     ? `<button type="button" class="text" data-act="authMode" data-id="signup">${t('toSignup')}</button><button type="button" class="text" data-act="authMode" data-id="reset">${t('forgot')}</button>`
     : `<button type="button" class="text" data-act="authMode" data-id="login">${t('toLogin')}</button>`;
+  const google = GOOGLE_LOGIN && m !== 'reset'
+    ? `<button type="button" class="outline big google" data-act="google"><span class="g-logo" aria-hidden="true">G</span>${t('google')}</button><p class="or small muted">${t('orEmail')}</p>` : '';
   return `<form data-form="login" class="panel" aria-label="${title}">
     <h2>${title}</h2>
+    ${google}
     <label for="login-email" class="sr-only">${t('email')}</label>
     <input id="login-email" name="email" type="email" autocomplete="email" placeholder="${t('email')}" required>
     ${pw}
     ${flashFor('login')}
+    ${captchaOn() ? '<div id="ts-box" class="captcha"></div>' : ''}
     ${m === 'signup' ? `<p class="muted small">${t('agreeTerms')}</p>` : ''}
     <button type="submit" class="primary">${submit}</button>
     <div class="row tight">${links}<button type="button" class="text" data-act="toggleLogin">${t('cancel')}</button></div>
@@ -1370,6 +1379,7 @@ function render() {
   document.body.dataset.view = S.view;
   app.innerHTML = topBar() + loginPanel() + flashFor('top') + `<div id="main" class="stack"></div>` + footer() + tabBar();
   renderMain();
+  mountCaptcha('ts-box', HTML_LANG[S.lang] === 'zh-Hant' ? 'zh-tw' : HTML_LANG[S.lang]);
 }
 
 // A chosen photo can't be set again by code, so move the old file input into the new form
@@ -1457,6 +1467,11 @@ const actions = {
     }
   },
   openNotifs() { openNotifs(); },
+  async google() {
+    const back = location.origin + location.pathname + (S.selEv ? '?e=' + S.selEv : '');
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: back } });
+    if (error) { flash('login', 'errGeneric'); render(); }
+  },
   rate(key) {
     if (!S.user) { S.showLogin = true; render(); return; }
     S.rating = S.rating === key ? null : key; S.ratingPick = 0; S.flash = null; renderMain();
@@ -1761,19 +1776,25 @@ const forms = {
     const password = String(d.get('password') || '');
     const back = location.origin + location.pathname + (S.selEv ? '?e=' + S.selEv : '');
     if (S.authMode !== 'reset' && password.length < 8) { flash('login', 'errShortPw'); render(); keepEmail(email); return; }
+    if (S.authMode === 'signup' && isBlockedEmail(email)) { flash('login', 'errDisposable'); render(); keepEmail(email); return; }
+    const captcha = captchaToken();
+    if (captchaOn() && !captcha) { flash('login', 'errCaptcha'); render(); keepEmail(email); return; }
+    const cap = captcha ? { captchaToken: captcha } : {};
+    resetCaptcha(); // each check works once
+    const isCap = (er) => /captcha/i.test(er.message || '');
     if (S.authMode === 'login') {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email, password, options: cap });
       if (!error) return; // onAuthStateChange re-renders
-      flash('login', isRateLimit(error) ? 'errEmailLimit' : /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
+      flash('login', isCap(error) ? 'errCaptcha' : isRateLimit(error) ? 'errEmailLimit' : /confirm/i.test(error.message) ? 'errConfirm' : /invalid/i.test(error.message) ? 'errCreds' : 'errGeneric');
     } else if (S.authMode === 'signup') {
-      const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: back } });
-      if (error) flash('login', isRateLimit(error) ? 'errEmailLimit' : /registered|exists/i.test(error.message) ? 'errExists' : 'errGeneric');
+      const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: back, ...cap } });
+      if (error) flash('login', isCap(error) ? 'errCaptcha' : isRateLimit(error) ? 'errEmailLimit' : /registered|exists/i.test(error.message) ? 'errExists' : /disposable|saving new user/i.test(error.message) ? 'errDisposable' : 'errGeneric');
       else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) flash('login', 'errExists', 'warn');
       else if (data.session) return; // confirmation is off: already logged in
       else flash('login', 'signupSent', 'ok');
     } else {
-      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-      if (error) flash('login', isRateLimit(error) ? 'errEmailLimit' : 'errGeneric'); else flash('login', 'resetSent', 'ok');
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname, ...cap });
+      if (error) flash('login', isCap(error) ? 'errCaptcha' : isRateLimit(error) ? 'errEmailLimit' : 'errGeneric'); else flash('login', 'resetSent', 'ok');
     }
     render(); keepEmail(email);
   },
