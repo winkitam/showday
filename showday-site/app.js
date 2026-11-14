@@ -992,13 +992,7 @@ function filterBar(type) {
   }
   if (type === 'merch') {
     const seg = (k, label) => `<button type="button" class="${S.mf.kind === k ? 'on' : ''}" aria-pressed="${S.mf.kind === k}" data-act="mfKind" data-id="${k}">${label}</button>`;
-    let html = `<div class="seg seg-scroll" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}${S.v7 && S.selEv !== 'general' ? seg('free', '🎁 ' + t('navFree')) : ''}</div>`;
-    if (S.v7) {
-      const cats = CATS.filter((k) => all.some((x) => x.category === k));
-      const members = [...new Map(all.filter((x) => x.member).map((x) => [x.member.trim().toLowerCase(), x.member.trim()])).values()].slice(0, 20);
-      if (cats.length) html += `<div class="chips-row" role="group" aria-label="${t('fCategory')}">${cats.map((k) => chipBtn('mfCat', k, S.mf.cat === k, catLabel(k))).join('')}</div>`;
-      if (members.length) html += `<div class="chips-row" role="group" aria-label="${t('fMember')}">${members.map((m) => chipBtn('mfMember', m, (S.mf.member || '').toLowerCase() === m.toLowerCase(), '♡ ' + m)).join('')}</div>`;
-    }
+    const html = `<div class="seg seg-scroll" role="group">${seg('all', t('all2'))}${seg('sale', 'WTS')}${seg('buy', 'WTB')}${seg('swap', 'WTT')}${S.v7 && S.selEv !== 'general' ? seg('free', '🎁 ' + t('navFree')) : ''}</div>`;
     return html;
   }
   return '';
