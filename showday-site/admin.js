@@ -87,6 +87,7 @@ function render() {
         <h1>Admin</h1>
         <div class="row tight">
           <button type="button" class="text" data-act="refresh">Refresh</button>
+          <button type="button" class="text" data-act="cleanPhotos">${S.cleaning ? 'Cleaning…' : 'Clean up old photos'}</button>
           <button type="button" class="text" data-act="logout">Log out</button>
         </div>
       </div>
@@ -177,6 +178,29 @@ const actions = {
   tab(id) { S.tab = id; S.note = null; S.armed = null; render(); },
   async refresh() { S.note = null; S.loaded = false; render(); await load(); render(); },
   async logout() { await sb.auth.signOut(); location.reload(); },
+  async cleanPhotos() {
+    if (S.cleaning) return;
+    S.cleaning = true; S.note = null; render();
+    let removed = 0;
+    try {
+      for (let round = 0; round < 20; round++) {
+        const { data, error } = await sb.rpc('orphan_photos');
+        if (error) throw error;
+        if (!data || !data.length) break;
+        const names = data.map((r) => (typeof r === 'string' ? r : r.orphan_photos));
+        for (let i = 0; i < names.length; i += 100) {
+          const { error: e2 } = await sb.storage.from('photos').remove(names.slice(i, i + 100));
+          if (e2) throw e2;
+        }
+        removed += names.length;
+        if (names.length < 1000) break;
+      }
+      setNote(removed ? `Removed ${removed} unused photo${removed === 1 ? '' : 's'}.` : 'No unused photos to remove.');
+    } catch (err) {
+      setNote(/orphan_photos|function/i.test(err.message || '') ? 'Run supabase/010_cleanup.sql first.' : `Could not clean up: ${err.message}`, 'err');
+    }
+    S.cleaning = false; render();
+  },
   async delEvent(id) {
     if (S.armed !== id) { S.armed = id; render(); return; }
     S.armed = null;
