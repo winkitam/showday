@@ -79,7 +79,8 @@ async function loadExtra() {
     .eq('status', 'approved').gte('event_date', since).order('event_date', { ascending: true }).limit(1000);
   if (sh.error) sh = await sb.from('events').select(base).eq('status', 'approved').gte('event_date', since).order('event_date', { ascending: true }).limit(1000);
   S.shows = sh.data || [];
-  const ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2').order('name_en');
+  let ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2, parent_id').order('name_en');
+  if (ar.error) ar = await sb.from('artists').select('id, name_en, name_zh, name_ko, aliases, color1, color2').order('name_en');
   S.artists = ar.error ? null : ar.data;
   const ra = await sb.from('ratings').select('id, rater, ratee, item_type, score, comment, hidden, created_at').order('created_at', { ascending: false }).limit(100);
   S.ratings = ra.error ? null : ra.data;
@@ -217,6 +218,8 @@ function artistForm(a) {
         <div class="field"><label for="az-${id}">Chinese name (optional)</label><input id="az-${id}" name="name_zh" maxlength="80" value="${esc(a ? a.name_zh : '')}"></div>
         <div class="field"><label for="ak-${id}">Korean name (optional)</label><input id="ak-${id}" name="name_ko" maxlength="80" value="${esc(a ? a.name_ko : '')}"></div>
       </div>
+      <div class="field"><label for="ap-${id}">Part of (group, for sub-units and solos)</label><select id="ap-${id}" name="parent_id">
+        <option value="">None (a group or solo artist)</option>${(S.artists || []).filter((x) => !a || x.id !== a.id).map((x) => `<option value="${x.id}" ${a && a.parent_id === x.id ? 'selected' : ''}>${esc(x.name_en)}</option>`).join('')}</select></div>
       <div class="field"><label for="aa-${id}">Other names fans search for, comma separated</label><input id="aa-${id}" name="aliases" maxlength="400" value="${esc(a ? (a.aliases || []).join(', ') : '')}" placeholder="skz, 스키즈"></div>
       <div class="row">
         <label class="row tight"><input type="checkbox" name="custom" ${has ? 'checked' : ''}> Fandom colours</label>
@@ -237,7 +240,7 @@ function artistsView() {
   const rows = S.artists.map((a) => `<article class="listing">
       <div class="row between">
         <div><b>${fanTag(a.name_en)}</b>
-          <p class="small muted">${[a.name_zh, a.name_ko].filter(Boolean).map(esc).join(' · ') || 'English name only'}${(a.aliases || []).length ? ` · also: ${esc(a.aliases.join(', '))}` : ''}</p></div>
+          <p class="small muted">${a.parent_id ? `Part of ${esc((S.artists.find((x) => x.id === a.parent_id) || {}).name_en || '?')} · ` : ''}${[a.name_zh, a.name_ko].filter(Boolean).map(esc).join(' · ') || 'English name only'}${(a.aliases || []).length ? ` · also: ${esc(a.aliases.join(', '))}` : ''}</p></div>
         <button type="button" class="text" data-act="editArtist" data-id="${a.id}">Edit</button>
       </div>
       ${S.editArtist === a.id ? artistForm(a) : ''}
@@ -550,6 +553,7 @@ const forms = {
     const row = { name_en: opt('name_en'), name_zh: opt('name_zh'), name_ko: opt('name_ko'),
       aliases: String(d.get('aliases') || '').split(/[,，、]/).map((x) => x.trim()).filter(Boolean).slice(0, 12),
       color1: custom && HEX.test(c1) ? c1 : null, color2: custom && HEX.test(c2) ? c2 : null, updated_at: new Date().toISOString() };
+    if ((S.artists || []).some((x) => 'parent_id' in x) || d.get('parent_id')) row.parent_id = String(d.get('parent_id') || '') || null;
     if (!row.name_en) return;
     const q = id === 'new' ? sb.from('artists').insert(row).select().single() : sb.from('artists').update(row).eq('id', id).select().single();
     const { data, error } = await q;

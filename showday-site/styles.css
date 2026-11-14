@@ -477,3 +477,7 @@ button.google{display:flex;align-items:center;justify-content:center;gap:10px;wi
 .captcha{min-height:65px}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
 .pager button[disabled]{opacity:.4}
+.artist-group .chev-rot{display:inline-flex;transition:transform .15s}
+.artist-group.open .chev-rot{transform:rotate(90deg)}
+.sub-list{margin:6px 0 10px 14px;padding-left:10px;border-left:3px solid var(--line)}
+button.google .g-logo{background:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center}
