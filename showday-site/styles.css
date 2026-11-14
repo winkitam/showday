@@ -486,3 +486,7 @@ button.google .g-logo{background:#fff;border-radius:50%;width:24px;height:24px;d
 .icon-btn[data-act="reloadPage"]{font-size:20px;line-height:1}
 
 .notif .who{display:block;margin-top:2px;color:var(--ink,inherit)}
+
+.notif-wrap{display:flex;flex-direction:column;gap:2px}
+.who{padding:0 14px 6px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
+.who-name{padding:2px 4px;min-height:0;text-decoration:underline}
