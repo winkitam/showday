@@ -106,6 +106,8 @@ const T = {
   fTitle: ['Item', '物品', '물품'], phTitle: ['[MEMBER] photocard', '[成員] 小卡', '[멤버] 포토카드'],
   fDetails: ['Details (optional)', '詳情（選填）', '상세 (선택)'], phDetails: ['Condition, what you want in return', '狀況、想換什麼', '상태, 원하는 교환품'],
   fPrice: ['Price ({c})', '價格（{c}）', '가격 ({c})'], confirmMerch: ['This is not a ticket.', '這不是門票。', '티켓이 아니에요.'],
+  undoStep: ['↩ Undo', '↩ 撤回', '↩ 되돌리기'], errUndoRated: ['Someone already rated this trade, so it can\'t be undone.', '已經有人評分，唔可以撤回。', '이미 평가가 있어 되돌릴 수 없어요.'],
+  rateNeedAsk: ['Tap Interested on a post before the trade, then you can rate it.', '交易前喺帖文㩒「有興趣」，之後先可以評分。', '거래 전에 게시글에서 관심 있어요를 눌러야 평가할 수 있어요.'],
   markDone: ['Mark as done', '標記為完成', '완료로 표시'], doneLabel: ['Done', '已完成', '완료'],
   fEvent: ['Concert', '演出', '공연'], noUpcoming: ['Add the concert on the Board tab first.', '請先在「票板」新增演出。', '먼저 게시판에서 공연을 추가하세요.'],
   noPosts: ['Nothing yet.', '暫時沒有內容。', '아직 없어요.'],
@@ -1026,6 +1028,7 @@ function listingCard(l) {
   let main = '', menu = '';
   if (mine) {
     if (l.status !== 'done') main = `<button type="button" class="outline" data-act="advance" data-id="${l.id}">${l.status === 'open' ? t('markMeeting') : t('confirmTransfer')}</button>`;
+    if (l.status !== 'open') main += `<button type="button" class="text" data-act="undo" data-id="${l.id}">${t('undoStep')}</button>`;
     menu = `<button type="button" class="menu-item danger" data-act="del" data-id="${l.id}">${t('del')}</button>`;
   } else {
     main = S.user
@@ -1137,6 +1140,7 @@ function itemCard(type, it, inEvent) {
   let main = '', menu = '';
   if (mine) {
     if (type !== 'buddy' && !done) main = `<button type="button" class="outline" data-act="itemDone" data-id="${key}">${type === 'free' ? t('markAllGone') : t('markDone')}</button>`;
+    if (type !== 'buddy' && done) main = `<button type="button" class="text" data-act="itemUndo" data-id="${key}">${t('undoStep')}</button>`;
     menu = `<button type="button" class="menu-item danger" data-act="itemDel" data-id="${key}">${t('del')}</button>`;
   } else {
     if (type !== 'free') main = S.user
@@ -1285,6 +1289,7 @@ function rateBlock(key, ownerId, status, canRate) {
   if (!S.v11 || !canRate || !S.user || S.user.id === ownerId) return { btn: '', form: '' };
   if (!['meeting', 'done'].includes(status)) return { btn: '', form: '' };
   if (S.myRatings[key]) return { btn: `<span class="chip done">★ ${t('rated')}</span>`, form: '' };
+  if (!S.myReacts['ask:' + key]) return { btn: '', form: '' };
   const btn = `<button type="button" class="text" data-act="rate" data-id="${key}" aria-expanded="${S.rating === key}">★ ${key.startsWith('listing') || key.startsWith('merch') ? t('rateSeller') : t('rateTrader')}</button>`;
   if (S.rating !== key) return { btn, form: '' };
   const pick = S.ratingPick;
@@ -1722,6 +1727,19 @@ const actions = {
     if (error) flash('list', 'errGeneric'); else l.status = next;
     renderMain();
   },
+  async undo(id) {
+    const l = S.listings.find((x) => x.id === id); if (!l) return;
+    const prev = l.status === 'done' ? 'meeting' : 'open';
+    const { error } = await sb.from('listings').update({ status: prev }).eq('id', id);
+    if (error) flash('list', error.message && /rating/i.test(error.message) ? 'errUndoRated' : 'errGeneric'); else l.status = prev;
+    renderMain();
+  },
+  async itemUndo(key) {
+    const [type, id] = parseKey(key);
+    const { error } = await sb.from(TABLE[type]).update({ status: 'open' }).eq('id', id);
+    if (error) flash('list', error.message && /rating/i.test(error.message) ? 'errUndoRated' : 'errGeneric'); else { const x = (S.items[type] || []).find((i) => i.id === id); if (x) x.status = 'open'; }
+    renderMain();
+  },
   async del(id) {
     const { error } = await sb.from('listings').delete().eq('id', id);
     if (error) flash('list', 'errGeneric'); else S.listings = S.listings.filter((x) => x.id !== id);
@@ -1762,7 +1780,7 @@ const forms = {
     if (error) {
       const m = error.message || '';
       const k = error.code === '23505' ? 'rateErrDup' : /yourself/i.test(m) ? 'rateErrSelf' : /new accounts/i.test(m) ? 'rateErrNew'
-        : /too many/i.test(m) ? 'rateErrMany' : /marked done|cannot be rated|too old/i.test(m) ? 'rateErrState' : null;
+        : /too many/i.test(m) ? 'rateErrMany' : /interested/i.test(m) ? 'rateNeedAsk' : /marked done|cannot be rated|too old/i.test(m) ? 'rateErrState' : null;
       if (k === 'rateErrDup') S.myRatings[key] = true;
       const rk = k || ruleErr(error);
       if (rk) flash('rate', rk); else S.flash = { area: 'rate', text: m, kind: 'err' };
