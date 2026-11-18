@@ -490,3 +490,12 @@ button.google .g-logo{background:#fff;border-radius:50%;width:24px;height:24px;d
 .notif-wrap{display:flex;flex-direction:column;gap:2px}
 .who{padding:0 14px 6px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}
 .who-name{padding:2px 4px;min-height:0;text-decoration:underline}
+
+/* AI paste-to-post and alerts */
+.ai-box{border:1px dashed var(--line,#d6d3e0);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ai-box>summary{cursor:pointer;font-weight:700}
+.ai-box[open]>summary{margin-bottom:6px}
+.ai-box textarea{width:100%}
+.ai-pick{cursor:pointer;display:inline-flex;align-items:center}
+.alert-card{display:block;width:100%;text-align:center;margin:10px 0}
+.note.ok{color:var(--accent-ink,#0b6b5f)}
