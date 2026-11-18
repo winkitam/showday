@@ -3,6 +3,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, CONTACT_EMAIL, GOOGLE_LOGIN } from './
 import { googleIdOn, mountGoogle } from './google.js';
 import { captchaOn, mountCaptcha, captchaToken, resetCaptcha } from './turnstile.js';
 import { isBlockedEmail } from './blocked-domains.js';
+import { callAi, shrinkImage, matchShows } from './ai.js';
 
 const CONFIGURED = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
 // Captured before the client reads the URL, so a password-reset link is recognised.
@@ -66,6 +67,37 @@ const T = {
   markMeeting: ['Mark as meeting', '標記為面交中', '만나는 중으로 표시'], confirmTransfer: ['Transfer confirmed', '確認已轉讓', '양도 확인'],
   payAfter: ['Pay only after the ticket is in your official app.', '票轉到官方 App 後才付款。', '티켓이 공식 앱에 도착한 뒤에 결제하세요.'],
   postCta: ['Post a listing', '發佈貼文', '글 올리기'],
+  aiBox: ['✨ Paste or screenshot to fill', '✨ 貼上文字或截圖自動填寫', '✨ 붙여넣기·캡처로 자동 입력'],
+  aiHint: ['Paste your message or add a screenshot of your ticket. AI fills the form and you check it before posting. Cover barcodes and QR codes first.', '貼上你的訊息或票截圖，AI 會幫你填表，發佈前請自行檢查。截圖前請遮住條碼同 QR code。', '메시지를 붙여넣거나 티켓 캡처를 올리면 AI가 양식을 채워요. 올리기 전에 꼭 확인하세요. 바코드·QR은 가려주세요.'],
+  aiPh: ['Paste your WhatsApp, IG or Threads message here', '喺度貼上 WhatsApp、IG 或 Threads 訊息', 'WhatsApp, IG, Threads 메시지를 붙여넣기'],
+  aiImg: ['Add screenshot', '加入截圖', '캡처 추가'], aiImgOn: ['Screenshot added', '已加入截圖', '캡처 추가됨'],
+  aiFill: ['Fill the form', '自動填寫', '자동 입력'], aiWorking: ['Reading…', '讀取中…', '읽는 중…'],
+  aiDone: ['Filled in. Please check every field before posting.', '已填好，發佈前請檢查每一格。', '입력 완료. 올리기 전에 모든 칸을 확인하세요.'],
+  aiEmpty: ['Paste a message or add a screenshot first.', '請先貼上訊息或加入截圖。', '메시지를 붙여넣거나 캡처를 추가하세요.'],
+  aiOff: ['AI is not switched on yet. Please fill the form by hand.', 'AI 暫時未開通，請手動填寫。', 'AI가 아직 켜지지 않았어요. 직접 입력해 주세요.'],
+  aiLimit: ['You have used today’s AI fills. Try again tomorrow or fill by hand.', '今日 AI 次數已用完，明日再試或手動填寫。', '오늘 AI 사용 횟수를 다 썼어요. 내일 다시 시도하거나 직접 입력하세요.'],
+  aiUnreadable: ['Could not find ticket details. Try a clearer message or fill by hand.', '搵唔到票務資料，請試清楚啲嘅內容或手動填寫。', '티켓 정보를 찾지 못했어요. 더 명확한 내용으로 시도하거나 직접 입력하세요.'],
+  aiBadImg: ['That image could not be used. Try a JPG or PNG screenshot.', '呢張圖用唔到，請試 JPG 或 PNG 截圖。', '이 이미지는 사용할 수 없어요. JPG 또는 PNG를 시도하세요.'],
+  aiErr: ['AI is busy. Please try again or fill by hand.', 'AI 繁忙，請稍後再試或手動填寫。', 'AI가 바빠요. 다시 시도하거나 직접 입력하세요.'],
+  aiMismatch: ['Check the show: the message may be about a different show or date ({x}).', '請核對場次：訊息可能係另一場或另一日（{x}）。', '공연을 확인하세요. 다른 공연이나 날짜일 수 있어요 ({x}).'],
+  alTitle: ['Ticket alerts', '搵飛提醒', '티켓 알림'],
+  alSub: ['Tell us what you want in your own words. We notify you when a matching post appears.', '用你自己的說話講想要咩票，有配對貼文出現就通知你。', '원하는 티켓을 말로 적어주세요. 맞는 글이 올라오면 알려드려요.'],
+  alCard: ['🔔 Get alerted when tickets appear', '🔔 有票出現時通知我', '🔔 티켓이 올라오면 알림 받기'],
+  alPh: ['2 tickets for MIRROR 12/15, floor, under $1,000', '2 張 MIRROR 12/15，內場，$1,000 以下', 'MIRROR 12/15 플로어 2장, 1,000 이하'],
+  alFind: ['Set up alert', '建立提醒', '알림 만들기'], alManual: ['Set up by choosing a show', '改為手動揀場次', '공연을 직접 선택'],
+  alWorking: ['Reading…', '讀取中…', '읽는 중…'],
+  alLogin: ['Log in to set alerts.', '登入後先可以設定提醒。', '알림을 설정하려면 로그인하세요.'],
+  alShow: ['Show', '場次', '공연'], alAll: ['All {n} matching shows', '全部 {n} 場配對場次', '맞는 공연 {n}개 전체'],
+  alNoShows: ['No upcoming show matched. Pick one below.', '搵唔到配對場次，請喺下面揀。', '맞는 공연이 없어요. 아래에서 선택하세요.'],
+  alQty: ['Tickets', '張數', '장수'], alMax: ['Max price per ticket ({c})', '每張最高價（{c}）', '장당 최대 가격 ({c})'],
+  alKeys: ['Words to match, e.g. floor, row 5 (optional)', '關鍵字，例如 floor、row 5（選填）', '키워드 예: floor, row 5 (선택)'],
+  alSave: ['Save alert', '儲存提醒', '알림 저장'], alSaved: ['Alert saved. We will notify you in the bell.', '已儲存，有配對會喺鈴噹通知你。', '저장했어요. 알림은 벨에서 알려드려요.'],
+  alMine: ['My alerts', '我的提醒', '내 알림'], alNone: ['No alerts yet.', '暫時未有提醒。', '아직 알림이 없어요.'],
+  alDel: ['Remove', '移除', '삭제'], alUnder: ['under {p}', '{p} 以下', '{p} 이하'], alAnyPrice: ['any price', '任何價錢', '가격 무관'],
+  alErrMax: ['You can keep up to 10 alerts. Remove one first.', '最多可設 10 個提醒，請先移除一個。', '알림은 최대 10개예요. 하나를 먼저 삭제하세요.'],
+  alErr: ['Could not save the alert. Please try again.', '儲存失敗，請再試。', '저장하지 못했어요. 다시 시도하세요.'],
+  alPriv: ['Only you can see your alerts.', '只有你睇到你嘅提醒。', '알림은 나만 볼 수 있어요.'],
+  matchOne: ['New ticket matching your alert', '有新票符合你嘅提醒', '알림에 맞는 새 티켓'],
   iHave: ['Selling', '我有票', '판매'], iNeed: ['Looking', '求票', '구함'],
   fSection: ['Section or standing', '區域或企位', '구역 또는 스탠딩'], fQty: ['Qty', '數量', '수량'],
   fOriginal: ['Face value ({c})', '原價（{c}）', '원가 ({c})'],
@@ -553,12 +585,13 @@ async function openNotifs(push = true) {
 }
 function notifText(x) {
   const one = x.n === 1;
+  if (x.kind === 'match') return t('matchOne');
   return x.kind === 'interest' ? (one ? t('oneInterest') : t('nInterest', { n: x.n }))
     : x.kind === 'like' ? (one ? t('oneLike') : t('nLikes', { n: x.n }))
     : (one ? t('oneRating') : t('nRatings', { n: x.n }));
 }
 function notifView() {
-  const ic = { interest: '🙋', like: '♥', rating: '★' };
+  const ic = { interest: '🙋', like: '♥', rating: '★', match: '🎯' };
   const seen = S.notifSeen || new Set();
   const list = S.notifs === null ? `<p class="muted">${t('loading')}</p>`
     : S.notifs.length ? S.notifs.map((x) => `<div class="notif-wrap"><button type="button" class="item notif ${seen.has(x.id) ? 'is-new' : ''}" data-act="goPost" data-id="${x.item_type}:${x.event_id || 'general'}">
@@ -692,7 +725,7 @@ async function openEvent(id, push = true, view) {
   if (!Array.isArray(S.items[S.view])) { await loadItems(S.view); renderMain(); }
   if (S.view === 'merch' && S.v7 && !Array.isArray(S.items.free)) { await loadItems('free'); renderMain(); }
 }
-function tabHome(push = true) { if (S.view === 'board' || S.view === 'me' || S.view === 'u') return goHome(push); return setView(S.view, push); }
+function tabHome(push = true) { if (S.view === 'board' || S.view === 'me' || S.view === 'u' || S.view === 'a') return goHome(push); return setView(S.view, push); }
 function goHome(push = true) {
   S.view = 'board';
   S.selEv = null; S.posting = false; S.flash = null;
@@ -778,6 +811,7 @@ function homeView() {
   return `<section class="hero">
       <h1>${heads ? t(heads[0]) : t('hero')}</h1><p class="sub muted">${heads ? t(heads[1]) : t('heroSub')}</p>
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
+      <button type="button" class="outline-link alert-card" data-act="openAlerts">${t('alCard')}</button>
     </section>
     <div id="results" class="list"></div>
     ${create}
@@ -1110,6 +1144,13 @@ function postArea(e) {
       <button type="button" class="${sell ? 'on' : ''}" aria-pressed="${sell}" data-act="kind" data-id="sell">${t('iHave')}</button>
       <button type="button" class="${!sell ? 'on' : ''}" aria-pressed="${!sell}" data-act="kind" data-id="buy">${t('iNeed')}</button>
     </div>
+    <details class="ai-box" ${S.aiOpen ? 'open' : ''}><summary>${t('aiBox')}</summary>
+      <p class="small muted">${t('aiHint')}</p>
+      <textarea id="ai-text" rows="3" maxlength="4000" placeholder="${t('aiPh')}" aria-label="${t('aiPh')}"></textarea>
+      <div class="row tight"><label class="text ai-pick"><input id="ai-img" type="file" accept="image/jpeg,image/png,image/webp" hidden><span id="ai-img-l">${t('aiImg')}</span></label>
+        <button type="button" class="primary" id="ai-go" data-act="aiFill">${t('aiFill')}</button></div>
+      <p id="ai-status" class="note small" role="status"></p>
+    </details>
     <div class="grid2">
       <div class="field"><label for="p-section">${t('fSection')}</label><input id="p-section" name="section" maxlength="80" required></div>
       <div class="field narrow"><label for="p-qty">${t('fQty')}</label><select id="p-qty" name="qty"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
@@ -1461,6 +1502,7 @@ function meView() {
   return `<section class="event-head"><h1>${t('navMe')}</h1><p class="sub">${t('loggedInAs')} ${esc(S.user.email)}</p></section>
     ${flashFor('me')}
     ${S.isAdmin ? `<a class="outline-link" href="admin.html">${t('adminPage')}</a>` : ''}
+    <button type="button" class="outline-link alert-card" data-act="openAlerts">${t('alCard')}</button>
     ${profileEditor()}
     <h2 class="list-title">${t('myPosts')}</h2>
     <div class="list">${posts}</div>
@@ -1517,6 +1559,7 @@ function renderMain() {
   if (S.view === 'me') { main.innerHTML = meView(); return; }
   if (S.view === 'u') { main.innerHTML = profileView(); return; }
   if (S.view === 'n') { main.innerHTML = notifView(); return; }
+  if (S.view === 'a') { main.innerHTML = alertsView(); return; }
   const e = S.selEv === 'general' && S.view === 'merch' ? 'general' : S.events.find((x) => x.id === S.selEv);
   if (!e) { main.innerHTML = homeView(); renderResults(); return; }
   if (S.view !== 'board') {
@@ -1593,6 +1636,15 @@ const actions = {
   },
   reloadPage() { location.reload(); },
   openNotifs() { openNotifs(); },
+  openAlerts() { openAlerts(); },
+  aiFill() { aiFill(); },
+  alManual() { S.al.draft = { p: {}, shows: [] }; S.flash = null; renderMain(); },
+  alCancel() { S.al.draft = null; S.flash = null; renderMain(); },
+  async alDel(id) {
+    const { error } = await sb.from('alerts').delete().eq('id', id);
+    if (error) { flash('alert', 'alErr'); } else { S.flash = null; await loadAlerts(); }
+    renderMain();
+  },
   emailOpen() { S.emailOpen = true; render(); const el = document.getElementById('login-email'); if (el) el.focus(); },
   openArtist(k) { S.openArtist = S.openArtist === k ? null : k; renderResults(); },
   page(n) { S.page = Math.max(0, Number(n) || 0); renderResults(); const r = document.getElementById('results'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'start' }); },
@@ -1684,7 +1736,7 @@ const actions = {
   setTheme(id) { if (!THEMES[id]) return; S.theme = id; store.set('theme', id); applyTheme(); render(); },
   cycleTheme() { const k = Object.keys(THEMES); actions.setTheme(k[(k.indexOf(S.theme) + 1) % k.length]); },
   unblockAll() { S.blocked = []; store.set('blocked', []); renderMain(); },
-  back() { if (history.state && (history.state.ev || history.state.v === 'u' || history.state.v === 'n')) history.back(); else tabHome(); },
+  back() { if (history.state && (history.state.ev || history.state.v === 'u' || history.state.v === 'n' || history.state.v === 'a')) history.back(); else tabHome(); },
   authMode(id) {
     const email = document.getElementById('login-email')?.value || '';
     S.authMode = id; S.flash = null; render(); keepEmail(email);
@@ -1821,6 +1873,35 @@ async function uploadPhoto(file) {
 
 const keepNick = () => { const el = document.getElementById('pf-nick'); if (el) S.draftNick = el.value; };
 const forms = {
+  async alertText(f) {
+    if (!S.user) { actions.toggleLogin(); return; }
+    const text = String(new FormData(f).get('text') || '').trim(); if (!text) return;
+    const btn = document.getElementById('al-go'); if (btn) { btn.disabled = true; btn.textContent = t('alWorking'); }
+    const r = await callAi(sb, 'alert', text);
+    S.flash = null;
+    if (r.error) {
+      flash('alert', AI_ERR[r.error] || 'aiErr');
+      S.al.draft = { p: {}, shows: [] };
+    } else {
+      const p = r.data || {};
+      S.al.draft = { p, shows: matchShows(S.events, p, todayISO(), alNames).filter((e) => e.status !== 'pending') };
+    }
+    renderMain();
+  },
+  async alertSave(f) {
+    if (!S.user) { actions.toggleLogin(); return; }
+    const d = new FormData(f); const v = String(d.get('ev') || '');
+    const targets = v === 'all' ? S.al.draft.shows.slice(0, 5).map((e) => e.id) : [v];
+    const max = parseFloat(String(d.get('max') || '').replace(/,/g, ''));
+    const keywords = String(d.get('keys') || '').split(/[,，、]/).map((x) => x.trim()).filter(Boolean).slice(0, 5);
+    if (!targets[0] || !S.events.some((e) => e.id === targets[0])) return;
+    for (const event_id of targets) {
+      const { error } = await sb.from('alerts').insert({ event_id, qty: Number(d.get('qty')) || 1, max_price: max > 0 ? max : null, keywords });
+      if (error) { flash('alert', /10 alerts/.test(error.message) ? 'alErrMax' : 'alErr'); renderMain(); return; }
+    }
+    S.al.draft = null; flash('alert', 'alSaved', 'ok');
+    await loadAlerts(); renderMain();
+  },
   async rate(f) {
     const key = f.dataset.id;
     const [item_type, item_id] = key.split(':');
@@ -2007,6 +2088,93 @@ const forms = {
   }
 };
 
+
+// ---------- AI: paste-to-post ----------
+let aiImg = null;
+const aiMsg = (key, kind = 'err', vars) => {
+  const el = document.getElementById('ai-status'); if (!el) return;
+  el.textContent = key ? t(key, vars) : ''; el.className = 'note small ' + (kind === 'ok' ? 'ok' : 'err');
+};
+const AI_ERR = { limit: 'aiLimit', unreadable: 'aiUnreadable', not_configured: 'aiOff', bad_image: 'aiBadImg', empty: 'aiEmpty' };
+async function aiFill() {
+  const e = S.events.find((x) => x.id === S.selEv); if (!e) return;
+  if (!S.user) { actions.toggleLogin(); return; }
+  const text = (document.getElementById('ai-text') || {}).value || '';
+  if (!text.trim() && !aiImg) { aiMsg('aiEmpty'); return; }
+  const btn = document.getElementById('ai-go'); if (btn) btn.disabled = true;
+  aiMsg('aiWorking', 'ok');
+  const r = await callAi(sb, 'post', text, aiImg);
+  if (btn) btn.disabled = false;
+  if (r.error) { aiMsg(AI_ERR[r.error] || 'aiErr'); return; }
+  const d = r.data || {};
+  const kind = d.kind === 'buy' ? 'buy' : 'sell';
+  const keep = {}; // fields the person already typed (contact, confirm) survive the re-render
+  const f0 = document.querySelector('form[data-form="post"]');
+  if (f0) for (const [k, v] of new FormData(f0).entries()) if (typeof v === 'string') keep[k] = v;
+  S.aiOpen = true; S.formKind = kind; renderMain();
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null && v !== '') el.value = String(v); };
+  set('p-contact', keep.contact);
+  set('p-section', d.section); set('p-qty', d.qty); set('p-original', kind === 'sell' ? d.original_price : null);
+  set('p-price', d.price); set('p-meet', d.meet); set('p-note', d.note);
+  checkOver();
+  const warn = [];
+  if (d.date && d.date !== e.event_date) warn.push(fmtDate(d.date));
+  if (d.artist && !artistAll(e.artist).toLowerCase().includes(String(d.artist).toLowerCase())) warn.push(d.artist);
+  const ta = document.getElementById('ai-text'); if (ta) ta.value = '';
+  aiImg = null;
+  if (warn.length) aiMsg('aiMismatch', 'err', { x: warn.join(', ') }); else aiMsg('aiDone', 'ok');
+}
+
+// ---------- Alerts ----------
+S.al = { list: null, draft: null };
+async function loadAlerts() {
+  if (!S.user) { S.al.list = []; return; }
+  const { data, error } = await sb.from('alerts').select('id, event_id, qty, max_price, keywords, created_at, events(artist, city, event_date, currency)').order('created_at', { ascending: false });
+  S.al.list = error ? [] : data || [];
+}
+async function openAlerts(push = true) {
+  S.view = 'a'; S.selEv = null; S.flash = null; S.al.draft = null;
+  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
+  if (push) history.pushState({ v: 'a' }, '', location.pathname + '?v=a');
+  render(); window.scrollTo(0, 0);
+  if (S.user) { await loadAlerts(); renderMain(); }
+}
+const alNames = (e) => ({ artist: artistAll(e.artist).toLowerCase(), city: cityAll(e.city).toLowerCase() });
+const upcoming = () => S.events.filter((e) => e.event_date >= todayISO() && e.status !== 'pending');
+function alertDraftView() {
+  const dr = S.al.draft; if (!dr) return '';
+  const p = dr.p || {};
+  const shows = dr.shows.length ? dr.shows : upcoming();
+  const opts = (shows.length > 1 && dr.shows.length ? `<option value="all">${t('alAll', { n: shows.length })}</option>` : '')
+    + shows.slice(0, 60).map((e) => `<option value="${esc(e.id)}">${esc(evName(e))}</option>`).join('');
+  return `<form data-form="alertSave" class="panel stack">
+    ${dr.shows.length ? '' : `<p class="note">${t('alNoShows')}</p>`}
+    <div class="field"><label for="al-ev">${t('alShow')}</label><select id="al-ev" name="ev">${opts}</select></div>
+    <div class="grid2">
+      <div class="field narrow"><label for="al-qty">${t('alQty')}</label><select id="al-qty" name="qty">${[1, 2, 3, 4].map((n) => `<option ${Number(p.qty) === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      <div class="field"><label for="al-max">${t('alMax', { c: curSym((shows[0] || {}).currency) })}</label><input id="al-max" name="max" inputmode="decimal" value="${esc(p.max_price || '')}"></div>
+    </div>
+    <div class="field"><label for="al-keys">${t('alKeys')}</label><input id="al-keys" name="keys" maxlength="100" value="${esc((p.keywords || []).join(', '))}"></div>
+    <div class="row"><button type="submit" class="primary">${t('alSave')}</button><button type="button" class="text" data-act="alCancel">${t('cancel')}</button></div>
+  </form>`;
+}
+function alertsView() {
+  const head = `<div class="row between"><button type="button" class="text back" data-act="back">${icon.back}${t('back')}</button></div>
+    <h1>${t('alTitle')}</h1><p class="sub muted">${t('alSub')}</p>`;
+  if (!S.user) return head + `<button type="button" class="primary big" data-act="toggleLogin">${t('alLogin')}</button>`;
+  const list = S.al.list === null ? `<p class="muted">${t('loading')}</p>`
+    : S.al.list.length ? S.al.list.map((a) => `<div class="item notif"><span class="item-main"><b>${esc(a.events ? evName(a.events) : '')}</b>
+        <span class="small muted">${a.qty}× · ${a.max_price ? t('alUnder', { p: curSym(a.events && a.events.currency) + Number(a.max_price) }) : t('alAnyPrice')}${(a.keywords || []).length ? ' · ' + esc(a.keywords.join(', ')) : ''}</span></span>
+        <button type="button" class="text" data-act="alDel" data-id="${esc(a.id)}">${t('alDel')}</button></div>`).join('')
+      : `<p class="muted">${t('alNone')}</p>`;
+  return head + `${flashFor('alert')}
+    ${S.al.draft ? alertDraftView() : `<form data-form="alertText" class="panel stack">
+      <textarea id="al-text" name="text" rows="3" maxlength="300" placeholder="${t('alPh')}" aria-label="${t('alPh')}" required></textarea>
+      <div class="row"><button type="submit" class="primary" id="al-go">${t('alFind')}</button><button type="button" class="text" data-act="alManual">${t('alManual')}</button></div>
+      <p class="small muted">${t('alPriv')}</p></form>`}
+    <h2 class="list-title">${t('alMine')}</h2><div class="list">${list}</div>`;
+}
+
 // ---------- Wiring ----------
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
@@ -2033,7 +2201,12 @@ document.addEventListener('input', (e) => {
   if (e.target.id === 'c-event') S.selEvForm = e.target.value;
   if (e.target.id === 'p-price' || e.target.id === 'p-original') checkOver();
 });
-document.addEventListener('change', (e) => {
+document.addEventListener('change', async (e) => {
+  if (e.target.id === 'ai-img') {
+    aiImg = await shrinkImage(e.target.files && e.target.files[0]);
+    const l = document.getElementById('ai-img-l'); if (l) l.textContent = aiImg ? t('aiImgOn') : t('aiImg');
+    if (!aiImg && e.target.files && e.target.files[0]) aiMsg('aiBadImg');
+  }
   if (e.target.id === 'lang') { S.lang = Number(e.target.value); store.set('lang', S.lang); render(); }
   if (e.target.id === 'sort') {
     S.sort = e.target.value;
@@ -2047,6 +2220,7 @@ const routeTo = async (push) => {
   const id = p.get('e'); const v = p.get('v');
   if (v === 'u' && UUID.test(p.get('id') || '')) { await openProfile(p.get('id'), push); return; }
   if (v === 'n' && S.user) { await openNotifs(push); return; }
+  if (v === 'a') { await openAlerts(push); return; }
   const view = v === 'free' ? 'merch' : VIEWS.includes(v) ? v : 'board';
   const okId = id && ((id === 'general' && view === 'merch') || (UUID.test(id) && S.events.some((x) => x.id === id)));
   if (okId && view !== 'me') await openEvent(id, push, view);
