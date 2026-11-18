@@ -41,7 +41,7 @@ begin
   if auth.uid() is not null and exists (select 1 from banned_users where user_id = auth.uid()) then
     raise exception 'Account suspended: this account cannot post' using errcode = 'P0001';
   end if;
-  foreach col in array tg_argv loop
+  foreach col in array coalesce(tg_argv, '{}'::text[]) loop
     txt := txt || ' ' || coalesce(doc ->> col, '');
   end loop;
   txt := lower(txt);
