@@ -812,6 +812,7 @@ function homeView() {
       <h1>${heads ? t(heads[0]) : t('hero')}</h1><p class="sub muted">${heads ? t(heads[1]) : t('heroSub')}</p>
       <div class="searchbox">${icon.search}<input id="q" type="search" aria-label="${t('searchPh')}" placeholder="${t('searchPh')}" value="${esc(S.q)}" autocomplete="off"></div>
       <button type="button" class="outline-link alert-card" data-act="openAlerts">${t('alCard')}</button>
+      <a class="outline-link alert-card" href="ootd.html">👗 OOTD finder</a>
     </section>
     <div id="results" class="list"></div>
     ${create}
