@@ -77,6 +77,23 @@ export function sanitizeAlert(o: Record<string, unknown>) {
     keywords: cleanKeywords(o.keywords),
   };
 }
+const PARTS = ["top", "bottom", "dress", "outerwear", "shoes", "bag", "hat", "jewelry", "eyewear", "belt", "other"];
+export function sanitizeOutfit(o: Record<string, unknown>) {
+  const arr = Array.isArray(o.items) ? o.items.slice(0, 8) : [];
+  const items = arr.map((x) => {
+    const r = (x && typeof x === "object" ? x : {}) as Record<string, unknown>;
+    const part = typeof r.part === "string" && PARTS.includes(r.part.toLowerCase()) ? r.part.toLowerCase() : "other";
+    return {
+      part,
+      name: cleanText(r.name, 60),
+      color: cleanText(r.color, 30),
+      material: cleanText(r.material, 30),
+      brand: cleanText(r.brand, 40),
+      search: cleanText(r.search, 80),
+    };
+  }).filter((i) => i.name || i.search);
+  return { items, style: cleanText(o.style, 60) };
+}
 export function pickJson(raw: string): Record<string, unknown> | null {
   const a = raw.indexOf("{");
   const b = raw.lastIndexOf("}");
@@ -93,6 +110,18 @@ const SAFE =
   "Use null when unsure. Never output phone numbers, emails, social handles, links, people's names, barcodes, QR codes, or order and booking numbers. " +
   "Prices are plain numbers without currency symbols.";
 export function systemPrompt(mode: string, today: string): string {
+  if (mode === "outfit") {
+    return (
+      "You describe the clothes and accessories in a photo so a shopper can search for them. Describe ONLY clothing, shoes, bags and accessories. " +
+      "Never identify, name or guess who the person is, and never describe their face or body. Reply with ONE JSON object and nothing else, with keys: " +
+      "items (up to 8, one per visible piece, each with part (one of top, bottom, dress, outerwear, shoes, bag, hat, jewelry, eyewear, belt, other), " +
+      "name (short plain description, e.g. 'neon green fringe mini skirt'), color, material (or null), " +
+      "brand (ONLY if a logo or text on the item is clearly readable in the photo, otherwise null; never guess a brand), " +
+      "search (a short English shopping search phrase with style, colour and material, max 8 words)), " +
+      "style (the overall look in a few words, or null). " +
+      SAFE
+    );
+  }
   if (mode === "alert") {
     return (
       "You read a fan's request to be alerted about concert tickets they want to buy. Reply with ONE JSON object and nothing else, with keys: " +
@@ -157,14 +186,14 @@ Deno.serve(async (req: Request) => {
   } catch {
     return reply(req, 400, { error: "bad_request" });
   }
-  const mode = body.mode === "alert" ? "alert" : body.mode === "post" ? "post" : "";
+  const mode = body.mode === "alert" ? "alert" : body.mode === "post" ? "post" : body.mode === "outfit" ? "outfit" : "";
   if (!mode) return reply(req, 400, { error: "bad_request" });
   const text = typeof body.text === "string" ? body.text.slice(0, MAX_TEXT).replace(/<\/?message>/gi, "") : "";
   const image = typeof body.image === "string" ? body.image : "";
-  if (image && (mode !== "post" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image) || image.length > MAX_IMAGE)) {
+  if (image && (mode === "alert" || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image) || image.length > MAX_IMAGE)) {
     return reply(req, 400, { error: "bad_image" });
   }
-  if (!text.trim() && !image) return reply(req, 400, { error: "empty" });
+  if ((!text.trim() && !image) || (mode === "outfit" && !image)) return reply(req, 400, { error: "empty" });
 
   const key = Deno.env.get("OPENROUTER_API_KEY");
   const model = Deno.env.get("AI_MODEL");
@@ -193,7 +222,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model,
         temperature: 0,
-        max_tokens: 400,
+        max_tokens: mode === "outfit" ? 900 : 400,
         response_format: { type: "json_object" },
         provider: { data_collection: Deno.env.get("AI_DATA_COLLECTION") ?? "deny" },
         messages: [
@@ -217,5 +246,5 @@ Deno.serve(async (req: Request) => {
 
   const obj = pickJson(raw);
   if (!obj) return reply(req, 422, { error: "unreadable" });
-  return reply(req, 200, { ok: true, data: mode === "alert" ? sanitizeAlert(obj) : sanitizePost(obj) });
+  return reply(req, 200, { ok: true, data: mode === "alert" ? sanitizeAlert(obj) : mode === "outfit" ? sanitizeOutfit(obj) : sanitizePost(obj) });
 });

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OOTD finder · Show Day</title>
+<meta name="theme-color" content="#FFB3D1">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main id="app" class="wrap stack">
+  <a class="text" href="./">← Show Day</a>
+  <h1>👗 OOTD finder</h1>
+  <p class="sub muted">Upload an outfit photo. We describe the clothes (never who is wearing them) and give you shopping searches. Results are similar items, not confirmed exact matches.</p>
+  <div id="gate" class="panel hidden"><p>Please log in on Show Day first, then come back here.</p><a class="primary big" href="./">Go to Show Day</a></div>
+  <form id="form" class="panel stack hidden">
+    <div class="field"><label for="photo">Outfit photo (JPG, PNG or WebP)</label><input id="photo" type="file" accept="image/jpeg,image/png,image/webp" required></div>
+    <img id="preview" alt="" class="hidden" style="max-width:100%;max-height:340px;border-radius:12px;object-fit:contain">
+    <div class="field"><label for="credit">Event or show it is from (optional)</label><input id="credit" maxlength="80" placeholder="e.g. airport 11/10, music show"></div>
+    <p class="small muted">Your photo is resized in your browser, sent to an AI provider to read the clothes, and not stored by Show Day. Only upload photos you are allowed to use.</p>
+    <button id="go" type="submit" class="primary big">Find the outfit</button>
+    <p id="msg" class="note small" role="status"></p>
+  </form>
+  <div id="out" class="stack"></div>
+</main>
+<script type="module" src="ootd.js"></script>
+</body>
+</html>
